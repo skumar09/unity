@@ -1,26 +1,29 @@
 {
-  "name": "@adobecom/college",
+  "name": "@adobecom/unity",
   "private": true,
   "type": "module",
   "version": "1.0.0",
-  "description": "Website foundation technology.",
+  "description": "Adobecom Unity interactivity components",
   "scripts": {
-    "test": "wtr \"./test/**/*.test.js\" --node-resolve --port=2000 --coverage",
+    "test": "wtr --config ./web-test-runner.config.mjs \"./test/**/*.test.(js|html)\" --node-resolve --port=2000 --coverage",
     "test:watch": "npm test -- --watch",
+    "wtr": "wtr --config ./web-test-runner.config.mjs \"./test/**/*.test.(js|html)\" --node-resolve --port=2000 --coverage --concurrent-browsers 4",
+    "wtr:watch": "npm run wtr -- --watch",
+    "lcov": "lcov -a coverage/jest/lcov.info -a coverage/wtr/lcov.info -o coverage/lcov.info",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint .",
-    "lint:css": "stylelint 'blocks/**/*.css' 'styles/*.css'"
+    "lint:css": "stylelint 'unitylibs/blocks/**/*.css' 'unitylibs/styles/*.css'"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adobecom/college.git"
+    "url": "git+https://github.com/adobecom/unity.git"
   },
   "author": "Adobe",
   "license": "Apache License 2.0",
   "bugs": {
-    "url": "https://github.com/adobecom/college/issues"
+    "url": "https://github.com/adobecom/unity/issues"
   },
-  "homepage": "https://github.com/adobecom/college#readme",
+  "homepage": "https://github.com/adobecom/unity#readme",
   "devDependencies": {
     "@babel/core": "7.17.7",
     "@babel/eslint-parser": "7.17.0",
