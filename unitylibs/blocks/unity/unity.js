@@ -22,7 +22,7 @@ export const [setUnityLibs, getUnityLibs] = (() => {
 })();
 
 export default async function init(el) {
-  const unitylibs = setUnityLibs('/unitylibs');
+  const unitylibs = setUnityLibs('/unitylibs', project = 'unity');
   const { default: init } = await import(`${unitylibs}/core/workflow/workflow.js`);
   init(el);
 }
