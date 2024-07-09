@@ -1,15 +1,11 @@
 export const unityConfig = {
 }
 
-export const [setLibs, getLibs] = (() => {
+export const [setUnityLibs, getUnityLibs] = (() => {
   let libs;
   return [
-    (prodLibs, force = false) => {
-      if (force) {
-        libs = prodLibs;
-        return libs;
-      }
-      const { hostname } = window.location;
+    (prodLibs, project = 'unity') => {
+      const { hostname, origin} = window.location;
       if (!hostname.includes('hlx.page')
         && !hostname.includes('hlx.live')
         && !hostname.includes('localhost')) {
@@ -18,14 +14,15 @@ export const [setLibs, getLibs] = (() => {
       }
       const branch = new URLSearchParams(window.location.search).get('unitylibs') || 'main';
       if (branch.indexOf('--') > -1) { libs = `https://${branch}.hlx.live/unitylibs`; return libs; }
-      libs = `https://${branch}--unity--adobecom.hlx.live/libs`;
+      if (hostname.includes('localhost') && (project === 'unity')) { libs = `${origin}/unitylibs`; return libs; }
+      libs = `https://${branch}--unity--adobecom.hlx.live/unitylibs`;
       return libs;
     }, () => libs,
   ];
 })();
 
 export default async function init(el) {
-  const unitylibs = setLibs('/unitylibs');
-  const { default: init } = await import(`${unitylibs}/unitylibs/core/workflow/workflow.js`);
+  const unitylibs = setUnityLibs('/unitylibs');
+  const { default: init } = await import(`${unitylibs}/core/workflow/workflow.js`);
   init(el);
 }
