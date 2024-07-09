@@ -1,6 +1,3 @@
-export const unityConfig = {
-}
-
 export const [setUnityLibs, getUnityLibs] = (() => {
   let libs;
   return [
