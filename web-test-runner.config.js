@@ -1,79 +1,47 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { importMapsPlugin } from '@web/dev-server-import-maps';
-import { defaultReporter } from '@web/test-runner';
 
-function customReporter() {
-  return {
-    async reportTestFileResults({ logger, sessionsForTestFile }) {
-      sessionsForTestFile.forEach((session) => {
-        session.testResults.tests.forEach((test) => {
-          if (!test.passed && !test.skipped) {
-            logger.log(test);
-          }
-        });
-      });
-    },
-  };
+async function enableCORS(context, next) {
+  await next();
+  context.set('Access-Control-Allow-Credentials', true);
+  context.set('Access-Control-Allow-Origin', context.request.headers.origin);
 }
+
+const swcImportMaps = Object.fromEntries([
+  'theme.js',
+  'search.js',
+  'checkbox.js',
+  'dialog.js',
+  'base.js',
+  'reactive-controllers.js',
+  'shared.js',
+  'textfield.js',
+  'button.js',
+  'icons-workflow.js',
+  'icons-ui.js',
+  'checkmark.js',
+  'dash.js',
+  'divider.js',
+  'button-group.js',
+  'alert-dialog.js',
+  'underlay.js',
+  'help-text.js',
+  'icon.js',
+  'icons/checkmark.js',
+  'icons/dash.js',
+  'icons/cross.js',
+].map((file) => [`/libs/features/spectrum-web-components/dist/${file}`, `/node_modules/@adobecom/milo/libs/features/spectrum-web-components/dist/${file}`]));
+
 export default {
   coverageConfig: {
-    exclude: [
-      '**/mocks/**',
-      '**/node_modules/**',
-      '**/test/**',
-      '**/deps/**',
-    ],
+    include: ['unitylibs/**'],
+    exclude: ['test/mocks/**', 'test/**', '**/node_modules/**', 'unitylibs/deps/**'],
   },
-  plugins: [importMapsPlugin({})],
-  reporters: [
-    defaultReporter({ reportTestResults: true, reportTestProgress: true }),
-    customReporter(),
-  ],
-  testRunnerHtml: (testFramework) => `
-    <html>
-      <head>
-        <script type='module'>
-          const oldFetch = window.fetch;
-          window.fetch = async (resource, options) => {
-            if (!resource.startsWith('/') && !resource.startsWith('http://localhost')) {
-              console.error(
-                '** fetch request for an external resource is disallowed in unit tests, please find a way to mock! https://github.com/orgs/adobecom/discussions/814#discussioncomment-6060759 provides guidance on how to fix the issue.',
-                resource
-              );
-            }
-            return oldFetch.call(window, resource, options);
-          };
-          
-          const oldXHROpen = XMLHttpRequest.prototype.open;
-          XMLHttpRequest.prototype.open = async function (...args) {
-            let [method, url, asyn] = args;
-            if (!resource.startsWith('/') && url.startsWith('http://localhost')) {
-              console.error(
-                '** XMLHttpRequest request for an external resource is disallowed in unit tests, please find a way to mock! https://github.com/orgs/adobecom/discussions/814#discussioncomment-6060759 provides guidance on how to fix the issue.',
-                url
-              );
-            }
-            return oldXHROpen.apply(this, args);
-          };
-
-          const observer = new MutationObserver((mutationsList, observer) => {
-            for(let mutation of mutationsList) {
-              if (mutation.type === 'childList') {
-                for(let node of mutation.addedNodes) {
-                  if(node.nodeName === 'SCRIPT' && node.src && !node.src.startsWith('http://localhost')) {
-                    console.error(
-                      '** An external 3rd script has been added. This is disallowed in unit tests, please find a way to mock! https://github.com/orgs/adobecom/discussions/814#discussioncomment-6060891 provides guidance on how to fix the issue.',
-                      node.src
-                    );
-                  }
-                }
-              }
-            }
-          });
-          observer.observe(document.head, { childList: true });
-        </script>
-      </head>
-      <body>
-        <script type='module' src='${testFramework}'></script>
-      </body>
-    </html>`,
+  debug: false,
+  files: ['test/**/*.test.(js|html)'],
+  nodeResolve: true,
+  middlewares: [enableCORS],
+  plugins: [importMapsPlugin({ inject: { importMap: { imports: { ...swcImportMaps } } } })],
+  port: 2000,
+  browserLogs: false,
 };
