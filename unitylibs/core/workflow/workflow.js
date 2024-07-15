@@ -32,12 +32,13 @@ function intEnbReendered(targetBlock) {
 }
 
 function createInteractiveArea(el, pic) {
-  const iArea = createTag('div', { class: 'interactive-holder' });
+  const iArea = createTag('div', { class: 'interactive-area' });
+  const iWidget = createTag('div', { class: 'unity-widget' });
   const newPic = pic.cloneNode(true);
   const p = createTag('p', {}, newPic);
   el.querySelector(':scope > div > div').prepend(p);
   pic.querySelector('img').src = getImgSrc(pic);
-  iArea.append(pic);
+  iArea.append(pic, iWidget);
   if (el.classList.contains('light')) iArea.classList.add('light');
   else iArea.classList.add('dark');
   return iArea;
@@ -47,7 +48,7 @@ async function getTargetArea(el) {
   const metadataSec = el.closest('.section');
   const intEnb = metadataSec.querySelector('.marquee, .aside');
   try {
-    intEnb.classList.add('interactive-enabled');
+    intEnb.classList.add('unity-enabled');
     await intEnbReendered(intEnb);
   } catch (err) { return null; }
   const asset = intEnb.querySelector('.asset picture, .image picture');

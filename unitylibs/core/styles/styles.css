@@ -1,5 +1,6 @@
-.interactive-enabled .interactive-holder,
-.interactive-enabled .interactive-holder .image img {
+.unity-enabled .interactive-area,
+.unity-enabled .interactive-area .image img {
   height: 100%;
   max-height: 100%;
 }
+
