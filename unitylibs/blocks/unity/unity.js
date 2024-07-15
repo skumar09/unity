@@ -2,7 +2,7 @@ export const [setUnityLibs, getUnityLibs] = (() => {
   let libs;
   return [
     (prodLibs, project = 'unity') => {
-      const { hostname, origin} = window.location;
+      const { hostname, origin } = window.location;
       if (!hostname.includes('hlx.page')
         && !hostname.includes('hlx.live')
         && !hostname.includes('localhost')) {
