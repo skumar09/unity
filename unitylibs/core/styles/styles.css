@@ -1,6 +1,23 @@
+.unity {
+  /* display: none; */
+}
+
 .unity-enabled .interactive-area,
 .unity-enabled .interactive-area .image img {
+  position: relative;
   height: 100%;
   max-height: 100%;
 }
 
+.unity-enabled .interactive-area .unity-widget {
+  height: 30px;
+  width: 50%;
+  position: absolute;
+  bottom: 30px;
+  left: auto;
+  right: auto;
+  background-color: white;
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}

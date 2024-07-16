@@ -34,14 +34,15 @@ function intEnbReendered(targetBlock) {
 function createInteractiveArea(el, pic) {
   const iArea = createTag('div', { class: 'interactive-area' });
   const iWidget = createTag('div', { class: 'unity-widget' });
+  pic.querySelector('img').src = getImgSrc(pic);
+  [...pic.querySelectorAll('source')].forEach((s) => s.remove());
   const newPic = pic.cloneNode(true);
   const p = createTag('p', {}, newPic);
   el.querySelector(':scope > div > div').prepend(p);
-  pic.querySelector('img').src = getImgSrc(pic);
   iArea.append(pic, iWidget);
   if (el.classList.contains('light')) iArea.classList.add('light');
   else iArea.classList.add('dark');
-  return iArea;
+  return [iArea, iWidget];
 }
 
 async function getTargetArea(el) {
@@ -53,11 +54,29 @@ async function getTargetArea(el) {
   } catch (err) { return null; }
   const asset = intEnb.querySelector('.asset picture, .image picture');
   const container = asset.closest('p');
-  const iArea = createInteractiveArea(el, asset);
+  const [iArea, iWidget] = createInteractiveArea(el, asset);
   const assetArea = intEnb.querySelector('.asset, .image');
   if (container) container.replaceWith(iArea);
   else assetArea.append(iArea);
-  return iArea;
+  return [iArea, iWidget];
+}
+
+function getEnabledFeatures(unityEl, supportedFeatures) {
+  const enabledFeatures = [];
+  const configuredFeatures = unityEl.querySelectorAll(':scope ul > li > span.icon');
+  configuredFeatures.forEach((cf) => {
+    const cfName = [...cf.classList].find((cn) => cn.match('icon-'));
+    if (!cfName) return;
+    const fn = cfName.split('-')[1];
+    const isEnabled = supportedFeatures.includes(fn);
+    if (isEnabled) {
+      enabledFeatures.push({
+        featureName: fn,
+        featureCfg: cf.closest('li'),
+      });
+    }
+  });
+  return enabledFeatures;
 }
 
 function getWorkFlowInformation(el) {
@@ -81,15 +100,19 @@ async function initWorkflow(cfg) {
 
 export default async function init(el) {
   loadStyle(`${getUnityLibs()}/core/styles/styles.css`);
-  const targetBlock = await getTargetArea(el);
+  const [targetBlock, unityWidget] = await getTargetArea(el);
   if (!targetBlock) return;
   const [wfName, featureList, featureCode] = getWorkFlowInformation(el);
   if (!wfName || !featureList) return;
+  const enabledFeatures = getEnabledFeatures(el, featureList);
+  if (!enabledFeatures) return;
   const workflowConfig = {
     unityEl: el,
     targetEl: targetBlock,
+    unityWidget,
     wfName,
     supportedFeatures: featureList,
+    enabledFeatures,
     featureCode,
   };
   await initWorkflow(workflowConfig);
