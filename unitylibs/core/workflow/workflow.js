@@ -62,17 +62,36 @@ async function getTargetArea(el) {
 
 function getWorkFlowInformation(el) {
   let wfName = '';
-  const workflowCfg = { 'workflow-photoshop': ['removebg', 'changebg', 'huesat'] };
+  const workflowCfg = {
+    'workflow-photoshop': {
+      featureList: ['removebg', 'changebg', 'huesat'],
+      featureCode: 'psworkflow',
+    },
+  };
   [...el.classList].forEach((cn) => { if (cn.match('workflow-')) wfName = cn; });
   if (!wfName) return [];
-  return [wfName, workflowCfg[wfName]];
+  return [wfName, workflowCfg[wfName].featureList, workflowCfg[wfName].featureCode];
+}
+
+async function initWorkflow(cfg) {
+  loadStyle(`${getUnityLibs()}/core/workflow/${cfg.featureCode}/${cfg.featureCode}.css`);
+  const { default: initUnity } = await import(`./${cfg.featureCode}/${cfg.featureCode}.js`);
+  initUnity(cfg);
 }
 
 export default async function init(el) {
   loadStyle(`${getUnityLibs()}/core/styles/styles.css`);
   const targetBlock = await getTargetArea(el);
   if (!targetBlock) return;
-  const [wfName, supportedFeature] = getWorkFlowInformation(el);
-  if (!wfName || !supportedFeature) return;
-  el.innerHTML = 'Loaded the unity block!!';
+  const [wfName, featureList, featureCode] = getWorkFlowInformation(el);
+  if (!wfName || !featureList) return;
+  const workflowConfig = {
+    unityEl: el,
+    targetEl: targetBlock,
+    wfName,
+    supportedFeatures: featureList,
+    featureCode,
+  };
+  await initWorkflow(workflowConfig);
+  el.innerHTML += 'Loaded the unity block!!<br>'; // to remove
 }
