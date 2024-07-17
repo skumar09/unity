@@ -1,4 +1,4 @@
-async function getImageBlobData(url) {
+export async function getImageBlobData(url) {
   return new Promise((res, rej) => {
     const xhr = new XMLHttpRequest();
     xhr.open('GET', url);
@@ -11,16 +11,18 @@ async function getImageBlobData(url) {
   });
 }
 
-async function uploadToUnityStorage(storageUrl, blobData) {
+async function uploadImgToUnity(storageUrl, id, blobData) {
   const uploadOptions = {
     method: 'PUT',
     headers: { 'Content-Type': 'image/jpeg' },
     body: blobData,
   };
   const response = await fetch(storageUrl, uploadOptions);
+  if (response.status !== 200) return '';
+  return id;
 }
 
-export default async function uploadAsset(url) {
+export async function uploadAsset(apiEp, imgUrl) {
   const genIdOptions = {
     method: 'POST',
     headers: {
@@ -29,11 +31,10 @@ export default async function uploadAsset(url) {
       'x-api-key': 'leo',
     },
   };
-  const response = await fetch('https://assistant-int.adobe.io/api/v1/asset', genIdOptions);
+  const response = await fetch(`${apiEp}/asset`, genIdOptions);
   if (response.status !== 200) return '';
   const { id, href } = await response.json();
-  const blobData = await getImageBlobData(url);
-  await uploadToUnityStorage(href, blobData);
-  if (response.status !== 200) return '';
-  return id;
+  const blobData = await getImageBlobData(imgUrl);
+  const assetId = await uploadImgToUnity(href, id, blobData);
+  return assetId;
 }

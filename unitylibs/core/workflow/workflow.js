@@ -1,4 +1,4 @@
-import { createTag, loadStyle, getUnityLibs } from '../../scripts/utils.js';
+import { createTag, loadStyle, getUnityLibs, unityConfig } from '../../scripts/utils.js';
 
 export function defineDeviceByScreenSize() {
   const DESKTOP_SIZE = 1200;
@@ -61,19 +61,18 @@ async function getTargetArea(el) {
   return [iArea, iWidget];
 }
 
-function getEnabledFeatures(unityEl, supportedFeatures) {
+function getEnabledFeatures(unityEl, wfDetail) {
   const enabledFeatures = [];
+  const supportedFeatures = Object.keys(wfDetail);
   const configuredFeatures = unityEl.querySelectorAll(':scope ul > li > span.icon');
   configuredFeatures.forEach((cf) => {
     const cfName = [...cf.classList].find((cn) => cn.match('icon-'));
     if (!cfName) return;
     const fn = cfName.split('-')[1];
-    const isEnabled = supportedFeatures.includes(fn);
-    if (isEnabled) {
-      enabledFeatures.push({
-        featureName: fn,
-        featureCfg: cf.closest('li'),
-      });
+    const isEnabled = supportedFeatures.indexOf(fn);
+    if (isEnabled > -1) {
+      enabledFeatures.push(fn);
+      wfDetail[fn].authorCfg = cf.closest('li');
     }
   });
   return enabledFeatures;
@@ -83,18 +82,19 @@ function getWorkFlowInformation(el) {
   let wfName = '';
   const workflowCfg = {
     'workflow-photoshop': {
-      featureList: ['removebg', 'changebg', 'huesat'],
-      featureCode: 'psworkflow',
+      removebg: { endpoint: 'providers/PhotoshopRemoveBackground' },
+      changebg: { endpoint: 'providers/PhotoshopChangeBackground' },
+      huesat: {},
     },
   };
   [...el.classList].forEach((cn) => { if (cn.match('workflow-')) wfName = cn; });
-  if (!wfName) return [];
-  return [wfName, workflowCfg[wfName].featureList, workflowCfg[wfName].featureCode];
+  if (!wfName || !workflowCfg[wfName]) return [];
+  return [wfName, workflowCfg[wfName]];
 }
 
 async function initWorkflow(cfg) {
-  loadStyle(`${getUnityLibs()}/core/workflow/${cfg.featureCode}/${cfg.featureCode}.css`);
-  const { default: initUnity } = await import(`./${cfg.featureCode}/${cfg.featureCode}.js`);
+  loadStyle(`${getUnityLibs()}/core/workflow/${cfg.wfName}/${cfg.wfName}.css`);
+  const { default: initUnity } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
   initUnity(cfg);
 }
 
@@ -102,19 +102,18 @@ export default async function init(el) {
   loadStyle(`${getUnityLibs()}/core/styles/styles.css`);
   const [targetBlock, unityWidget] = await getTargetArea(el);
   if (!targetBlock) return;
-  const [wfName, featureList, featureCode] = getWorkFlowInformation(el);
-  if (!wfName || !featureList) return;
-  const enabledFeatures = getEnabledFeatures(el, featureList);
+  const [wfName, wfDetail] = getWorkFlowInformation(el);
+  if (!wfName || !wfDetail) return;
+  const enabledFeatures = getEnabledFeatures(el, wfDetail);
   if (!enabledFeatures) return;
-  const workflowConfig = {
+  const wfConfig = {
     unityEl: el,
     targetEl: targetBlock,
     unityWidget,
     wfName,
-    supportedFeatures: featureList,
+    wfDetail,
     enabledFeatures,
-    featureCode,
+    ...unityConfig,
   };
-  await initWorkflow(workflowConfig);
-  el.innerHTML += 'Loaded the unity block!!<br>'; // to remove
+  await initWorkflow(wfConfig);
 }

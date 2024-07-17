@@ -42,4 +42,6 @@ setUnityLibs('/unitylibs');
 const { createTag, getConfig, loadStyle } = await import(`${miloLibs}/utils/utils.js`);
 export { createTag, loadStyle, getConfig };
 
-export const unityConfig = {};
+export const unityConfig = {
+  apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
+};
