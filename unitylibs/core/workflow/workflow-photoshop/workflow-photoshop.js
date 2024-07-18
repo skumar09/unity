@@ -1,6 +1,28 @@
 import { createTag } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 
+function toggleOptionTrayDisplay(unityCfg) {
+  const { unityWidget } = unityCfg;
+  const unityOptTray = unityWidget.querySelector('.unity-option-area');
+  if (unityOptTray.style.display === 'none') unityOptTray.style.display = 'flex';
+  else unityOptTray.style.display = 'none';
+}
+
+function createActionBtn(btnCfg) {
+  const txt = btnCfg.innerText;
+  const img = btnCfg.querySelector('img[src*=".svg"]');
+  const actionBtn = createTag('a', { class: 'unity-action-btn' });
+  if (img) {
+    const actionSvg = createTag('img', { class: 'btn-icon' }, img);
+    actionBtn.append(actionSvg);
+  }
+  if (txt) {
+    const actionText = createTag('div', { class: 'btn-text' }, txt);
+    actionBtn.append(actionText);
+  }
+  return actionBtn;
+}
+
 function loadImg(img) {
   return new Promise((res) => {
     img.loading = 'eager';
@@ -83,7 +105,7 @@ async function removeBgHandler(unityCfg, changeDisplay = true) {
     return false;
   }
   const { origin, pathname } = new URL(img.src);
-  const imgUrl = !srcUrl ? `${origin}${pathname}` : srcUrl;
+  const imgUrl = srcUrl || `${origin}${pathname}`;
   unityCfg.presentState.removeBgState.srcUrl = imgUrl;
   const id = await uploadAsset(apiEndPoint, imgUrl);
   const removeBgOptions = {
@@ -96,7 +118,7 @@ async function removeBgHandler(unityCfg, changeDisplay = true) {
     body: `{"surfaceId":"Unity","assets":[{"id": "${id}"}]}`,
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, removeBgOptions);
-  if (response.status !== 200) return;
+  if (response.status !== 200) return true;
   const { outputUrl } = await response.json();
   const opId = new URL(outputUrl).pathname.split('/').pop();
   unityCfg.presentState.removeBgState.assetId = opId;
@@ -109,26 +131,23 @@ async function removeBgHandler(unityCfg, changeDisplay = true) {
 }
 
 function removebg(featureName, unityCfg) {
-  const { unityWidget } = unityCfg;
-  const featureBtn = unityWidget.querySelector('.unity-button');
-  const a = createTag('a', { class: 'unity-button removebg-button' }, 'Remove BG');
-  if (!featureBtn) unityWidget.append(a);
-  else featureBtn.replaceWith(a);
-  a.addEventListener('click', async () => {
+  const { unityWidget, wfDetail } = unityCfg;
+  const btn = createActionBtn(wfDetail[featureName].authorCfg);
+  unityWidget.querySelector('.unity-action-area').append(btn);
+  btn.addEventListener('click', async () => {
     await removeBgHandler(unityCfg);
   });
 }
 
-async function changeBgHandler(unityCfg, refreshState = true) {
+async function changeBgHandler(unityCfg, selectedUrl = null, refreshState = true) {
   if (refreshState) resetWorkflowState(unityCfg);
-  const { apiEndPoint, targetEl } = unityCfg;
-  const { unityEl, interactiveSwitchEvent } = unityCfg;
-  const { authorCfg, endpoint } = unityCfg.wfDetail.changebg;
+  const { apiEndPoint, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = unityCfg;
+  const { endpoint } = unityCfg.wfDetail.changebg;
   const unityRetriggered = await removeBgHandler(unityCfg, false);
   const img = targetEl.querySelector('picture img');
   const fgId = unityCfg.presentState.removeBgState.assetId;
-  const bgImg = authorCfg.querySelector(':scope > ul li img');
-  const { origin, pathname } = new URL(bgImg.src);
+  const bgImg = selectedUrl || unityWidget.querySelector('.unity-option-area .changebg-selector-tray img').dataset.backgroundImg;
+  const { origin, pathname } = new URL(bgImg);
   const bgImgUrl = `${origin}${pathname}`;
   if (!unityRetriggered && unityCfg.presentState.changeBgState[bgImgUrl]?.assetId) {
     img.src = unityCfg.presentState.changeBgState[bgImgUrl].assetUrl;
@@ -165,18 +184,30 @@ async function changeBgHandler(unityCfg, refreshState = true) {
 }
 
 function changebg(featureName, unityCfg) {
-  const { unityWidget } = unityCfg;
-  const featureBtn = unityWidget.querySelector('.unity-button');
-  const a = createTag('a', { class: 'unity-button changebg-button' }, 'Change BG');
-  if (!featureBtn) unityWidget.append(a);
-  else featureBtn.replaceWith(a);
-  a.addEventListener('click', async () => {
-    await changeBgHandler(unityCfg, false);
+  const { unityWidget, wfDetail } = unityCfg;
+  const { authorCfg } = wfDetail[featureName];
+  const btn = createActionBtn(authorCfg);
+  unityWidget.querySelector('.unity-action-area').append(btn);
+  const bgSelectorTray = createTag('div', { class: 'changebg-selector-tray' });
+  const bgOptions = authorCfg.querySelectorAll(':scope ul li');
+  [...bgOptions].forEach((o) => {
+    let [thumbnail, bgImg] = o.querySelectorAll('img');
+    if (!bgImg) bgImg = thumbnail;
+    thumbnail.dataset.backgroundImg = bgImg.src;
+    const a = createTag('a', { class: 'changebg-option' }, thumbnail);
+    bgSelectorTray.append(a);
+    a.addEventListener('click', async () => {
+      await changeBgHandler(unityCfg, bgImg.src, false);
+    });
+  });
+  unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);
+  btn.addEventListener('click', () => {
+    toggleOptionTrayDisplay(unityCfg);
   });
 }
 
 function changeHueSat(featureName, unityCfg) {
-  const { unityWidget, targetEl } = unityCfg;
+  const { unityWidget } = unityCfg;
   const featureBtn = unityWidget.querySelector('.unity-button');
   const a = createTag('a', { class: 'unity-button changebg-button' }, 'Change BG');
   if (!featureBtn) unityWidget.append(a);
@@ -192,11 +223,11 @@ function changeVisibleFeature(cfg) {
   cfg.presentState.activeIdx += 1;
   const featureName = enabledFeatures[cfg.presentState.activeIdx];
   switch (featureName) {
-    case 'changebg':
-      changebg(featureName, cfg);
-      break;
     case 'removebg':
       removebg(featureName, cfg);
+      break;
+    case 'changebg':
+      changebg(featureName, cfg);
       break;
     case 'huesat':
       changeHueSat(featureName, cfg);
