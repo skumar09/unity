@@ -14,29 +14,34 @@ export const [setLibs, getLibs] = (() => {
   ];
 })();
 
-export function decorateArea(area = document) {
-  const eagerLoad = (parent, selector) => {
-    const img = parent.querySelector(selector);
-    img?.removeAttribute('loading');
-  };
+export const [setUnityLibs, getUnityLibs] = (() => {
+  let libs;
+  return [
+    (prodLibs, project = 'unity') => {
+      const { hostname, origin } = window.location;
+      if (!hostname.includes('hlx.page')
+        && !hostname.includes('hlx.live')
+        && !hostname.includes('localhost')) {
+        libs = prodLibs;
+        return libs;
+      }
+      if (project === 'unity') { libs = `${origin}/unitylibs`; return libs; }
+      const branch = new URLSearchParams(window.location.search).get('unitylibs') || 'main';
+      if (branch.indexOf('--') > -1) { libs = `https://${branch}.hlx.live/unitylibs`; return libs; }
+      libs = `https://${branch}--unity--adobecom.hlx.live/unitylibs`;
+      return libs;
+    }, () => libs,
+  ];
+})();
 
-  (async function loadLCPImage() {
-    const marquee = document.querySelector('.marquee');
-    if (!marquee) {
-      eagerLoad(document, 'img');
-      return;
-    }
-  
-    // First image of first row
-    eagerLoad(marquee, 'div:first-child img');
-    // Last image of last column of last row
-    eagerLoad(marquee, 'div:last-child > div:last-child img');
-  }());
-}
+export function decorateArea(area = document) {}
 
-export async function useMiloSample() {
-  const { createTag } = await import(`${getLibs()}/utils/utils.js`);
-}
+const miloLibs = setLibs('/libs');
+setUnityLibs('/unitylibs');
+
+const { createTag, getConfig, loadStyle } = await import(`${miloLibs}/utils/utils.js`);
+export { createTag, loadStyle, getConfig };
 
 export const unityConfig = {
-}
+  apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
+};

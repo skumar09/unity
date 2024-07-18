@@ -1,4 +1,5 @@
 import { setLibs, decorateArea } from './utils.js';
+
 const STYLES = '/unitylibs/styles/styles.css';
 const LIBS = '/libs';
 
