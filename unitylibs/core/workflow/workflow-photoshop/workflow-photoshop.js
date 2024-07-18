@@ -51,7 +51,7 @@ function addProductIcon(unityCfg) {
       await switchProdIcon(unityCfg, true);
     });
   }
-  unityWidget.append(iconHolder);
+  unityWidget.querySelector('.unity-action-area').append(iconHolder);
 }
 
 function resetWorkflowState(unityCfg) {
@@ -109,7 +109,7 @@ async function removeBgHandler(unityCfg, changeDisplay = true) {
 }
 
 function removebg(featureName, unityCfg) {
-  const { unityWidget, targetEl } = unityCfg;
+  const { unityWidget } = unityCfg;
   const featureBtn = unityWidget.querySelector('.unity-button');
   const a = createTag('a', { class: 'unity-button removebg-button' }, 'Remove BG');
   if (!featureBtn) unityWidget.append(a);
@@ -165,7 +165,7 @@ async function changeBgHandler(unityCfg, refreshState = true) {
 }
 
 function changebg(featureName, unityCfg) {
-  const { unityWidget, targetEl } = unityCfg;
+  const { unityWidget } = unityCfg;
   const featureBtn = unityWidget.querySelector('.unity-button');
   const a = createTag('a', { class: 'unity-button changebg-button' }, 'Change BG');
   if (!featureBtn) unityWidget.append(a);
