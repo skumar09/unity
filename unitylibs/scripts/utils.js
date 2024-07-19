@@ -34,6 +34,23 @@ export const [setUnityLibs, getUnityLibs] = (() => {
   ];
 })();
 
+export const [setUnityConfig, getUnityConfig] = (() => {
+  let unityConfig = {};
+  return [
+    (cfg) => {
+      unityConfig = {
+        apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
+        apiKey: 'leo',
+        progressCircleEvent: 'unity:progress-circle',
+        refreshWidgetEvent: 'unity:refresh-widget',
+        interactiveSwitchEvent: 'unity:interactive-switch',
+        ...cfg,
+      };
+    },
+    () => unityConfig,
+  ];
+})();
+
 export function decorateArea(area = document) {}
 
 const miloLibs = setLibs('/libs');
@@ -42,6 +59,16 @@ setUnityLibs('/unitylibs');
 const { createTag, getConfig, loadStyle } = await import(`${miloLibs}/utils/utils.js`);
 export { createTag, loadStyle, getConfig };
 
-export const unityConfig = {
-  apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
-};
+export function getGuestAccessToken() {
+  const { token } = window.adobeIMS.getAccessToken();
+  return `Bearer ${token}`;
+}
+
+export function defineDeviceByScreenSize() {
+  const DESKTOP_SIZE = 1200;
+  const MOBILE_SIZE = 600;
+  const screenWidth = window.innerWidth;
+  if (screenWidth >= DESKTOP_SIZE) return 'DESKTOP';
+  if (screenWidth <= MOBILE_SIZE) return 'MOBILE';
+  return 'TABLET';
+}

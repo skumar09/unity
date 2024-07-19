@@ -20,6 +20,6 @@ export const [setUnityLibs, getUnityLibs] = (() => {
 
 export default async function init(el) {
   const unitylibs = setUnityLibs('/unitylibs', 'unity');
-  const { default: init } = await import(`${unitylibs}/core/workflow/workflow.js`);
-  init(el);
+  const { default: wfinit } = await import(`${unitylibs}/core/workflow/workflow.js`);
+  wfinit(el);
 }

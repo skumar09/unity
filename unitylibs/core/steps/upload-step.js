@@ -1,3 +1,5 @@
+import { getGuestAccessToken } from '../../scripts/utils.js';
+
 export async function getImageBlobData(url) {
   return new Promise((res, rej) => {
     const xhr = new XMLHttpRequest();
@@ -27,7 +29,7 @@ export async function uploadAsset(apiEp, imgUrl) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: window.bearerToken,
+      Authorization: getGuestAccessToken(),
       'x-api-key': 'leo',
     },
   };
