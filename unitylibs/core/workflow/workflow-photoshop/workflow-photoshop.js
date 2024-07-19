@@ -114,7 +114,7 @@ async function removeBgHandler(changeDisplay = true) {
     return false;
   }
   const { origin, pathname } = new URL(img.src);
-  const imgUrl = srcUrl || `${origin}${pathname}`;
+  const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
   unityCfg.presentState.removeBgState.srcUrl = imgUrl;
   const id = await uploadAsset(apiEndPoint, imgUrl);
   const removeBgOptions = {
@@ -132,7 +132,6 @@ async function removeBgHandler(changeDisplay = true) {
   const opId = new URL(outputUrl).pathname.split('/').pop();
   unityCfg.presentState.removeBgState.assetId = opId;
   unityCfg.presentState.removeBgState.assetUrl = outputUrl;
-  console.log(unityCfg);
   if (!changeDisplay) return true;
   img.src = outputUrl;
   await loadImg(img);
@@ -141,12 +140,17 @@ async function removeBgHandler(changeDisplay = true) {
 }
 
 async function removebg(featureName) {
-  const { wfDetail, unityWidget } = getUnityConfig();
+  const { wfDetail, unityWidget, unityEl, progressCircleEvent } = getUnityConfig();
   const removebgBtn = unityWidget.querySelector('.ps-action-btn.removebg-button');
   if (removebgBtn) return removebgBtn;
   const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'removebg-button');
   btn.addEventListener('click', async () => {
-    await removeBgHandler();
+    try {
+      unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+      await removeBgHandler();
+    } catch (e) {
+      unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+    }
   });
   return btn;
 }
@@ -197,7 +201,7 @@ async function changeBgHandler(selectedUrl = null, refreshState = true) {
 }
 
 async function changebg(featureName) {
-  const { unityWidget, wfDetail } = getUnityConfig();
+  const { unityEl, unityWidget, wfDetail, progressCircleEvent } = getUnityConfig();
   const { authorCfg } = wfDetail[featureName];
   const changebgBtn = unityWidget.querySelector('.ps-action-btn.changebg-button');
   if (changebgBtn) return changebgBtn;
@@ -212,7 +216,12 @@ async function changebg(featureName) {
     const a = createTag('a', { class: 'changebg-option' }, thumbnail);
     bgSelectorTray.append(a);
     a.addEventListener('click', async () => {
-      await changeBgHandler(bgImg.src, false);
+      try {
+        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+        await changeBgHandler(bgImg.src, false);
+      } catch (e) {
+        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+      }
     });
   });
   unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);
@@ -269,18 +278,19 @@ async function changeVisibleFeature() {
 
 export default async function initUnity() {
   const cfg = getUnityConfig();
+  const { unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
   resetWorkflowState();
   await addProductIcon();
   await changeVisibleFeature();
   const img = cfg.targetEl.querySelector('picture img');
   const uploadBtn = await createUpload(img, removeBgHandler);
-  cfg.unityWidget.querySelector('.unity-action-area').append(uploadBtn);
+  unityWidget.querySelector('.unity-action-area').append(uploadBtn);
   await initAppConnector('photoshop');
-  cfg.unityEl.addEventListener(cfg.interactiveSwitchEvent, async () => {
+  unityEl.addEventListener(interactiveSwitchEvent, async () => {
     await changeVisibleFeature();
     await switchProdIcon();
   });
-  cfg.unityEl.addEventListener(cfg.refreshWidgetEvent, async () => {
+  unityEl.addEventListener(refreshWidgetEvent, async () => {
     await switchProdIcon(true);
   });
 }

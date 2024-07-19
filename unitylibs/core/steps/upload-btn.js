@@ -70,7 +70,9 @@ async function createActionBtn(btnCfg) {
 }
 
 export default async function createUpload(target, callback = null) {
-  const { unityEl, errorToastEvent, interactiveSwitchEvent } = getUnityConfig();
+  const unityCfg = getUnityConfig();
+  const { unityEl, errorToastEvent } = unityCfg;
+  const { interactiveSwitchEvent, progressCircleEvent } = unityCfg;
   const li = unityEl.querySelector('.icon-upload').parentElement;
   const a = await createActionBtn(li);
   const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg' });
@@ -83,11 +85,17 @@ export default async function createUpload(target, callback = null) {
       unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { msg: eft } }));
       return;
     }
-    if (!callback) {
-      const objUrl = URL.createObjectURL(file);
-      target.src = objUrl;
-    } else {
-      await callback();
+    const objUrl = URL.createObjectURL(file);
+    target.src = objUrl;
+    if (callback) {
+      try {
+        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+        await callback();
+      } catch (err) {
+        return;
+      } finally {
+        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+      }
     }
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
   });
