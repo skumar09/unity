@@ -1,6 +1,7 @@
 import { createTag, getGuestAccessToken, getUnityConfig } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import { initAppConnector, loadImg } from '../../steps/app-connector.js';
+import createUpload from '../../steps/upload-btn.js';
 
 function toggleDisplay(domEl) {
   if (domEl.classList.contains('show')) domEl.classList.remove('show');
@@ -131,6 +132,7 @@ async function removeBgHandler(changeDisplay = true) {
   const opId = new URL(outputUrl).pathname.split('/').pop();
   unityCfg.presentState.removeBgState.assetId = opId;
   unityCfg.presentState.removeBgState.assetUrl = outputUrl;
+  console.log(unityCfg);
   if (!changeDisplay) return true;
   img.src = outputUrl;
   await loadImg(img);
@@ -270,6 +272,9 @@ export default async function initUnity() {
   resetWorkflowState();
   await addProductIcon();
   await changeVisibleFeature();
+  const img = cfg.targetEl.querySelector('picture img');
+  const uploadBtn = await createUpload(img);
+  cfg.unityWidget.querySelector('.unity-action-area').append(uploadBtn);
   await initAppConnector('photoshop');
   cfg.unityEl.addEventListener(cfg.interactiveSwitchEvent, async () => {
     await changeVisibleFeature();
