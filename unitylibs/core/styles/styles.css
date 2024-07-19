@@ -406,9 +406,18 @@
   .unity-enabled .interactive-area .progress-holder {
     display: none;
     justify-content: center;
+    align-items: center;
     position: absolute;
     width: 100%;
-    bottom: 321px;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 80%);
+    z-index: 2;
+  }
+
+  .unity-enabled .interactive-area.loading .progress-holder {
+    display: flex;
   }
 
   .spectrum-ProgressCircle--indeterminate-fill-submask-2 {
