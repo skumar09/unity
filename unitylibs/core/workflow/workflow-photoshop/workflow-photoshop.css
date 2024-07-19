@@ -1,0 +1,50 @@
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray {
+  display: none;
+  flex-direction: row;
+  padding: 8px;
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray.show {
+  display: flex;
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
+  cursor: pointer;
+}
+
+@media screen and (max-width: 600px) {
+  .unity-enabled .interactive-area .unity-option-area .changebg-options-tray {
+    gap: 15px;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
+    width: 100%;
+    height: 67px;
+    min-height: 67px;
+    max-height: 67px;
+    overflow: hidden;
+  }
+
+  .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option img {
+    width: 100%;
+    object-fit: cover;
+  }
+}
+
+@media screen and (min-width: 600px) {
+  .unity-enabled .interactive-area .unity-option-area .changebg-options-tray {
+    gap: 8px;
+    width: fit-content;
+    border-radius: 8px;
+  }
+
+  .unity-enabled .interactive-area .unity-option-area .changebg-options-tray img {
+    height: 67px;
+    min-height: 67px;
+    max-height: 67px;
+    width: 67px;
+    min-width: 67px;
+    max-width: 67px;
+  }
+}

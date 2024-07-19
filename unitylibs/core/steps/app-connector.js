@@ -1,4 +1,4 @@
-import { createTag, getGuestAccessToken, getUnityConfig } from '../../scripts/utils.js';
+import { createTag, getUnityConfig } from '../../scripts/utils.js';
 
 export function loadImg(img) {
   return new Promise((res) => {
@@ -33,7 +33,7 @@ async function continueInApp(appName, btnConfig) {
   const unityCfg = getUnityConfig();
   const { unityWidget } = unityCfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
-  if (continuebtn) return;
+  if (continuebtn) return continuebtn;
   const btn = await createContinueBtn(btnConfig, appName);
   return btn;
 }

@@ -31,7 +31,7 @@ export default function createProgressCircle() {
     </div>
   </div>`;
   const prgc = createTag('div', { class: 'spectrum-ProgressCircle spectrum-ProgressCircle--indeterminate' }, pdom);
-  const layer = createTag('div', { class: 'layer layer-progress' }, prgc);
+  const layer = createTag('div', { class: 'progress-holder' }, prgc);
   cfg.unityEl.addEventListener(cfg.progressCircleEvent, () =>
     cfg.targetEl.classList.contains('loading') ? cfg.targetEl.classList.remove('loading') : cfg.targetEl.classList.add('loading'));
   return layer;

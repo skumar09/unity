@@ -10,7 +10,7 @@ function toggleDisplay(domEl) {
 
 async function loadSvg(img) {
   const res = await fetch(img.src);
-  if (!res.status === 200) return;
+  if (!res.status === 200) return null;
   const svg = await res.text();
   return svg;
 }
@@ -273,7 +273,7 @@ export default async function initUnity() {
   await addProductIcon();
   await changeVisibleFeature();
   const img = cfg.targetEl.querySelector('picture img');
-  const uploadBtn = await createUpload(img);
+  const uploadBtn = await createUpload(img, removeBgHandler);
   cfg.unityWidget.querySelector('.unity-action-area').append(uploadBtn);
   await initAppConnector('photoshop');
   cfg.unityEl.addEventListener(cfg.interactiveSwitchEvent, async () => {
