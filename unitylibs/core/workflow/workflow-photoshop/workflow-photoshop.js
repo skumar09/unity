@@ -149,6 +149,8 @@ async function removebg(featureName) {
       unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
       await removeBgHandler();
     } catch (e) {
+      // error
+    } finally {
       unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
     }
   });
@@ -220,6 +222,8 @@ async function changebg(featureName) {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
         await changeBgHandler(bgImg.src, false);
       } catch (e) {
+        // error
+      } finally {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
       }
     });
