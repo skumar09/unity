@@ -31,7 +31,11 @@
     object-fit: cover;
   }
 
-  
+  .unity-enabled .interactive-area .unity-action-btn:active .btn-text,
+  .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
+    color: var(--highlight-blue);
+    fill: var(--highlight-blue);
+  }
 }
 
 @media screen and (min-width: 600px) {

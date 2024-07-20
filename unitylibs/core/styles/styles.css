@@ -191,6 +191,14 @@
     order: 1;
   }
 
+  .unity-enabled .interactive-area .unity-action-btn.subnav-active .btn-text,
+  .unity-enabled .interactive-area .unity-action-btn.subnav-active .btn-icon svg path,
+  .unity-enabled .interactive-area .unity-action-btn:active .btn-text,
+  .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
+    color: var(--highlight-blue);
+    fill: var(--highlight-blue);
+  }
+
   .unity-enabled .interactive-area > .widget-refresh-button.show {
     display: flex;
   }
@@ -199,8 +207,6 @@
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn:hover {
     text-decoration: none;
   }
-
-
 }
 
 @media screen and (min-width: 600px) and (max-width: 1200px) {

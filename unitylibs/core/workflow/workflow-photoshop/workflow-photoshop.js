@@ -207,7 +207,7 @@ async function changebg(featureName) {
   const { authorCfg } = wfDetail[featureName];
   const changebgBtn = unityWidget.querySelector('.ps-action-btn.changebg-button');
   if (changebgBtn) return changebgBtn;
-  const btn = await createActionBtn(authorCfg, 'changebg-button');
+  const btn = await createActionBtn(authorCfg, 'changebg-button subnav-active');
   btn.dataset.optionsTray = 'changebg-options-tray';
   const bgSelectorTray = createTag('div', { class: 'changebg-options-tray show' });
   const bgOptions = authorCfg.querySelectorAll(':scope ul li');
@@ -230,6 +230,8 @@ async function changebg(featureName) {
   });
   unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);
   btn.addEventListener('click', () => {
+    if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
+    else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .changebg-options-tray'));
   });
   return btn;
