@@ -33,10 +33,14 @@
 .unity-enabled .interactive-area {
   position: relative;
 }
-  
+
 .unity-enabled .widget-refresh-button {
   display: none;
   padding: 12.8px;
+}
+
+.unity-enabled .widget-refresh-button:focus-visible {
+  outline: none;
 }
 
 .unity-enabled .interactive-area .unity-option-area {
@@ -104,6 +108,10 @@
 .unity-enabled .interactive-area .unity-widget .widget-refresh-button,
 .unity-enabled .interactive-area .unity-widget .widget-refresh-button.show {
   display: none;
+}
+
+.unity-enabled .interactive-area .unity-action-btn:focus-visible {
+  outline: none;
 }
 
 @media screen and (max-width: 600px) {
@@ -206,9 +214,7 @@
   }
 
   .unity-enabled .interactive-area .unity-action-btn.subnav-active .btn-text,
-  .unity-enabled .interactive-area .unity-action-btn.subnav-active .btn-icon svg path,
-  .unity-enabled .interactive-area .unity-action-btn:active .btn-text,
-  .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
+  .unity-enabled .interactive-area .unity-action-btn.subnav-active .btn-icon svg path {
     color: var(--highlight-blue);
     fill: var(--highlight-blue);
   }
@@ -264,7 +270,7 @@
     display: flex;
     flex-direction: row;
     gap: 8px;
-    padding: 13px 8px;
+    padding: 12.8px 6.39px;
     justify-content: center;
     align-items: center;
     width: fit-content;
@@ -304,7 +310,7 @@
   }
 
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn {
-    padding: 6px 13px;
+    padding: 6.39px 12.8px;
     display: none;
     flex-direction: row;
     gap: 13px;
@@ -314,6 +320,7 @@
     border: 2px solid var(--border-gray);
   }
 
+  .unity-enabled .interactive-area .unity-action-area .unity-action-btn:focus-visible,
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn:hover {
     border: 2px solid var(--highlight-blue);
   }
@@ -327,6 +334,7 @@
     border: 2px solid var(--highlight-blue);
   }
 
+  .unity-enabled .interactive-area .unity-widget .continue-in-app:focus-visible,
   .unity-enabled .interactive-area .unity-widget .continue-in-app:hover {
     border: 2px solid var(--color-black);
   }
@@ -353,6 +361,18 @@
 
   .unity-enabled .interactive-area .unity-widget .widget-refresh-button.show {
     display: flex;
+  }
+
+  .unity-enabled .widget-refresh-button {
+    padding: 12.8px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+  }
+
+  .unity-enabled .widget-refresh-button:hover,
+  .unity-enabled .widget-refresh-button:focus-visible {
+    border-radius: 8px;
+    border: 2px solid var(--highlight-blue);
   }
 }
 

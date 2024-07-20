@@ -72,3 +72,41 @@ export function defineDeviceByScreenSize() {
   if (screenWidth <= MOBILE_SIZE) return 'MOBILE';
   return 'TABLET';
 }
+
+export async function loadSvg(img) {
+  const res = await fetch(img.src);
+  if (!res.status === 200) return null;
+  const svg = await res.text();
+  return svg;
+}
+
+export function loadImg(img) {
+  return new Promise((res) => {
+    img.loading = 'eager';
+    img.fetchpriority = 'high';
+    if (img.complete) res();
+    else {
+      img.onload = () => res();
+      img.onerror = () => res();
+    }
+  });
+}
+
+export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapOrder = false) {
+  const txt = btnCfg.innerText;
+  const img = btnCfg.querySelector('img[src*=".svg"]');
+  const actionBtn = createTag('a', { href: '#', class: `unity-action-btn ${btnClass}` });
+  if (img) {
+    let btnImg = null;
+    if (iconAsImg) btnImg = img.cloneNode(true);
+    else btnImg = await loadSvg(img);
+    const btnIcon = createTag('div', { class: 'btn-icon' }, btnImg);
+    actionBtn.append(btnIcon);
+  }
+  if (txt) {
+    const btnTxt = createTag('div', { class: 'btn-text' }, txt.split('\n')[0].trim());
+    if (swapOrder) actionBtn.prepend(btnTxt);
+    else actionBtn.append(btnTxt);
+  }
+  return actionBtn;
+}

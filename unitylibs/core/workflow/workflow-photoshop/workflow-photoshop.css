@@ -9,7 +9,22 @@
 }
 
 .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
+  border-radius: 5.36px;
   cursor: pointer;
+  border: 3px solid transparent;
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option img {
+  border-radius: 5.36px;
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:focus-visible,
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:hover {
+  border: 3px solid var(--highlight-blue);
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:focus-visible {
+  outline: none;
 }
 
 .unity-enabled .interactive-area .unity-option-area .adjustment-options-tray {
