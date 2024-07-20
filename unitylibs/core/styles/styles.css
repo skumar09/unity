@@ -125,6 +125,10 @@
     background: var(--dark-bg);
   }
 
+  .unity-enabled .interactive-area.light .unity-widget {
+    background: var(--light-bg);
+  }
+
   .unity-enabled .interactive-area .unity-action-area {
     display: flex;
     flex-direction: row;
