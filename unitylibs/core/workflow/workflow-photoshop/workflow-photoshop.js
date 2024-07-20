@@ -14,6 +14,7 @@ function resetWorkflowState() {
     changeBgState: {},
     adjustments: {},
   };
+  unityCfg.preludeState = { assetId: null };
   const img = unityCfg.targetEl.querySelector(':scope > picture img');
   img.style.filter = '';
 }
@@ -110,6 +111,7 @@ async function removeBgHandler(changeDisplay = true) {
   const { outputUrl } = await response.json();
   const opId = new URL(outputUrl).pathname.split('/').pop();
   unityCfg.presentState.removeBgState.assetId = opId;
+  unityCfg.preludeState.assetId = opId;
   unityCfg.presentState.removeBgState.assetUrl = outputUrl;
   if (!changeDisplay) return true;
   img.src = outputUrl;
@@ -176,6 +178,7 @@ async function changeBgHandler(selectedUrl = null, refreshState = true) {
   unityCfg.presentState.changeBgState[bgImgUrl] = {};
   unityCfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
   unityCfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
+  unityCfg.preludeState.assetId = changeBgId;
   img.src = outputUrl;
   await loadImg(img);
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));

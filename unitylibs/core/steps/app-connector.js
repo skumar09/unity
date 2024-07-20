@@ -6,6 +6,9 @@ async function continueInApp(appName, btnConfig) {
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
+  btn.addEventListener('click', () => {
+    console.log(unityCfg.preludeState.assetId);
+  });
   return btn;
 }
 
