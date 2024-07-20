@@ -113,6 +113,11 @@
     justify-content: center;
   }
 
+  .unity-enabled .interactive-area > picture {
+    display: flex;
+    width: 100%;
+  }
+
   .unity-enabled .interactive-area > picture img,
   .marquee.unity-enabled .interactive-area > picture img {
     width: 100%;

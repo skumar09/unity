@@ -96,8 +96,9 @@ export default async function createUpload(target, callback = null) {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
         return;
       }
+    } else {
+      unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     }
-    unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
   });
   return a;
 }
