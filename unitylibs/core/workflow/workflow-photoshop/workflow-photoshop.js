@@ -1,43 +1,37 @@
-import { createTag, getGuestAccessToken, getUnityConfig } from '../../../scripts/utils.js';
+import { createTag, getGuestAccessToken, getUnityConfig, loadImg, createActionBtn } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
-import { initAppConnector, loadImg } from '../../steps/app-connector.js';
+import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
+
+function resetWorkflowState() {
+  const unityCfg = getUnityConfig();
+  unityCfg.presentState = {
+    activeIdx: -1,
+    removeBgState: {
+      assetId: null,
+      assetUrl: null,
+    },
+    changeBgState: {},
+    adjustments: {},
+  };
+  unityCfg.preludeState = { assetId: null };
+  const img = unityCfg.targetEl.querySelector(':scope > picture img');
+  img.style.filter = '';
+}
 
 function toggleDisplay(domEl) {
   if (domEl.classList.contains('show')) domEl.classList.remove('show');
   else domEl.classList.add('show');
 }
 
-async function loadSvg(img) {
-  const res = await fetch(img.src);
-  if (!res.status === 200) return null;
-  const svg = await res.text();
-  return svg;
-}
-
-async function createActionBtn(btnCfg, btnClass) {
-  const txt = btnCfg.innerText;
-  const img = btnCfg.querySelector('img[src*=".svg"]');
-  const actionBtn = createTag('a', { class: `unity-action-btn ps-action-btn ${btnClass} show` });
-  if (img) {
-    const btnImg = await loadSvg(img);
-    const actionSvg = createTag('div', { class: 'btn-icon' }, btnImg);
-    actionBtn.append(actionSvg);
-  }
-  if (txt) {
-    const actionText = createTag('div', { class: 'btn-text' }, txt);
-    actionBtn.append(actionText);
-  }
-  return actionBtn;
-}
-
-async function resetActiveState() {
+async function resetWidgetState() {
   const unityCfg = getUnityConfig();
-  const { unityEl, targetEl, unityWidget } = unityCfg;
+  const { unityEl, targetEl } = unityCfg;
   unityCfg.presentState.activeIdx = -1;
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;
+  img.style.filter = '';
   await changeVisibleFeature();
   await loadImg(img);
 }
@@ -48,7 +42,7 @@ async function switchProdIcon(forceRefresh = false) {
   const iconHolder = unityWidget.querySelector('.widget-product-icon');
   if (!(refreshEnabled)) return;
   if (forceRefresh) {
-    await resetActiveState();
+    await resetWidgetState();
     iconHolder?.classList.add('show');
     unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
     targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
@@ -67,7 +61,7 @@ async function addProductIcon() {
   if (!refreshCfg) return;
   const [prodIcon, refreshIcon] = refreshCfg.closest('li').querySelectorAll('img[src*=".svg"]');
   const iconHolder = createTag('div', { class: 'widget-product-icon show' }, prodIcon);
-  const refreshHolder = createTag('div', { class: 'widget-refresh-button' }, refreshIcon);
+  const refreshHolder = createTag('a', { href: '#', class: 'widget-refresh-button' }, refreshIcon);
   await loadImg(prodIcon);
   unityWidget.querySelector('.unity-action-area').append(iconHolder);
   if (!refreshIcon) return;
@@ -81,20 +75,6 @@ async function addProductIcon() {
   unityWidget.querySelector('.unity-action-area').append(refreshHolder);
   targetEl.append(mobileRefreshHolder);
   await loadImg(refreshIcon);
-}
-
-function resetWorkflowState() {
-  const unityCfg = getUnityConfig();
-  unityCfg.presentState = {
-    activeIdx: -1,
-    removeBgState: {
-      assetId: null,
-      assetUrl: null,
-    },
-    changeBgState: {},
-    hueState: {},
-    satState: {},
-  };
 }
 
 async function removeBgHandler(changeDisplay = true) {
@@ -131,6 +111,7 @@ async function removeBgHandler(changeDisplay = true) {
   const { outputUrl } = await response.json();
   const opId = new URL(outputUrl).pathname.split('/').pop();
   unityCfg.presentState.removeBgState.assetId = opId;
+  unityCfg.preludeState.assetId = opId;
   unityCfg.presentState.removeBgState.assetUrl = outputUrl;
   if (!changeDisplay) return true;
   img.src = outputUrl;
@@ -143,7 +124,7 @@ async function removebg(featureName) {
   const { wfDetail, unityWidget, unityEl, progressCircleEvent } = getUnityConfig();
   const removebgBtn = unityWidget.querySelector('.ps-action-btn.removebg-button');
   if (removebgBtn) return removebgBtn;
-  const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'removebg-button');
+  const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'ps-action-btn removebg-button show');
   btn.addEventListener('click', async () => {
     try {
       unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
@@ -197,6 +178,7 @@ async function changeBgHandler(selectedUrl = null, refreshState = true) {
   unityCfg.presentState.changeBgState[bgImgUrl] = {};
   unityCfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
   unityCfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
+  unityCfg.preludeState.assetId = changeBgId;
   img.src = outputUrl;
   await loadImg(img);
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
@@ -207,7 +189,7 @@ async function changebg(featureName) {
   const { authorCfg } = wfDetail[featureName];
   const changebgBtn = unityWidget.querySelector('.ps-action-btn.changebg-button');
   if (changebgBtn) return changebgBtn;
-  const btn = await createActionBtn(authorCfg, 'changebg-button');
+  const btn = await createActionBtn(authorCfg, 'ps-action-btn changebg-button subnav-active show');
   btn.dataset.optionsTray = 'changebg-options-tray';
   const bgSelectorTray = createTag('div', { class: 'changebg-options-tray show' });
   const bgOptions = authorCfg.querySelectorAll(':scope ul li');
@@ -215,7 +197,7 @@ async function changebg(featureName) {
     let [thumbnail, bgImg] = o.querySelectorAll('img');
     if (!bgImg) bgImg = thumbnail;
     thumbnail.dataset.backgroundImg = bgImg.src;
-    const a = createTag('a', { class: 'changebg-option' }, thumbnail);
+    const a = createTag('a', { href: '#', class: 'changebg-option' }, thumbnail);
     bgSelectorTray.append(a);
     a.addEventListener('click', async () => {
       try {
@@ -230,21 +212,101 @@ async function changebg(featureName) {
   });
   unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);
   btn.addEventListener('click', () => {
+    if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
+    else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .changebg-options-tray'));
   });
   return btn;
 }
 
-function changeHueSat(featureName) {
-  const { unityWidget } = getUnityConfig();
-  const featureBtn = unityWidget.querySelector('.unity-button');
-  const a = createTag('a', { class: 'unity-button changebg-button' }, 'Change BG');
-  if (!featureBtn) unityWidget.append(a);
-  else featureBtn.replaceWith(a);
-  a.addEventListener('click', async () => {
-    await changeBgHandler();
+function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
+  const cfg = getUnityConfig();
+  const { targetEl } = cfg;
+  const actionDiv = createTag('div', { class: 'adjustment-option' });
+  const actionLabel = createTag('label', { class: 'adjustment-label' }, label);
+  const actionSliderDiv = createTag('div', { class: `adjustment-container ${propertyName}` });
+  const actionSliderInput = createTag('input', {
+    type: 'range',
+    min: minVal,
+    max: maxVal,
+    value: (minVal + maxVal) / 2,
+    class: `adjustment-slider ${propertyName}`,
   });
+  const actionAnalytics = createTag('div', { class: 'analytics-content' }, `Unity ${label}`);
+  const actionSliderCircle = createTag('a', { href: '#', class: `adjustment-circle ${propertyName}` }, actionAnalytics);
+  actionSliderDiv.append(actionSliderInput, actionSliderCircle);
+  actionDiv.append(actionLabel, actionSliderDiv);
+  actionSliderInput.addEventListener('input', () => {
+    const { value } = actionSliderInput;
+    const centerOffset = (value - minVal) / (maxVal - minVal);
+    const moveCircle = 3 + (centerOffset * 94);
+    actionSliderCircle.style.left = `${moveCircle}%`;
+    const img = targetEl.querySelector(':scope > picture img');
+    const filterValue = cssFilter.replace('inputValue', value);
+    cfg.presentState.adjustments[propertyName] = { value, filterValue };
+    const imgFilters = Object.keys(cfg.presentState.adjustments);
+    img.style.filter = '';
+    imgFilters.forEach((f) => {
+      img.style.filter += `${cfg.presentState.adjustments[f].filterValue} `;
+    });
+  });
+  tray.append(actionDiv);
 }
+
+async function changeAdjustments(featureName) {
+  const { unityEl, unityWidget, wfDetail, progressCircleEvent, targetEl } = getUnityConfig();
+  const { authorCfg } = wfDetail[featureName];
+  const adjustmentBtn = unityWidget.querySelector('.ps-action-btn.adjustment-button');
+  if (adjustmentBtn) {
+    const img = targetEl.querySelector(':scope > picture img');
+    img.style.filter = '';
+    return adjustmentBtn;
+  }
+  const btn = await createActionBtn(authorCfg, 'ps-action-btn adjustment-button subnav-active show');
+  btn.dataset.optionsTray = 'adjustment-options-tray';
+  const sliderTray = createTag('div', { class: 'adjustment-options-tray show' });
+  const sliderOptions = authorCfg.querySelectorAll(':scope > ul li');
+  [...sliderOptions].forEach((o) => {
+    let actionName = null;
+    const psAction = o.querySelector(':scope > .icon');
+    [...psAction.classList].forEach((cn) => { if (cn.match('icon-')) actionName = cn; });
+    actionName = actionName.split('-')[1];
+    switch (actionName) {
+      case 'hue':
+        createSlider(sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', -180, 180);
+        break;
+      case 'saturation':
+        createSlider(sliderTray, 'saturation', o.innerText, 'saturate(inputValue%)', 0, 300);
+        break;
+      default:
+        break;
+    }
+  });
+  unityWidget.querySelector('.unity-option-area').append(sliderTray);
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
+    else btn.classList.add('subnav-active');
+    toggleDisplay(unityWidget.querySelector('.unity-option-area .adjustment-options-tray'));
+  });
+  return btn;
+}
+
+function showFeatureButton(prevBtn, currBtn) {
+  const cfg = getUnityConfig();
+  const { unityWidget } = cfg;
+  if (!prevBtn) {
+    unityWidget.querySelector('.unity-action-area').append(currBtn);
+  } else {
+    prevBtn.insertAdjacentElement('afterend', currBtn);
+    const prevOptionTray = prevBtn?.dataset.optionsTray;
+    unityWidget.querySelector(`.unity-option-area .${prevOptionTray}`)?.classList.remove('show');
+    prevBtn.classList.remove('show');
+  }
+  const currOptionTray = currBtn.dataset.optionsTray;
+  unityWidget.querySelector(`.unity-option-area .${currOptionTray}`)?.classList.add('show');
+  currBtn.classList.add('show');
+}
+
 async function changeVisibleFeature() {
   const cfg = getUnityConfig();
   const { unityWidget, enabledFeatures } = cfg;
@@ -259,25 +321,23 @@ async function changeVisibleFeature() {
     case 'changebg':
       actionBtn = await changebg(featureName);
       break;
-    case 'huesat':
-      actionBtn = changeHueSat(featureName);
+    case 'slider':
+      actionBtn = await changeAdjustments(featureName);
       break;
     default:
       break;
   }
   const prevActionBtn = unityWidget.querySelector('.ps-action-btn.show');
   if (prevActionBtn === actionBtn) return;
-  if (prevActionBtn) {
-    prevActionBtn.classList.remove('show');
-    const hasOptTray = prevActionBtn.dataset.optionsTray;
-    if (hasOptTray) {
-      const optionTray = unityWidget.querySelector(`.unity-option-area .${hasOptTray}`);
-      optionTray?.classList.remove('show');
-    }
-  }
-  if (!prevActionBtn) unityWidget.querySelector('.unity-action-area').append(actionBtn);
-  else prevActionBtn.insertAdjacentElement('afterend', actionBtn);
-  actionBtn.classList.add('show');
+  showFeatureButton(prevActionBtn, actionBtn);
+}
+
+async function uploadCallback() {
+  const cfg = getUnityConfig();
+  const { enabledFeatures } = cfg;
+  resetWorkflowState();
+  if (enabledFeatures.length === 1) return;
+  await removeBgHandler();
 }
 
 export default async function initUnity() {
@@ -287,7 +347,7 @@ export default async function initUnity() {
   await addProductIcon();
   await changeVisibleFeature();
   const img = cfg.targetEl.querySelector('picture img');
-  const uploadBtn = await createUpload(img, removeBgHandler);
+  const uploadBtn = await createUpload(img, uploadCallback);
   unityWidget.querySelector('.unity-action-area').append(uploadBtn);
   await initAppConnector('photoshop');
   unityEl.addEventListener(interactiveSwitchEvent, async () => {

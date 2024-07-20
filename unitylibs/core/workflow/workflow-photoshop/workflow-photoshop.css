@@ -9,7 +9,89 @@
 }
 
 .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
+  border-radius: 5.36px;
   cursor: pointer;
+  border: 3px solid transparent;
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option img {
+  border-radius: 5.36px;
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:focus-visible,
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:hover {
+  border: 3px solid var(--highlight-blue);
+}
+
+.unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:focus-visible {
+  outline: none;
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray {
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+  padding: 16px 16px 0;
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray.show {
+  display: flex;
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-container {
+  height: 2px;
+  border-radius: 1px;
+  margin: 7px 0;
+  position: relative;
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-label {
+  font-size: var(--type-body-m-size);
+  line-height: var(--type-body-m-lh);
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-container.hue {
+  background: linear-gradient(90deg, #E90B03 0%, #EF9100 9%, #FFE003 20.5%, #5AFE00 32.5%, #00FF84 43.5%, #00F1EF 53.5%, #001AFF 66.86%, #8700FC 77.17%, #FD00D6 89.5%, #FF0015 100%);
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-container.saturation {
+  background: linear-gradient(90deg, #000 0%, #F20000 100%);
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-slider {
+  width: 100%;
+  opacity: 0;
+  position: absolute;
+  top: -7px;
+  z-index: 1;
+  margin: 0;
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-slider::-webkit-slider-thumb {
+  height: 20px;
+  width: 20px;
+  position: relative;
+  border-radius: 50%;
+  appearance: none;
+  background: transparent;
+  cursor: grab;
+  z-index: 2;
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-circle {
+  position: absolute;
+  block-size: 16px;
+  inline-size: 16px;
+  background-color: #A2A2A2;
+  border-radius: 50%;
+  top: -7px;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-circle .analytics-content {
+  display: none;
 }
 
 @media screen and (max-width: 600px) {
@@ -30,6 +112,12 @@
     width: 100%;
     object-fit: cover;
   }
+
+  .unity-enabled .interactive-area .unity-action-btn:active .btn-text,
+  .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
+    color: var(--highlight-blue);
+    fill: var(--highlight-blue);
+  }
 }
 
 @media screen and (min-width: 600px) {
@@ -46,5 +134,15 @@
     width: 67px;
     min-width: 67px;
     max-width: 67px;
+  }
+
+  .unity-enabled .interactive-area .unity-option-area .adjustment-options-tray {
+    padding: 8px 16px;
+    width: 212px;
+    min-width: 212px;
+  }
+
+  .unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-label {
+    font-weight: bold;
   }
 }

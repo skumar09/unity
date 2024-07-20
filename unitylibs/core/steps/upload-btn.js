@@ -1,4 +1,4 @@
-import { createTag, getUnityConfig } from "../../scripts/utils.js";
+import { createTag, getUnityConfig, createActionBtn } from '../../scripts/utils.js';
 
 function showErrorToast(msg) {
   document.querySelector('.unity-enabled .interactive-area .alert-toast .alert-text p').innerText = msg;
@@ -46,35 +46,12 @@ export function createErrorToast() {
   return errdom;
 }
 
-async function loadSvg(img) {
-  const res = await fetch(img.src);
-  if (!res.status === 200) return null;
-  const svg = await res.text();
-  return svg;
-}
-
-async function createActionBtn(btnCfg) {
-  const txt = btnCfg.innerText;
-  const img = btnCfg.querySelector('img[src*=".svg"]');
-  const actionBtn = createTag('a', { class: 'unity-action-btn show' });
-  if (img) {
-    const btnImg = await loadSvg(img);
-    const actionSvg = createTag('div', { class: 'btn-icon' }, btnImg);
-    actionBtn.append(actionSvg);
-  }
-  if (txt) {
-    const actionText = createTag('div', { class: 'btn-text' }, txt);
-    actionBtn.append(actionText);
-  }
-  return actionBtn;
-}
-
 export default async function createUpload(target, callback = null) {
   const unityCfg = getUnityConfig();
   const { unityEl, errorToastEvent } = unityCfg;
   const { interactiveSwitchEvent, progressCircleEvent } = unityCfg;
   const li = unityEl.querySelector('.icon-upload').parentElement;
-  const a = await createActionBtn(li);
+  const a = await createActionBtn(li, 'show');
   const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg' });
   a.append(input);
   const eft = unityEl.querySelector('.icon-error-filesize').nextSibling.textContent;
