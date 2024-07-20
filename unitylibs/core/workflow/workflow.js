@@ -80,7 +80,7 @@ function getWorkFlowInformation(el) {
     'workflow-photoshop': {
       removebg: { endpoint: 'providers/PhotoshopRemoveBackground' },
       changebg: { endpoint: 'providers/PhotoshopChangeBackground' },
-      huesat: {},
+      slider: {},
     },
   };
   [...el.classList].forEach((cn) => { if (cn.match('workflow-')) wfName = cn; });
@@ -91,9 +91,9 @@ function getWorkFlowInformation(el) {
 async function initWorkflow(cfg) {
   loadStyle(`${getUnityLibs()}/core/workflow/${cfg.wfName}/${cfg.wfName}.css`);
   const { default: initUnity } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
-  // const errorToast = createErrorToast();
+  const errorToast = createErrorToast();
   const progressCircle = createProgressCircle();
-  // cfg.targetEl.append(errorToast, progressCircle);
+  cfg.targetEl.append(errorToast, progressCircle);
   cfg.targetEl.append(progressCircle);
   initUnity(cfg);
 }
