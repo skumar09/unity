@@ -83,6 +83,11 @@ async function removeBgHandler(changeDisplay = true) {
   const { unityEl, interactiveSwitchEvent } = unityCfg;
   const { endpoint } = unityCfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
+  const hasExec = unityCfg.presentState.removeBgState.srcUrl;
+  if (changeDisplay && hasExec && !(img.src.startsWith(unityCfg.presentState.removeBgState.srcUrl))) {
+    unityCfg.presentState.removeBgState.assetId = null;
+    unityCfg.presentState.removeBgState.srcUrl = null;
+  }
   const { srcUrl, assetUrl } = unityCfg.presentState.removeBgState;
   const urlIsValid = assetUrl ? await fetch(assetUrl) : null;
   if (unityCfg.presentState.removeBgState.assetId && urlIsValid?.status === 200) {
