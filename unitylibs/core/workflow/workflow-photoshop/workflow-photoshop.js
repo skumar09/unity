@@ -345,7 +345,7 @@ async function uploadCallback() {
   await removeBgHandler();
 }
 
-export default async function initUnity() {
+export default async function init() {
   const cfg = getUnityConfig();
   const { unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
   resetWorkflowState();
