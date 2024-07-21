@@ -24,35 +24,6 @@ function toggleDisplay(domEl) {
   else domEl.classList.add('show');
 }
 
-async function resetWidgetState() {
-  const unityCfg = getUnityConfig();
-  const { unityEl, targetEl } = unityCfg;
-  unityCfg.presentState.activeIdx = -1;
-  const initImg = unityEl.querySelector(':scope picture img');
-  const img = targetEl.querySelector(':scope > picture img');
-  img.src = initImg.src;
-  img.style.filter = '';
-  await changeVisibleFeature();
-  await loadImg(img);
-}
-
-async function switchProdIcon(forceRefresh = false) {
-  const unityCfg = getUnityConfig();
-  const { unityWidget, refreshEnabled, targetEl } = unityCfg;
-  const iconHolder = unityWidget.querySelector('.widget-product-icon');
-  if (!(refreshEnabled)) return;
-  if (forceRefresh) {
-    await resetWidgetState();
-    iconHolder?.classList.add('show');
-    unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
-    targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
-    return;
-  }
-  iconHolder?.classList.remove('show');
-  unityWidget.querySelector('.widget-refresh-button').classList.add('show');
-  targetEl.querySelector(':scope > .widget-refresh-button').classList.add('show');
-}
-
 async function addProductIcon() {
   const unityCfg = getUnityConfig();
   const { unityEl, unityWidget, targetEl, refreshWidgetEvent } = unityCfg;
@@ -84,7 +55,9 @@ async function removeBgHandler(changeDisplay = true) {
   const { endpoint } = unityCfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
   const hasExec = unityCfg.presentState.removeBgState.srcUrl;
-  if (changeDisplay && hasExec && !(img.src.startsWith(unityCfg.presentState.removeBgState.srcUrl))) {
+  if (changeDisplay
+    && hasExec
+    && !(img.src.startsWith(unityCfg.presentState.removeBgState.srcUrl))) {
     unityCfg.presentState.removeBgState.assetId = null;
     unityCfg.presentState.removeBgState.srcUrl = null;
   }
@@ -199,7 +172,9 @@ async function changebg(featureName) {
   const bgSelectorTray = createTag('div', { class: 'changebg-options-tray show' });
   const bgOptions = authorCfg.querySelectorAll(':scope ul li');
   [...bgOptions].forEach((o) => {
-    let [thumbnail, bgImg] = o.querySelectorAll('img');
+    let thumbnail = null;
+    let bgImg = null;
+    [thumbnail, bgImg] = o.querySelectorAll('img');
     if (!bgImg) bgImg = thumbnail;
     thumbnail.dataset.backgroundImg = bgImg.src;
     const a = createTag('a', { href: '#', class: 'changebg-option' }, thumbnail);
@@ -259,7 +234,7 @@ function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
 }
 
 async function changeAdjustments(featureName) {
-  const { unityEl, unityWidget, wfDetail, progressCircleEvent, targetEl } = getUnityConfig();
+  const { unityWidget, wfDetail, targetEl } = getUnityConfig();
   const { authorCfg } = wfDetail[featureName];
   const adjustmentBtn = unityWidget.querySelector('.ps-action-btn.adjustment-button');
   if (adjustmentBtn) {
@@ -272,10 +247,10 @@ async function changeAdjustments(featureName) {
   const sliderTray = createTag('div', { class: 'adjustment-options-tray show' });
   const sliderOptions = authorCfg.querySelectorAll(':scope > ul li');
   [...sliderOptions].forEach((o) => {
-    let actionName = null;
+    let iconName = null;
     const psAction = o.querySelector(':scope > .icon');
-    [...psAction.classList].forEach((cn) => { if (cn.match('icon-')) actionName = cn; });
-    actionName = actionName.split('-')[1];
+    [...psAction.classList].forEach((cn) => { if (cn.match('icon-')) iconName = cn; });
+    const [, actionName] = iconName.split('-');
     switch (actionName) {
       case 'hue':
         createSlider(sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', -180, 180);
@@ -335,6 +310,35 @@ async function changeVisibleFeature() {
   const prevActionBtn = unityWidget.querySelector('.ps-action-btn.show');
   if (prevActionBtn === actionBtn) return;
   showFeatureButton(prevActionBtn, actionBtn);
+}
+
+async function resetWidgetState() {
+  const unityCfg = getUnityConfig();
+  const { unityEl, targetEl } = unityCfg;
+  unityCfg.presentState.activeIdx = -1;
+  const initImg = unityEl.querySelector(':scope picture img');
+  const img = targetEl.querySelector(':scope > picture img');
+  img.src = initImg.src;
+  img.style.filter = '';
+  await changeVisibleFeature();
+  await loadImg(img);
+}
+
+async function switchProdIcon(forceRefresh = false) {
+  const unityCfg = getUnityConfig();
+  const { unityWidget, refreshEnabled, targetEl } = unityCfg;
+  const iconHolder = unityWidget.querySelector('.widget-product-icon');
+  if (!(refreshEnabled)) return;
+  if (forceRefresh) {
+    await resetWidgetState();
+    iconHolder?.classList.add('show');
+    unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
+    targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
+    return;
+  }
+  iconHolder?.classList.remove('show');
+  unityWidget.querySelector('.widget-refresh-button').classList.add('show');
+  targetEl.querySelector(':scope > .widget-refresh-button').classList.add('show');
 }
 
 async function uploadCallback() {
