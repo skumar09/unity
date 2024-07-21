@@ -7,7 +7,8 @@
   --separator-gray: #CCC;
 }
 
-.unity {
+.unity,
+.unity-enabled .interactive-area .unity-widget.decorating {
   display: none;
 }
 

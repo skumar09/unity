@@ -1,4 +1,4 @@
-import { createTag, loadStyle, getUnityLibs, setUnityConfig, defineDeviceByScreenSize} from '../../scripts/utils.js';
+import { createTag, loadStyle, getUnityLibs, setUnityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
 import createProgressCircle from '../features/progress-circle.js';
 
@@ -26,7 +26,7 @@ function intEnbReendered(targetBlock) {
 
 function createInteractiveArea(el, pic) {
   const iArea = createTag('div', { class: 'interactive-area' });
-  const iWidget = createTag('div', { class: 'unity-widget' });
+  const iWidget = createTag('div', { class: 'unity-widget decorating' });
   const unityaa = createTag('div', { class: 'unity-action-area' });
   const unityoa = createTag('div', { class: 'unity-option-area' });
   iWidget.append(unityoa, unityaa);
@@ -90,12 +90,13 @@ function getWorkFlowInformation(el) {
 
 async function initWorkflow(cfg) {
   loadStyle(`${getUnityLibs()}/core/workflow/${cfg.wfName}/${cfg.wfName}.css`);
-  const { default: initUnity } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
+  const { default: wfinit } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
   const errorToast = createErrorToast();
   const progressCircle = createProgressCircle();
   cfg.targetEl.append(errorToast, progressCircle);
   cfg.targetEl.append(progressCircle);
-  initUnity(cfg);
+  await wfinit(cfg);
+  cfg.unityWidget?.classList.remove('decorating');
 }
 
 export default async function init(el) {
