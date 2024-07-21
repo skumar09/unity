@@ -1,4 +1,4 @@
-import { createTag, getGuestAccessToken, getUnityConfig, loadImg, createActionBtn, loadSvg } from '../../../scripts/utils.js';
+import { createTag, getGuestAccessToken, getUnityConfig, loadImg, createActionBtn, loadSvg, decorateDefaultLinkAnalytics} from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
@@ -212,7 +212,7 @@ function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
     value: (minVal + maxVal) / 2,
     class: `adjustment-slider ${propertyName}`,
   });
-  const actionAnalytics = createTag('div', { class: 'analytics-content' }, `Unity ${label}`);
+  const actionAnalytics = createTag('div', { class: 'analytics-content' }, `Adjust ${label} slider`);
   const actionSliderCircle = createTag('a', { href: '#', class: `adjustment-circle ${propertyName}` }, actionAnalytics);
   actionSliderDiv.append(actionSliderInput, actionSliderCircle);
   actionDiv.append(actionLabel, actionSliderDiv);
@@ -229,6 +229,9 @@ function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
     imgFilters.forEach((f) => {
       img.style.filter += `${cfg.presentState.adjustments[f].filterValue} `;
     });
+  });
+  actionSliderInput.addEventListener('change', () => {
+    actionSliderCircle.click();
   });
   tray.append(actionDiv);
 }
@@ -359,9 +362,11 @@ export default async function init() {
   const uploadBtn = await createUpload(img, uploadCallback);
   unityWidget.querySelector('.unity-action-area').append(uploadBtn);
   await initAppConnector('photoshop');
+  await decorateDefaultLinkAnalytics(unityWidget);
   unityEl.addEventListener(interactiveSwitchEvent, async () => {
     await changeVisibleFeature();
     await switchProdIcon();
+    await decorateDefaultLinkAnalytics(unityWidget);
   });
   unityEl.addEventListener(refreshWidgetEvent, async () => {
     await switchProdIcon(true);

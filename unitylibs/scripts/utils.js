@@ -58,6 +58,8 @@ setUnityLibs('/unitylibs');
 
 const { createTag, getConfig, loadStyle } = await import(`${miloLibs}/utils/utils.js`);
 export { createTag, loadStyle, getConfig };
+const { decorateDefaultLinkAnalytics } = await import(`${miloLibs}/martech/attributes.js`);
+export { decorateDefaultLinkAnalytics };
 
 export function getGuestAccessToken() {
   const { token } = window.adobeIMS.getAccessToken();
