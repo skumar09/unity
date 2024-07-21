@@ -1,4 +1,4 @@
-import { createTag, getGuestAccessToken, getUnityConfig, loadImg, createActionBtn } from '../../../scripts/utils.js';
+import { createTag, getGuestAccessToken, getUnityConfig, loadImg, createActionBtn, loadSvg } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
@@ -32,7 +32,8 @@ async function addProductIcon() {
   if (!refreshCfg) return;
   const [prodIcon, refreshIcon] = refreshCfg.closest('li').querySelectorAll('img[src*=".svg"]');
   const iconHolder = createTag('div', { class: 'widget-product-icon show' }, prodIcon);
-  const refreshHolder = createTag('a', { href: '#', class: 'widget-refresh-button' }, refreshIcon);
+  const refreshSvg = await loadSvg(refreshIcon);
+  const refreshHolder = createTag('a', { href: '#', class: 'widget-refresh-button' }, refreshSvg);
   await loadImg(prodIcon);
   unityWidget.querySelector('.unity-action-area').append(iconHolder);
   if (!refreshIcon) return;
@@ -45,7 +46,6 @@ async function addProductIcon() {
   });
   unityWidget.querySelector('.unity-action-area').append(refreshHolder);
   targetEl.append(mobileRefreshHolder);
-  await loadImg(refreshIcon);
 }
 
 async function removeBgHandler(changeDisplay = true) {
