@@ -12,6 +12,16 @@
   display: none;
 }
 
+.unity-enabled .interactive-area {
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(135deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(135deg, transparent 75%, #ccc 75%);
+  background-size: 25px 25px;
+  background-position: 0 0, 12.5px 0, 12.5px -12.5px, 0px 12.5px;
+}
+
 .unity-enabled .interactive-area,
 .unity-enabled .interactive-area .image img {
   position: relative;
@@ -54,6 +64,7 @@
   background: var(--light-bg);
 }
 
+.unity-enabled .interactive-area .widget-refresh-button svg,
 .unity-enabled .interactive-area .widget-refresh-button img {
   width: 30px;
   height: 26px;
@@ -115,6 +126,16 @@
   outline: none;
 }
 
+.unity-enabled .interactive-area .widget-refresh-button svg path,
+.unity-enabled .interactive-area .unity-action-btn .btn-icon svg path {
+  fill: var(--color-white);
+}
+
+.unity-enabled .interactive-area.light .widget-refresh-button svg path,
+.unity-enabled .interactive-area.light .unity-action-btn .btn-icon svg path {
+  fill: var(--color-black);
+}
+
 @media screen and (max-width: 600px) {
   .unity-enabled .interactive-area {
     display: flex;
@@ -164,7 +185,6 @@
     line-height: var(--type-body-xl-lh);
     background: var(--dark-bg);
     border-radius: 8px;
-    box-shadow: 0 3.194px 3.194px 0 rgba(0, 0, 0, 25%);
   }
 
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn {
@@ -311,7 +331,7 @@
   }
 
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn {
-    padding: 6.39px 12.8px;
+    padding: 6px 13px;
     display: none;
     flex-direction: row;
     gap: 13px;
