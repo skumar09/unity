@@ -23,7 +23,7 @@ export function createErrorToast() {
   </clipPath>
   </defs>
   </svg>`;
-  const {unityEl, errorToastEvent} = getUnityConfig();
+  const { unityEl, errorToastEvent } = getUnityConfig();
   const errdom = createTag('div', { class: 'alert-toast' });
   const alertContent = createTag('div', { class: 'alert-content' });
   const alertIcon = createTag('div', { class: 'alert-icon' });

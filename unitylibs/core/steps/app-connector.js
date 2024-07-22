@@ -10,7 +10,7 @@ async function continueInApp(appName, btnConfig) {
     const data = {
       assetId: unityCfg.preludeState.assetId,
       targetProduct: 'Photoshop',
-    }
+    };
     const connectorOptions = {
       method: 'POST',
       headers: {
@@ -23,6 +23,7 @@ async function continueInApp(appName, btnConfig) {
     const response = await fetch(connectorApiEndPoint, connectorOptions);
     if (response.status !== 200) return '';
     window.location.href = response.url;
+    return true;
   });
   return btn;
 }
