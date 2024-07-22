@@ -1,7 +1,6 @@
 import {
   createTag,
   getGuestAccessToken,
-  getUnityConfig,
   loadImg,
   createActionBtn,
   loadSvg,
@@ -11,9 +10,8 @@ import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
 
-function resetWorkflowState() {
-  const unityCfg = getUnityConfig();
-  unityCfg.presentState = {
+function resetWorkflowState(cfg) {
+  cfg.presentState = {
     activeIdx: -1,
     removeBgState: {
       assetId: null,
@@ -22,8 +20,8 @@ function resetWorkflowState() {
     changeBgState: {},
     adjustments: {},
   };
-  unityCfg.preludeState = { assetId: null };
-  const img = unityCfg.targetEl.querySelector(':scope > picture img');
+  cfg.preludeState = { assetId: null };
+  const img = cfg.targetEl.querySelector(':scope > picture img');
   img.style.filter = '';
 }
 
@@ -32,10 +30,9 @@ function toggleDisplay(domEl) {
   else domEl.classList.add('show');
 }
 
-async function addProductIcon() {
-  const unityCfg = getUnityConfig();
-  const { unityEl, unityWidget, targetEl, refreshWidgetEvent } = unityCfg;
-  unityCfg.refreshEnabled = false;
+async function addProductIcon(cfg) {
+  const { unityEl, unityWidget, targetEl, refreshWidgetEvent } = cfg;
+  cfg.refreshEnabled = false;
   const refreshCfg = unityEl.querySelector('.icon-product-icon');
   if (!refreshCfg) return;
   const [prodIcon, refreshIcon] = refreshCfg.closest('li').querySelectorAll('img[src*=".svg"]');
@@ -45,7 +42,7 @@ async function addProductIcon() {
   await loadImg(prodIcon);
   unityWidget.querySelector('.unity-action-area').append(iconHolder);
   if (!refreshIcon) return;
-  unityCfg.refreshEnabled = true;
+  cfg.refreshEnabled = true;
   const mobileRefreshHolder = refreshHolder.cloneNode(true);
   [refreshHolder, mobileRefreshHolder].forEach((el) => {
     el.addEventListener('click', (evt) => {
@@ -57,24 +54,23 @@ async function addProductIcon() {
   targetEl.append(mobileRefreshHolder);
 }
 
-async function removeBgHandler(changeDisplay = true) {
-  const unityCfg = getUnityConfig();
-  const { apiEndPoint, targetEl } = unityCfg;
-  const { unityEl, interactiveSwitchEvent } = unityCfg;
-  const { endpoint } = unityCfg.wfDetail.removebg;
+async function removeBgHandler(cfg, changeDisplay = true) {
+  const { apiEndPoint, targetEl } = cfg;
+  const { unityEl, interactiveSwitchEvent } = cfg;
+  const { endpoint } = cfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
-  const hasExec = unityCfg.presentState.removeBgState.srcUrl;
+  const hasExec = cfg.presentState.removeBgState.srcUrl;
   if (changeDisplay
     && hasExec
-    && !(img.src.startsWith(unityCfg.presentState.removeBgState.srcUrl))) {
-    unityCfg.presentState.removeBgState.assetId = null;
-    unityCfg.presentState.removeBgState.srcUrl = null;
+    && !(img.src.startsWith(cfg.presentState.removeBgState.srcUrl))) {
+    cfg.presentState.removeBgState.assetId = null;
+    cfg.presentState.removeBgState.srcUrl = null;
   }
-  const { srcUrl, assetUrl } = unityCfg.presentState.removeBgState;
+  const { srcUrl, assetUrl } = cfg.presentState.removeBgState;
   const urlIsValid = assetUrl ? await fetch(assetUrl) : null;
-  if (unityCfg.presentState.removeBgState.assetId && urlIsValid?.status === 200) {
+  if (cfg.presentState.removeBgState.assetId && urlIsValid?.status === 200) {
     if (changeDisplay) {
-      img.src = unityCfg.presentState.removeBgState.assetUrl;
+      img.src = cfg.presentState.removeBgState.assetUrl;
       await loadImg(img);
       unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     }
@@ -82,7 +78,7 @@ async function removeBgHandler(changeDisplay = true) {
   }
   const { origin, pathname } = new URL(img.src);
   const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
-  unityCfg.presentState.removeBgState.srcUrl = imgUrl;
+  cfg.presentState.removeBgState.srcUrl = imgUrl;
   const id = await uploadAsset(apiEndPoint, imgUrl);
   const removeBgOptions = {
     method: 'POST',
@@ -97,9 +93,9 @@ async function removeBgHandler(changeDisplay = true) {
   if (response.status !== 200) return true;
   const { outputUrl } = await response.json();
   const opId = new URL(outputUrl).pathname.split('/').pop();
-  unityCfg.presentState.removeBgState.assetId = opId;
-  unityCfg.preludeState.assetId = opId;
-  unityCfg.presentState.removeBgState.assetUrl = outputUrl;
+  cfg.presentState.removeBgState.assetId = opId;
+  cfg.preludeState.assetId = opId;
+  cfg.presentState.removeBgState.assetUrl = outputUrl;
   if (!changeDisplay) return true;
   img.src = outputUrl;
   await loadImg(img);
@@ -107,8 +103,8 @@ async function removeBgHandler(changeDisplay = true) {
   return true;
 }
 
-async function removebg(featureName) {
-  const { wfDetail, unityWidget, unityEl, progressCircleEvent } = getUnityConfig();
+async function removebg(cfg, featureName) {
+  const { wfDetail, unityWidget, unityEl, progressCircleEvent } = cfg;
   const removebgBtn = unityWidget.querySelector('.ps-action-btn.removebg-button');
   if (removebgBtn) return removebgBtn;
   const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'ps-action-btn removebg-button show');
@@ -116,7 +112,7 @@ async function removebg(featureName) {
     evt.preventDefault();
     try {
       unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-      await removeBgHandler();
+      await removeBgHandler(cfg);
     } catch (e) {
       // error
     } finally {
@@ -126,19 +122,18 @@ async function removebg(featureName) {
   return btn;
 }
 
-async function changeBgHandler(selectedUrl = null, refreshState = true) {
-  const unityCfg = getUnityConfig();
+async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   if (refreshState) resetWorkflowState();
-  const { apiEndPoint, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = unityCfg;
-  const { endpoint } = unityCfg.wfDetail.changebg;
-  const unityRetriggered = await removeBgHandler(false);
+  const { apiEndPoint, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = cfg;
+  const { endpoint } = cfg.wfDetail.changebg;
+  const unityRetriggered = await removeBgHandler(cfg, false);
   const img = targetEl.querySelector('picture img');
-  const fgId = unityCfg.presentState.removeBgState.assetId;
+  const fgId = cfg.presentState.removeBgState.assetId;
   const bgImg = selectedUrl || unityWidget.querySelector('.unity-option-area .changebg-options-tray img').dataset.backgroundImg;
   const { origin, pathname } = new URL(bgImg);
   const bgImgUrl = `${origin}${pathname}`;
-  if (!unityRetriggered && unityCfg.presentState.changeBgState[bgImgUrl]?.assetId) {
-    img.src = unityCfg.presentState.changeBgState[bgImgUrl].assetUrl;
+  if (!unityRetriggered && cfg.presentState.changeBgState[bgImgUrl]?.assetId) {
+    img.src = cfg.presentState.changeBgState[bgImgUrl].assetUrl;
     await loadImg(img);
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     return;
@@ -163,17 +158,17 @@ async function changeBgHandler(selectedUrl = null, refreshState = true) {
   if (response.status !== 200) return;
   const { outputUrl } = await response.json();
   const changeBgId = new URL(outputUrl).pathname.split('/').pop();
-  unityCfg.presentState.changeBgState[bgImgUrl] = {};
-  unityCfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
-  unityCfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
-  unityCfg.preludeState.assetId = changeBgId;
+  cfg.presentState.changeBgState[bgImgUrl] = {};
+  cfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
+  cfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
+  cfg.preludeState.assetId = changeBgId;
   img.src = outputUrl;
   await loadImg(img);
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
 }
 
-async function changebg(featureName) {
-  const { unityEl, unityWidget, wfDetail, progressCircleEvent } = getUnityConfig();
+async function changebg(cfg, featureName) {
+  const { unityEl, unityWidget, wfDetail, progressCircleEvent } = cfg;
   const { authorCfg } = wfDetail[featureName];
   const changebgBtn = unityWidget.querySelector('.ps-action-btn.changebg-button');
   if (changebgBtn) return changebgBtn;
@@ -193,7 +188,7 @@ async function changebg(featureName) {
       evt.preventDefault();
       try {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-        await changeBgHandler(bgImg.src, false);
+        await changeBgHandler(cfg, bgImg.src, false);
       } catch (e) {
         // error
       } finally {
@@ -210,8 +205,7 @@ async function changebg(featureName) {
   return btn;
 }
 
-function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
-  const cfg = getUnityConfig();
+function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal) {
   const { targetEl } = cfg;
   const actionDiv = createTag('div', { class: 'adjustment-option' });
   const actionLabel = createTag('label', { class: 'adjustment-label' }, label);
@@ -250,8 +244,8 @@ function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
   tray.append(actionDiv);
 }
 
-async function changeAdjustments(featureName) {
-  const { unityWidget, wfDetail, targetEl } = getUnityConfig();
+async function changeAdjustments(cfg, featureName) {
+  const { unityWidget, wfDetail, targetEl } = cfg;
   const { authorCfg } = wfDetail[featureName];
   const adjustmentBtn = unityWidget.querySelector('.ps-action-btn.adjustment-button');
   if (adjustmentBtn) {
@@ -270,10 +264,10 @@ async function changeAdjustments(featureName) {
     const [, actionName] = iconName.split('-');
     switch (actionName) {
       case 'hue':
-        createSlider(sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', -180, 180);
+        createSlider(cfg, sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', -180, 180);
         break;
       case 'saturation':
-        createSlider(sliderTray, 'saturation', o.innerText, 'saturate(inputValue%)', 0, 300);
+        createSlider(cfg, sliderTray, 'saturation', o.innerText, 'saturate(inputValue%)', 0, 300);
         break;
       default:
         break;
@@ -288,9 +282,7 @@ async function changeAdjustments(featureName) {
   return btn;
 }
 
-function showFeatureButton(prevBtn, currBtn) {
-  const cfg = getUnityConfig();
-  const { unityWidget } = cfg;
+function showFeatureButton(unityWidget, prevBtn, currBtn) {
   if (!prevBtn) {
     unityWidget.querySelector('.unity-action-area').append(currBtn);
   } else {
@@ -304,8 +296,7 @@ function showFeatureButton(prevBtn, currBtn) {
   currBtn.classList.add('show');
 }
 
-async function changeVisibleFeature() {
-  const cfg = getUnityConfig();
+async function changeVisibleFeature(cfg) {
   const { unityWidget, enabledFeatures } = cfg;
   if (cfg.presentState.activeIdx + 1 === enabledFeatures.length) return;
   cfg.presentState.activeIdx += 1;
@@ -313,44 +304,42 @@ async function changeVisibleFeature() {
   let actionBtn = null;
   switch (featureName) {
     case 'removebg':
-      actionBtn = await removebg(featureName);
+      actionBtn = await removebg(cfg, featureName);
       break;
     case 'changebg':
-      actionBtn = await changebg(featureName);
+      actionBtn = await changebg(cfg, featureName);
       break;
     case 'slider':
-      actionBtn = await changeAdjustments(featureName);
+      actionBtn = await changeAdjustments(cfg, featureName);
       break;
     default:
       break;
   }
   const prevActionBtn = unityWidget.querySelector('.ps-action-btn.show');
   if (prevActionBtn === actionBtn) return;
-  showFeatureButton(prevActionBtn, actionBtn);
+  showFeatureButton(unityWidget, prevActionBtn, actionBtn);
 }
 
-async function resetWidgetState() {
-  const unityCfg = getUnityConfig();
-  const { unityWidget, unityEl, targetEl } = unityCfg;
-  unityCfg.presentState.activeIdx = -1;
+async function resetWidgetState(cfg) {
+  const { unityWidget, unityEl, targetEl } = cfg;
+  cfg.presentState.activeIdx = -1;
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;
   img.style.filter = '';
-  await changeVisibleFeature();
+  await changeVisibleFeature(cfg);
   unityWidget.querySelector('.widget-product-icon')?.classList.add('show');
   unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
   targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
   await loadImg(img);
 }
 
-async function switchProdIcon(forceRefresh = true) {
-  const unityCfg = getUnityConfig();
-  const { unityWidget, refreshEnabled, targetEl } = unityCfg;
+async function switchProdIcon(cfg, forceRefresh = true) {
+  const { unityWidget, refreshEnabled, targetEl } = cfg;
   const iconHolder = unityWidget.querySelector('.widget-product-icon');
   if (!(refreshEnabled)) return;
   if (forceRefresh) {
-    await resetWidgetState();
+    await resetWidgetState(cfg);
     return;
   }
   iconHolder?.classList.remove('show');
@@ -358,32 +347,30 @@ async function switchProdIcon(forceRefresh = true) {
   targetEl.querySelector(':scope > .widget-refresh-button').classList.add('show');
 }
 
-async function uploadCallback() {
-  const cfg = getUnityConfig();
+async function uploadCallback(cfg) {
   const { enabledFeatures } = cfg;
-  resetWorkflowState();
+  resetWorkflowState(cfg);
   if (enabledFeatures.length === 1) return;
-  await removeBgHandler();
+  await removeBgHandler(cfg);
 }
 
-export default async function init() {
-  const cfg = getUnityConfig();
-  const {unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
-  resetWorkflowState();
-  await addProductIcon();
-  await changeVisibleFeature();
+export default async function init(cfg) {
+  const { unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
+  resetWorkflowState(cfg);
+  await addProductIcon(cfg);
+  await changeVisibleFeature(cfg);
   const img = cfg.targetEl.querySelector('picture img');
-  const uploadBtn = await createUpload(img, uploadCallback);
+  const uploadBtn = await createUpload(cfg, img, uploadCallback);
   unityWidget.querySelector('.unity-action-area').append(uploadBtn);
-  await initAppConnector('photoshop');
+  await initAppConnector(cfg, 'photoshop');
   await decorateDefaultLinkAnalytics(unityWidget);
   unityEl.addEventListener(interactiveSwitchEvent, async () => {
-    await changeVisibleFeature();
-    await switchProdIcon(false);
+    await changeVisibleFeature(cfg);
+    await switchProdIcon(cfg, false);
     await decorateDefaultLinkAnalytics(unityWidget);
   });
   unityEl.addEventListener(refreshWidgetEvent, async () => {
-    await switchProdIcon(true);
+    await switchProdIcon(cfg, true);
   });
-  createIntersectionObserver({ el: unityWidget, callback: switchProdIcon });
+  createIntersectionObserver({ el: unityWidget, callback: switchProdIcon, cfg });
 }
