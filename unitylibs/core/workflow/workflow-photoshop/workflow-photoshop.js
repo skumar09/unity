@@ -191,7 +191,6 @@ async function changebg(cfg, featureName) {
         await changeBgHandler(cfg, bgImg.src, false);
       } catch (e) {
         // error
-        console.log(e);
       } finally {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
       }
