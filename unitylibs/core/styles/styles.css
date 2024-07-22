@@ -352,12 +352,6 @@
 }
 
 @media screen and (min-width: 600px) and (max-width: 1200px) {
-  .marquee.split.unity-enabled.mobile-image-bottom,
-  .aside.split.unity-enabled.mobile-image-bottom {
-    display: flex;
-    flex-direction: column-reverse;
-  }
-
   .marquee.split.unity-enabled .asset.bleed {
     position: relative;
     width: 100%;
