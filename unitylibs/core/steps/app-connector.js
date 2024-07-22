@@ -2,13 +2,13 @@ import { getUnityConfig, createActionBtn, getGuestAccessToken } from '../../scri
 
 async function continueInApp(appName, btnConfig) {
   const unityCfg = getUnityConfig();
-  const { unityWidget, connectorApiEndPoint, preludeState } = unityCfg;
+  const { unityWidget, connectorApiEndPoint } = unityCfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
   btn.addEventListener('click', async () => {
     const data = {
-      assetId: preludeState.assetId,
+      assetId: unityCfg.preludeState.assetId,
       targetProduct: 'Photoshop',
     }
     const connectorOptions = {
