@@ -17,18 +17,9 @@ export const [setLibs, getLibs] = (() => {
 export const [setUnityLibs, getUnityLibs] = (() => {
   let libs;
   return [
-    (prodLibs, project = 'unity') => {
-      const { hostname, origin } = window.location;
-      if (!hostname.includes('hlx.page')
-        && !hostname.includes('hlx.live')
-        && !hostname.includes('localhost')) {
-        libs = prodLibs;
-        return libs;
-      }
+    (libPath, project = 'unity') => {
       if (project === 'unity') { libs = `${origin}/unitylibs`; return libs; }
-      const branch = new URLSearchParams(window.location.search).get('unitylibs') || 'main';
-      if (branch.indexOf('--') > -1) { libs = `https://${branch}.hlx.live/unitylibs`; return libs; }
-      libs = `https://${branch}--unity--adobecom.hlx.live/unitylibs`;
+      libs = libPath;
       return libs;
     }, () => libs,
   ];
@@ -57,8 +48,8 @@ export function defineDeviceByScreenSize() {
   return 'TABLET';
 }
 
-export async function loadSvg(img) {
-  const res = await fetch(img.src);
+export async function loadSvg(src) {
+  const res = await fetch(src);
   if (!res.status === 200) return null;
   const svg = await res.text();
   return svg;
@@ -82,8 +73,12 @@ export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapO
   const actionBtn = createTag('a', { href: '#', class: `unity-action-btn ${btnClass}` });
   if (img) {
     let btnImg = null;
-    if (iconAsImg) btnImg = img.cloneNode(true);
-    else btnImg = await loadSvg(img);
+    const { pathname } = new URL(img.src);
+    const libSrcPath = `${getUnityLibs().split('/unitylibs')[0]}${pathname}`;
+    if (iconAsImg) btnImg = createTag('img', { src: libSrcPath });
+    else {
+      btnImg = await loadSvg(libSrcPath);
+    }
     const btnIcon = createTag('div', { class: 'btn-icon' }, btnImg);
     actionBtn.append(btnIcon);
   }
