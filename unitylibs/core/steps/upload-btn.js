@@ -65,6 +65,7 @@ export default async function createUpload(cfg, target, callback = null) {
     }
     const objUrl = URL.createObjectURL(file);
     target.src = objUrl;
+    cfg.uploadState.filetype = file.type;
     if (callback) {
       try {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));

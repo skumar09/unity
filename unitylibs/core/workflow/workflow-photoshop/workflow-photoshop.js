@@ -79,7 +79,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   const { origin, pathname } = new URL(img.src);
   const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
   cfg.presentState.removeBgState.srcUrl = imgUrl;
-  const id = await uploadAsset(apiEndPoint, imgUrl);
+  const id = await uploadAsset(cfg, imgUrl);
   const removeBgOptions = {
     method: 'POST',
     headers: {
@@ -138,7 +138,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     return;
   }
-  const bgId = await uploadAsset(apiEndPoint, bgImgUrl);
+  const bgId = await uploadAsset(cfg, bgImgUrl);
   const changeBgOptions = {
     method: 'POST',
     headers: {
