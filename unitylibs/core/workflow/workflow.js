@@ -1,4 +1,4 @@
-import { createTag, loadStyle, getUnityLibs, unityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
+import { createTag, loadStyle, setUnityLibs, getUnityLibs, unityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
 import createProgressCircle from '../features/progress-circle/progress-circle.js';
 
@@ -97,7 +97,8 @@ async function initWorkflow(cfg) {
   cfg.unityWidget?.classList.remove('decorating');
 }
 
-export default async function init(el) {
+export default async function init(el, unityLibs) {
+  setUnityLibs(unityLibs);
   loadStyle(`${getUnityLibs()}/core/styles/styles.css`);
   const [targetBlock, unityWidget] = await getTargetArea(el);
   if (!targetBlock) return;

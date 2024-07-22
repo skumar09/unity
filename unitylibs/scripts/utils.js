@@ -37,7 +37,6 @@ export const [setUnityLibs, getUnityLibs] = (() => {
 export function decorateArea(area = document) {}
 
 const miloLibs = setLibs('/libs');
-setUnityLibs('/unitylibs');
 
 const { createTag, getConfig, loadStyle } = await import(`${miloLibs}/utils/utils.js`);
 export { createTag, loadStyle, getConfig };
