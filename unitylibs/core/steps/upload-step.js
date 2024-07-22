@@ -33,13 +33,13 @@ function getFileType(cfg, imgUrl) {
 }
 
 export async function uploadAsset(cfg, imgUrl) {
-  const { apiEndPoint } = cfg;
+  const { apiEndPoint, apiKey } = cfg;
   const genIdOptions = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: getGuestAccessToken(),
-      'x-api-key': 'leo',
+      'x-api-key': apiKey,
     },
   };
   const response = await fetch(`${apiEndPoint}/asset`, genIdOptions);

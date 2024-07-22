@@ -55,7 +55,7 @@ async function addProductIcon(cfg) {
 }
 
 async function removeBgHandler(cfg, changeDisplay = true) {
-  const { apiEndPoint, targetEl } = cfg;
+  const { apiEndPoint, apiKey, targetEl } = cfg;
   const { unityEl, interactiveSwitchEvent } = cfg;
   const { endpoint } = cfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
@@ -85,7 +85,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     headers: {
       Authorization: getGuestAccessToken(),
       'Content-Type': 'application/json',
-      'x-api-key': 'leo',
+      'x-api-key': apiKey,
     },
     body: `{"surfaceId":"Unity","assets":[{"id": "${id}"}]}`,
   };
@@ -124,7 +124,7 @@ async function removebg(cfg, featureName) {
 
 async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   if (refreshState) resetWorkflowState();
-  const { apiEndPoint, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = cfg;
+  const { apiEndPoint, apiKey, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = cfg;
   const { endpoint } = cfg.wfDetail.changebg;
   const unityRetriggered = await removeBgHandler(cfg, false);
   const img = targetEl.querySelector('picture img');
@@ -144,7 +144,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
     headers: {
       Authorization: getGuestAccessToken(),
       'Content-Type': 'application/json',
-      'x-api-key': 'leo',
+      'x-api-key': apiKey,
     },
     body: `{
             "assets": [{ "id": "${fgId}" },{ "id": "${bgId}" }],
