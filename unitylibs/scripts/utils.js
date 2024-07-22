@@ -112,3 +112,15 @@ export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapO
   }
   return actionBtn;
 }
+
+export function createIntersectionObserver({ el, callback, options = {} }) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) {
+        callback();
+      }
+    });
+  }, options);
+  io.observe(el);
+  return io;
+}

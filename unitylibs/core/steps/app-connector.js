@@ -1,4 +1,4 @@
-import { getUnityConfig, createActionBtn } from '../../scripts/utils.js';
+import { getUnityConfig, createActionBtn, createIntersectionObserver } from '../../scripts/utils.js';
 
 async function continueInApp(appName, btnConfig) {
   const unityCfg = getUnityConfig();
@@ -10,6 +10,12 @@ async function continueInApp(appName, btnConfig) {
     console.log(unityCfg.preludeState.assetId);
   });
   return btn;
+}
+
+function resetAppConnector() {
+  const { unityWidget } = getUnityConfig();
+  const connectBtn = unityWidget.querySelector('.continue-in-app');
+  connectBtn?.classList.remove('show');
 }
 
 export default async function initAppConnector(appName) {
@@ -26,4 +32,5 @@ export default async function initAppConnector(appName) {
   unityEl.addEventListener(interactiveSwitchEvent, () => {
     connectBtn?.classList.add('show');
   });
+  createIntersectionObserver({ el: connectBtn, callback: resetAppConnector });
 }
