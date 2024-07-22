@@ -55,7 +55,7 @@ async function addProductIcon(cfg) {
 }
 
 async function removeBgHandler(cfg, changeDisplay = true) {
-  const { apiEndPoint, targetEl } = cfg;
+  const { apiEndPoint, apiKey, targetEl } = cfg;
   const { unityEl, interactiveSwitchEvent } = cfg;
   const { endpoint } = cfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
@@ -79,13 +79,13 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   const { origin, pathname } = new URL(img.src);
   const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
   cfg.presentState.removeBgState.srcUrl = imgUrl;
-  const id = await uploadAsset(apiEndPoint, imgUrl);
+  const id = await uploadAsset(cfg, imgUrl);
   const removeBgOptions = {
     method: 'POST',
     headers: {
       Authorization: getGuestAccessToken(),
       'Content-Type': 'application/json',
-      'x-api-key': 'leo',
+      'x-api-key': apiKey,
     },
     body: `{"surfaceId":"Unity","assets":[{"id": "${id}"}]}`,
   };
@@ -124,7 +124,7 @@ async function removebg(cfg, featureName) {
 
 async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   if (refreshState) resetWorkflowState();
-  const { apiEndPoint, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = cfg;
+  const { apiEndPoint, apiKey, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = cfg;
   const { endpoint } = cfg.wfDetail.changebg;
   const unityRetriggered = await removeBgHandler(cfg, false);
   const img = targetEl.querySelector('picture img');
@@ -138,13 +138,13 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     return;
   }
-  const bgId = await uploadAsset(apiEndPoint, bgImgUrl);
+  const bgId = await uploadAsset(cfg, bgImgUrl);
   const changeBgOptions = {
     method: 'POST',
     headers: {
       Authorization: getGuestAccessToken(),
       'Content-Type': 'application/json',
-      'x-api-key': 'leo',
+      'x-api-key': apiKey,
     },
     body: `{
             "assets": [{ "id": "${fgId}" },{ "id": "${bgId}" }],

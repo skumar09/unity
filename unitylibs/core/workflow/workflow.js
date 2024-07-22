@@ -112,6 +112,7 @@ export default async function init(el) {
     wfName,
     wfDetail,
     enabledFeatures,
+    uploadState: { },
     ...unityConfig,
   };
   await initWorkflow(wfConfig);

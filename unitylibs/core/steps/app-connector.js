@@ -1,7 +1,7 @@
 import { createActionBtn, getGuestAccessToken, createIntersectionObserver } from '../../scripts/utils.js';
 
 async function continueInApp(cfg, appName, btnConfig) {
-  const { unityWidget, connectorApiEndPoint } = cfg;
+  const { unityWidget, connectorApiEndPoint, apiKey } = cfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
@@ -15,7 +15,7 @@ async function continueInApp(cfg, appName, btnConfig) {
       headers: {
         'Content-Type': 'application/json',
         Authorization: getGuestAccessToken(),
-        'x-api-key': 'leo',
+        'x-api-key': apiKey,
       },
       body: JSON.stringify(data),
     };

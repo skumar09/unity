@@ -13,10 +13,10 @@ export async function getImageBlobData(url) {
   });
 }
 
-async function uploadImgToUnity(storageUrl, id, blobData) {
+async function uploadImgToUnity(storageUrl, id, blobData, fileType) {
   const uploadOptions = {
     method: 'PUT',
-    headers: { 'Content-Type': 'image/jpeg' },
+    headers: { 'Content-Type': fileType },
     body: blobData,
   };
   const response = await fetch(storageUrl, uploadOptions);
@@ -24,19 +24,29 @@ async function uploadImgToUnity(storageUrl, id, blobData) {
   return id;
 }
 
-export async function uploadAsset(apiEp, imgUrl) {
+function getFileType(cfg, imgUrl) {
+  if (imgUrl.startsWith('blob:')) return cfg.uploadState.filetype;
+  if (imgUrl.endsWith('.jpeg')) return 'image/jpeg';
+  if (imgUrl.endsWith('.png')) return 'image/png';
+  if (imgUrl.endsWith('.jpg')) return 'image/jpg';
+  return '';
+}
+
+export async function uploadAsset(cfg, imgUrl) {
+  const { apiEndPoint, apiKey } = cfg;
   const genIdOptions = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: getGuestAccessToken(),
-      'x-api-key': 'leo',
+      'x-api-key': apiKey,
     },
   };
-  const response = await fetch(`${apiEp}/asset`, genIdOptions);
+  const response = await fetch(`${apiEndPoint}/asset`, genIdOptions);
   if (response.status !== 200) return '';
   const { id, href } = await response.json();
   const blobData = await getImageBlobData(imgUrl);
-  const assetId = await uploadImgToUnity(href, id, blobData);
+  const fileType = getFileType(cfg, imgUrl);
+  const assetId = await uploadImgToUnity(href, id, blobData, fileType);
   return assetId;
 }
