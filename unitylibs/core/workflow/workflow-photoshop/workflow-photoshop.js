@@ -1,4 +1,12 @@
-import { createTag, getGuestAccessToken, getUnityConfig, loadImg, createActionBtn, loadSvg, decorateDefaultLinkAnalytics, createIntersectionObserver } from '../../../scripts/utils.js';
+import {
+  createTag,
+  getGuestAccessToken,
+  getUnityConfig,
+  loadImg,
+  createActionBtn,
+  loadSvg,
+  decorateDefaultLinkAnalytics,
+  createIntersectionObserver } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';

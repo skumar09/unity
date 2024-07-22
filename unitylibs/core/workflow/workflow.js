@@ -1,6 +1,6 @@
 import { createTag, loadStyle, getUnityLibs, setUnityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
-import createProgressCircle from '../features/progress-circle.js';
+import createProgressCircle from '../features/progress-circle/progress-circle.js';
 
 export function getImgSrc(pic) {
   const viewport = defineDeviceByScreenSize();
@@ -90,6 +90,7 @@ function getWorkFlowInformation(el) {
 
 async function initWorkflow(cfg) {
   loadStyle(`${getUnityLibs()}/core/workflow/${cfg.wfName}/${cfg.wfName}.css`);
+  loadStyle(`${getUnityLibs()}/core/features/progress-circle/progress-circle.css`);
   const { default: wfinit } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
   const errorToast = createErrorToast();
   const progressCircle = createProgressCircle();

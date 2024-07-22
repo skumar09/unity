@@ -11,4 +11,4 @@ const config = {
     handler: 'render',
     renderWidget: true,
   },
-}
+};
