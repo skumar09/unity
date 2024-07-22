@@ -1,4 +1,4 @@
-import { createTag, loadStyle, getUnityLibs, setUnityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
+import { createTag, loadStyle, getUnityLibs, unityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
 import createProgressCircle from '../features/progress-circle/progress-circle.js';
 
@@ -92,10 +92,6 @@ async function initWorkflow(cfg) {
   loadStyle(`${getUnityLibs()}/core/workflow/${cfg.wfName}/${cfg.wfName}.css`);
   loadStyle(`${getUnityLibs()}/core/features/progress-circle/progress-circle.css`);
   const { default: wfinit } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
-  const errorToast = createErrorToast();
-  const progressCircle = createProgressCircle();
-  cfg.targetEl.append(errorToast, progressCircle);
-  cfg.targetEl.append(progressCircle);
   await wfinit(cfg);
   cfg.unityWidget?.classList.remove('decorating');
 }
@@ -115,7 +111,11 @@ export default async function init(el) {
     wfName,
     wfDetail,
     enabledFeatures,
+    ...unityConfig,
   };
-  setUnityConfig(wfConfig);
   await initWorkflow(wfConfig);
+  const errorToast = createErrorToast(wfConfig);
+  const progressCircle = createProgressCircle(wfConfig);
+  targetBlock.append(errorToast, progressCircle);
+  targetBlock.append(progressCircle);
 }

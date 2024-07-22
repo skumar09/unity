@@ -1,7 +1,6 @@
-import { createTag, getUnityConfig } from '../../../scripts/utils.js';
+import { createTag } from '../../../scripts/utils.js';
 
-export default function createProgressCircle() {
-  const cfg = getUnityConfig();
+export default function createProgressCircle(cfg) {
   const { unityEl, targetEl, progressCircleEvent } = cfg;
   const pdom = `<div class="spectrum-ProgressCircle-track"></div>
   <div class="spectrum-ProgressCircle-fills">

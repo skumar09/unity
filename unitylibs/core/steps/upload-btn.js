@@ -1,11 +1,11 @@
-import { createTag, getUnityConfig, createActionBtn } from '../../scripts/utils.js';
+import { createTag, createActionBtn } from '../../scripts/utils.js';
 
 function showErrorToast(msg) {
   document.querySelector('.unity-enabled .interactive-area .alert-toast .alert-text p').innerText = msg;
   document.querySelector('.unity-enabled .interactive-area .alert-toast').style.display = 'flex';
 }
 
-export function createErrorToast() {
+export function createErrorToast(cfg) {
   const alertImg = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
   <g id="Frame">
   <path id="iconPrimary" d="M9.99936 15.1233C9.76871 15.1315 9.54398 15.0496 9.37275 14.895C9.04242 14.5304 9.04242 13.9751 9.37275 13.6104C9.5421 13.4521 9.76758 13.3677 9.99939 13.3757C10.2357 13.3662 10.4653 13.4559 10.6324 13.6231C10.7945 13.7908 10.8816 14.017 10.8738 14.2499C10.8862 14.4846 10.8042 14.7145 10.6461 14.8886C10.4725 15.0531 10.2382 15.1382 9.99936 15.1233Z" fill="white"/>
@@ -23,7 +23,7 @@ export function createErrorToast() {
   </clipPath>
   </defs>
   </svg>`;
-  const { unityEl, errorToastEvent } = getUnityConfig();
+  const { unityEl, errorToastEvent } = cfg;
   const errdom = createTag('div', { class: 'alert-toast' });
   const alertContent = createTag('div', { class: 'alert-content' });
   const alertIcon = createTag('div', { class: 'alert-icon' });
@@ -45,10 +45,9 @@ export function createErrorToast() {
   return errdom;
 }
 
-export default async function createUpload(target, callback = null) {
-  const unityCfg = getUnityConfig();
-  const { unityEl, errorToastEvent } = unityCfg;
-  const { interactiveSwitchEvent, progressCircleEvent } = unityCfg;
+export default async function createUpload(cfg, target, callback = null) {
+  const { unityEl, errorToastEvent } = cfg;
+  const { interactiveSwitchEvent, progressCircleEvent } = cfg;
   const li = unityEl.querySelector('.icon-upload').parentElement;
   const a = await createActionBtn(li, 'show');
   const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg', tabIndex: -1 });
@@ -69,7 +68,7 @@ export default async function createUpload(target, callback = null) {
     if (callback) {
       try {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-        await callback();
+        await callback(cfg);
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
       } catch (err) {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));

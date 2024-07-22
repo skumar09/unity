@@ -34,24 +34,24 @@ export const [setUnityLibs, getUnityLibs] = (() => {
   ];
 })();
 
-export const [setUnityConfig, getUnityConfig] = (() => {
-  let unityConfig = {};
-  return [
-    (cfg) => {
-      unityConfig = {
-        apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
-        connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
-        apiKey: 'leo',
-        progressCircleEvent: 'unity:progress-circle',
-        errorToastEvent: 'unity:error-toast',
-        refreshWidgetEvent: 'unity:refresh-widget',
-        interactiveSwitchEvent: 'unity:interactive-switch',
-        ...cfg,
-      };
-    },
-    () => unityConfig,
-  ];
-})();
+// export const [setUnityConfig, getUnityConfig] = (() => {
+//   let unityConfig = {};
+//   return [
+//     (cfg) => {
+//       unityConfig = {
+//         apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
+//         connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
+//         apiKey: 'leo',
+//         progressCircleEvent: 'unity:progress-circle',
+//         errorToastEvent: 'unity:error-toast',
+//         refreshWidgetEvent: 'unity:refresh-widget',
+//         interactiveSwitchEvent: 'unity:interactive-switch',
+//         ...cfg,
+//       };
+//     },
+//     () => unityConfig,
+//   ];
+// })();
 
 export function decorateArea(area = document) {}
 
@@ -115,14 +115,24 @@ export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapO
   return actionBtn;
 }
 
-export function createIntersectionObserver({ el, callback, options = {} }) {
+export function createIntersectionObserver({ el, callback, cfg, options = {} }) {
   const io = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) {
-        callback();
+        callback(cfg);
       }
     });
   }, options);
   io.observe(el);
   return io;
 }
+
+export const unityConfig = {
+  apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
+  connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
+  apiKey: 'leo',
+  progressCircleEvent: 'unity:progress-circle',
+  errorToastEvent: 'unity:error-toast',
+  refreshWidgetEvent: 'unity:refresh-widget',
+  interactiveSwitchEvent: 'unity:interactive-switch',
+};

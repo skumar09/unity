@@ -1,14 +1,13 @@
-import { getUnityConfig, createActionBtn, getGuestAccessToken, createIntersectionObserver } from '../../scripts/utils.js';
+import { createActionBtn, getGuestAccessToken, createIntersectionObserver } from '../../scripts/utils.js';
 
-async function continueInApp(appName, btnConfig) {
-  const unityCfg = getUnityConfig();
-  const { unityWidget, connectorApiEndPoint } = unityCfg;
+async function continueInApp(cfg, appName, btnConfig) {
+  const { unityWidget, connectorApiEndPoint } = cfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
   btn.addEventListener('click', async () => {
     const data = {
-      assetId: unityCfg.preludeState.assetId,
+      assetId: cfg.preludeState.assetId,
       targetProduct: 'Photoshop',
     };
     const connectorOptions = {
@@ -28,19 +27,17 @@ async function continueInApp(appName, btnConfig) {
   return btn;
 }
 
-function resetAppConnector() {
-  const { unityWidget } = getUnityConfig();
-  const connectBtn = unityWidget.querySelector('.continue-in-app');
+function resetAppConnector(cfg) {
+  const connectBtn = cfg.unityWidget.querySelector('.continue-in-app');
   connectBtn?.classList.remove('show');
 }
 
-export default async function initAppConnector(appName) {
-  const cfg = getUnityConfig();
+export default async function initAppConnector(cfg, appName) {
   const { unityEl, unityWidget, refreshWidgetEvent, interactiveSwitchEvent } = cfg;
   const isContinueEnabled = unityEl.querySelector('.icon-app-connector');
   if (!isContinueEnabled) return;
   const btnConfig = isContinueEnabled.closest('li');
-  const connectBtn = await continueInApp(appName, btnConfig);
+  const connectBtn = await continueInApp(cfg, appName, btnConfig);
   unityWidget.querySelector('.unity-action-area').append(connectBtn);
   unityEl.addEventListener(refreshWidgetEvent, () => {
     connectBtn?.classList.remove('show');
@@ -48,5 +45,5 @@ export default async function initAppConnector(appName) {
   unityEl.addEventListener(interactiveSwitchEvent, () => {
     connectBtn?.classList.add('show');
   });
-  createIntersectionObserver({ el: connectBtn, callback: resetAppConnector });
+  createIntersectionObserver({ el: connectBtn, callback: resetAppConnector, cfg });
 }
