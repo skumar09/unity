@@ -17,6 +17,7 @@
   top: 0;
   left: 0;
   object-fit: cover;
+  height: 67px;
 }
 
 .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option:focus-visible {
@@ -121,6 +122,12 @@
   .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
     color: var(--highlight-blue);
     fill: var(--highlight-blue);
+  }
+}
+
+@media screen and (min-width: 600px) and (min-width: 1200px) {
+  .aside.split.unity-enabled .split-image img {
+    position: relative;
   }
 }
 
