@@ -69,7 +69,7 @@ export default async function createUpload(target, callback = null) {
     if (callback) {
       try {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-        // await callback();
+        await callback();
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
       } catch (err) {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
