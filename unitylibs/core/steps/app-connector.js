@@ -1,13 +1,27 @@
-import { getUnityConfig, createActionBtn } from '../../scripts/utils.js';
+import { getUnityConfig, createActionBtn, getGuestAccessToken } from '../../scripts/utils.js';
 
 async function continueInApp(appName, btnConfig) {
   const unityCfg = getUnityConfig();
-  const { unityWidget } = unityCfg;
+  const { unityWidget, connectorApiEndPoint, preludeState } = unityCfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
-  btn.addEventListener('click', () => {
-    console.log(unityCfg.preludeState.assetId);
+  btn.addEventListener('click', async () => {
+    const data = {
+      assetId: preludeState.assetId,
+      targetProduct: 'Photoshop',
+    }
+    const connectorOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: getGuestAccessToken(),
+        'x-api-key': 'leo',
+      },
+      body: JSON.stringify(data),
+    };
+    const response = await fetch(connectorApiEndPoint, connectorOptions);
+    if (response.status !== 200) return '';
   });
   return btn;
 }
