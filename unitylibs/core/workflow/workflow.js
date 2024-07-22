@@ -48,6 +48,7 @@ async function getTargetArea(el) {
     intEnb.classList.add('unity-enabled');
     await intEnbReendered(intEnb);
   } catch (err) { return null; }
+  if (el.classList.contains('mobile-image-bottom')) intEnb.classList.add('mobile-image-bottom');
   const asset = intEnb.querySelector('.asset picture, .image picture');
   const container = asset.closest('p');
   const [iArea, iWidget] = createInteractiveArea(el, asset);
