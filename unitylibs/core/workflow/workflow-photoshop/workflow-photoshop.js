@@ -73,6 +73,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   if (cfg.presentState.removeBgState.assetId && urlIsValid?.status === 200) {
     if (changeDisplay) {
       img.src = cfg.presentState.removeBgState.assetUrl;
+      cfg.preludeState.assetId = cfg.presentState.removeBgState.assetId;
       await loadImg(img);
       unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     }
@@ -137,6 +138,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   if (!unityRetriggered && cfg.presentState.changeBgState[bgImgUrl]?.assetId) {
     img.src = cfg.presentState.changeBgState[bgImgUrl].assetUrl;
     await loadImg(img);
+    cfg.preludeState.assetId = cfg.presentState.changeBgState[bgImgUrl].assetId;
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     return;
   }
