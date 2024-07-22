@@ -141,6 +141,10 @@
   fill: var(--color-black);
 }
 
+.unity-enabled .interactive-area .unity-widget .continue-in-app {
+  font-weight: bold;
+}
+
 .unity-enabled .interactive-area .alert-toast {
   display: none;
   background: var(--alert-red);
@@ -436,6 +440,7 @@
 
   .unity-enabled .interactive-area .unity-widget .continue-in-app {
     background: #1473E6;
+    color: var(--color-white);
     border: 2px solid var(--highlight-blue);
     z-index: 3;
   }

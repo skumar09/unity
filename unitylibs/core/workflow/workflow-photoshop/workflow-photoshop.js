@@ -6,7 +6,7 @@ import {
   createActionBtn,
   loadSvg,
   decorateDefaultLinkAnalytics,
-} from '../../../scripts/utils.js';
+  createIntersectionObserver } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
@@ -48,7 +48,8 @@ async function addProductIcon() {
   unityCfg.refreshEnabled = true;
   const mobileRefreshHolder = refreshHolder.cloneNode(true);
   [refreshHolder, mobileRefreshHolder].forEach((el) => {
-    el.addEventListener('click', () => {
+    el.addEventListener('click', (evt) => {
+      evt.preventDefault();
       unityEl.dispatchEvent(new CustomEvent(refreshWidgetEvent));
     });
   });
@@ -111,7 +112,8 @@ async function removebg(featureName) {
   const removebgBtn = unityWidget.querySelector('.ps-action-btn.removebg-button');
   if (removebgBtn) return removebgBtn;
   const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'ps-action-btn removebg-button show');
-  btn.addEventListener('click', async () => {
+  btn.addEventListener('click', async (evt) => {
+    evt.preventDefault();
     try {
       unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
       await removeBgHandler();
@@ -187,7 +189,8 @@ async function changebg(featureName) {
     thumbnail.dataset.backgroundImg = bgImg.src;
     const a = createTag('a', { href: '#', class: 'changebg-option' }, thumbnail);
     bgSelectorTray.append(a);
-    a.addEventListener('click', async () => {
+    a.addEventListener('click', async (evt) => {
+      evt.preventDefault();
       try {
         unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
         await changeBgHandler(bgImg.src, false);
@@ -240,6 +243,9 @@ function createSlider(tray, propertyName, label, cssFilter, minVal, maxVal) {
   });
   actionSliderInput.addEventListener('change', () => {
     actionSliderCircle.click();
+  });
+  actionSliderCircle.addEventListener('click', (evt) => {
+    evt.preventDefault();
   });
   tray.append(actionDiv);
 }
@@ -325,26 +331,26 @@ async function changeVisibleFeature() {
 
 async function resetWidgetState() {
   const unityCfg = getUnityConfig();
-  const { unityEl, targetEl } = unityCfg;
+  const { unityWidget, unityEl, targetEl } = unityCfg;
   unityCfg.presentState.activeIdx = -1;
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;
   img.style.filter = '';
   await changeVisibleFeature();
+  unityWidget.querySelector('.widget-product-icon')?.classList.add('show');
+  unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
+  targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
   await loadImg(img);
 }
 
-async function switchProdIcon(forceRefresh = false) {
+async function switchProdIcon(forceRefresh = true) {
   const unityCfg = getUnityConfig();
   const { unityWidget, refreshEnabled, targetEl } = unityCfg;
   const iconHolder = unityWidget.querySelector('.widget-product-icon');
   if (!(refreshEnabled)) return;
   if (forceRefresh) {
     await resetWidgetState();
-    iconHolder?.classList.add('show');
-    unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
-    targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
     return;
   }
   iconHolder?.classList.remove('show');
@@ -362,7 +368,7 @@ async function uploadCallback() {
 
 export default async function init() {
   const cfg = getUnityConfig();
-  const { unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
+  const {unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
   resetWorkflowState();
   await addProductIcon();
   await changeVisibleFeature();
@@ -373,10 +379,11 @@ export default async function init() {
   await decorateDefaultLinkAnalytics(unityWidget);
   unityEl.addEventListener(interactiveSwitchEvent, async () => {
     await changeVisibleFeature();
-    await switchProdIcon();
+    await switchProdIcon(false);
     await decorateDefaultLinkAnalytics(unityWidget);
   });
   unityEl.addEventListener(refreshWidgetEvent, async () => {
     await switchProdIcon(true);
   });
+  createIntersectionObserver({ el: unityWidget, callback: switchProdIcon });
 }

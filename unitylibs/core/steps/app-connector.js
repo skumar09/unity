@@ -1,4 +1,4 @@
-import { getUnityConfig, createActionBtn, getGuestAccessToken } from '../../scripts/utils.js';
+import { getUnityConfig, createActionBtn, getGuestAccessToken, createIntersectionObserver } from '../../scripts/utils.js';
 
 async function continueInApp(appName, btnConfig) {
   const unityCfg = getUnityConfig();
@@ -28,6 +28,12 @@ async function continueInApp(appName, btnConfig) {
   return btn;
 }
 
+function resetAppConnector() {
+  const { unityWidget } = getUnityConfig();
+  const connectBtn = unityWidget.querySelector('.continue-in-app');
+  connectBtn?.classList.remove('show');
+}
+
 export default async function initAppConnector(appName) {
   const cfg = getUnityConfig();
   const { unityEl, unityWidget, refreshWidgetEvent, interactiveSwitchEvent } = cfg;
@@ -42,4 +48,5 @@ export default async function initAppConnector(appName) {
   unityEl.addEventListener(interactiveSwitchEvent, () => {
     connectBtn?.classList.add('show');
   });
+  createIntersectionObserver({ el: connectBtn, callback: resetAppConnector });
 }
