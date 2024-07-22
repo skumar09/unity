@@ -43,6 +43,7 @@ export const [setUnityConfig, getUnityConfig] = (() => {
         connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
         apiKey: 'leo',
         progressCircleEvent: 'unity:progress-circle',
+        errorToastEvent: 'unity:error-toast',
         refreshWidgetEvent: 'unity:refresh-widget',
         interactiveSwitchEvent: 'unity:interactive-switch',
         ...cfg,

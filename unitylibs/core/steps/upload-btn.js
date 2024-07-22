@@ -23,8 +23,7 @@ export function createErrorToast() {
   </clipPath>
   </defs>
   </svg>`;
-  const cfg = getUnityConfig();
-  cfg.errorToastEvent = 'unity:error-toast';
+  const {unityEl, errorToastEvent} = getUnityConfig();
   const errdom = createTag('div', { class: 'alert-toast' });
   const alertContent = createTag('div', { class: 'alert-content' });
   const alertIcon = createTag('div', { class: 'alert-icon' });
@@ -37,7 +36,7 @@ export function createErrorToast() {
   alertClose.innerHTML = closeImg;
   alertContent.append(alertIcon, alertClose);
   errdom.append(alertContent);
-  cfg.unityEl.addEventListener(cfg.errorToastEvent, (e) => {
+  unityEl.addEventListener(errorToastEvent, (e) => {
     showErrorToast(e.detail.msg);
   });
   alertClose.addEventListener('click', (e) => {
