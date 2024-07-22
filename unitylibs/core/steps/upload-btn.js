@@ -25,7 +25,7 @@ export function createErrorToast() {
   </svg>`;
   const cfg = getUnityConfig();
   cfg.errorToastEvent = 'unity:error-toast';
-  const errdom = createTag('div', { class: 'alert-toast'});
+  const errdom = createTag('div', { class: 'alert-toast' });
   const alertContent = createTag('div', { class: 'alert-content' });
   const alertIcon = createTag('div', { class: 'alert-icon' });
   const alertText = createTag('div', { class: 'alert-text' });
