@@ -1,5 +1,6 @@
 import {
   createTag,
+  getUnityLibs,
   getGuestAccessToken,
   loadImg,
   createActionBtn,
@@ -36,8 +37,10 @@ async function addProductIcon(cfg) {
   const refreshCfg = unityEl.querySelector('.icon-product-icon');
   if (!refreshCfg) return;
   const [prodIcon, refreshIcon] = refreshCfg.closest('li').querySelectorAll('img[src*=".svg"]');
+  const unityOrigin = getUnityLibs().split('/unitylibs')[0];
+  prodIcon.src = `${unityOrigin}${new URL(prodIcon.src).pathname}`;
   const iconHolder = createTag('div', { class: 'widget-product-icon show' }, prodIcon);
-  const refreshSvg = await loadSvg(refreshIcon);
+  const refreshSvg = await loadSvg(`${unityOrigin}${new URL(refreshIcon.src).pathname}`);
   const refreshHolder = createTag('a', { href: '#', class: 'widget-refresh-button' }, refreshSvg);
   await loadImg(prodIcon);
   unityWidget.querySelector('.unity-action-area').append(iconHolder);

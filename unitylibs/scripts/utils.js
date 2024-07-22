@@ -49,10 +49,14 @@ export function defineDeviceByScreenSize() {
 }
 
 export async function loadSvg(src) {
-  const res = await fetch(src);
-  if (!res.status === 200) return null;
-  const svg = await res.text();
-  return svg;
+  try {
+    const res = await fetch(src);
+    if (!res.status === 200) return null;
+    const svg = await res.text();
+    return svg;
+  } catch (e) {
+    return '';
+  }
 }
 
 export function loadImg(img) {
@@ -76,9 +80,7 @@ export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapO
     const { pathname } = new URL(img.src);
     const libSrcPath = `${getUnityLibs().split('/unitylibs')[0]}${pathname}`;
     if (iconAsImg) btnImg = createTag('img', { src: libSrcPath });
-    else {
-      btnImg = await loadSvg(libSrcPath);
-    }
+    else btnImg = await loadSvg(libSrcPath);
     const btnIcon = createTag('div', { class: 'btn-icon' }, btnImg);
     actionBtn.append(btnIcon);
   }
