@@ -52,9 +52,12 @@ export default async function createUpload(target, callback = null) {
   const { interactiveSwitchEvent, progressCircleEvent } = unityCfg;
   const li = unityEl.querySelector('.icon-upload').parentElement;
   const a = await createActionBtn(li, 'show');
-  const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg' });
+  const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg', tabIndex: -1 });
   a.append(input);
   const eft = unityEl.querySelector('.icon-error-filesize').nextSibling.textContent;
+  a.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') input.click();
+  });
   a.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;

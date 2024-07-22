@@ -111,6 +111,11 @@
   width: 100%;
   top: 0;
   left: 0;
+  cursor: pointer;
+}
+
+::-webkit-file-upload-button {
+  cursor:pointer;
 }
 
 .unity-enabled .interactive-area > .widget-refresh-button.show {
@@ -202,6 +207,7 @@
   height: 32px;
   padding: 12px 8px 12px 0;
   z-index: 2;
+  cursor: pointer;
 }
 
 .unity-enabled .interactive-area .alert-toast .alert-content .alert-close svg {
