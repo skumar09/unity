@@ -1,4 +1,4 @@
-import { createTag, getUnityConfig } from '../../scripts/utils.js';
+import { createTag, getUnityConfig } from '../../../scripts/utils.js';
 
 export default function createProgressCircle() {
   const cfg = getUnityConfig();
