@@ -65,6 +65,8 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     && !(img.src.startsWith(cfg.presentState.removeBgState.srcUrl))) {
     cfg.presentState.removeBgState.assetId = null;
     cfg.presentState.removeBgState.srcUrl = null;
+    cfg.presentState.changeBgState = {};
+    cfg.presentState.adjustments = {};
   }
   const { srcUrl, assetUrl } = cfg.presentState.removeBgState;
   const urlIsValid = assetUrl ? await fetch(assetUrl) : null;
