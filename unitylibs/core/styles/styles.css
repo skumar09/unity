@@ -45,6 +45,7 @@
   position: relative;
 }
 
+.unity-enabled .widget-refresh-button .widget-refresh-text,
 .unity-enabled .widget-refresh-button {
   display: none;
   padding: 12.8px;

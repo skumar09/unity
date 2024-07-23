@@ -41,7 +41,9 @@ async function addProductIcon(cfg) {
   prodIcon.src = `${unityOrigin}${new URL(prodIcon.src).pathname}`;
   const iconHolder = createTag('div', { class: 'widget-product-icon show' }, prodIcon);
   const refreshSvg = await loadSvg(`${unityOrigin}${new URL(refreshIcon.src).pathname}`);
+  const refreshAnalyics = createTag('div', { class: 'widget-refresh-text' }, 'Restart');
   const refreshHolder = createTag('a', { href: '#', class: 'widget-refresh-button' }, refreshSvg);
+  refreshHolder.append(refreshAnalyics);
   await loadImg(prodIcon);
   unityWidget.querySelector('.unity-action-area').append(iconHolder);
   if (!refreshIcon) return;

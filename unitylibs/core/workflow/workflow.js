@@ -97,7 +97,7 @@ async function initWorkflow(cfg) {
   cfg.unityWidget?.classList.remove('decorating');
 }
 
-export default async function init(el, unityLibs, project = 'unity') {
+export default async function init(el, project = 'unity', unityLibs = '/unitylibs') {
   setUnityLibs(unityLibs, project);
   loadStyle(`${getUnityLibs()}/core/styles/styles.css`);
   const [targetBlock, unityWidget] = await getTargetArea(el);
