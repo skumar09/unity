@@ -8,7 +8,7 @@ function getUnityLibs(prodLibs, project = 'unity') {
     libs = prodLibs;
     return libs;
   }
-  const branch = new URLSearchParams(window.location.search).get('unitylibs') || 'stage';
+  const branch = new URLSearchParams(window.location.search).get('unitylibs') || 'main';
   if (branch.indexOf('--') > -1) { libs = `https://${branch}.hlx.live/unitylibs`; return libs; }
   libs = `https://${branch}--unity--adobecom.hlx.live/unitylibs`;
   return libs;
