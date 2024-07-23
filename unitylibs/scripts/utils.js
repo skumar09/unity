@@ -50,7 +50,7 @@ export function defineDeviceByScreenSize() {
 
 export async function loadSvg(src) {
   try {
-    const res = await fetch(src);
+    const res = await fetch(src, { mode: 'no-cors' });
     if (!res.status === 200) return null;
     const svg = await res.text();
     return svg;
