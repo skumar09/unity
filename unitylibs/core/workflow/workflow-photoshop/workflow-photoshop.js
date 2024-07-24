@@ -21,7 +21,7 @@ function resetWorkflowState(cfg) {
     changeBgState: {},
     adjustments: {},
   };
-  cfg.preludeState = { assetId: null };
+  cfg.preludeState = { assetId: null, adjustments: {} };
   const img = cfg.targetEl.querySelector(':scope > picture img');
   img.style.filter = '';
 }
@@ -72,6 +72,8 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     cfg.presentState.removeBgState.srcUrl = null;
     cfg.presentState.changeBgState = {};
     cfg.presentState.adjustments = {};
+    cfg.presentState.assetId = null;
+    cfg.preludeState.adjustments = {};
   }
   const { srcUrl, assetUrl } = cfg.presentState.removeBgState;
   const urlIsValid = assetUrl ? await fetch(assetUrl) : null;
@@ -237,11 +239,11 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal)
     actionSliderCircle.style.left = `${moveCircle}%`;
     const img = targetEl.querySelector(':scope > picture img');
     const filterValue = cssFilter.replace('inputValue', value);
-    cfg.presentState.adjustments[propertyName] = { value, filterValue };
-    const imgFilters = Object.keys(cfg.presentState.adjustments);
+    cfg.preludeState.adjustments[propertyName] = { value, filterValue };
+    const imgFilters = Object.keys(cfg.preludeState.adjustments);
     img.style.filter = '';
     imgFilters.forEach((f) => {
-      img.style.filter += `${cfg.presentState.adjustments[f].filterValue} `;
+      img.style.filter += `${cfg.preludeState.adjustments[f].filterValue} `;
     });
   });
   actionSliderInput.addEventListener('change', () => {
@@ -332,6 +334,7 @@ async function changeVisibleFeature(cfg) {
 async function resetWidgetState(cfg) {
   const { unityWidget, unityEl, targetEl } = cfg;
   cfg.presentState.activeIdx = -1;
+  cfg.preludeState.adjustments = {};
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;

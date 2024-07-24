@@ -1,15 +1,36 @@
 import { createActionBtn, getGuestAccessToken, createIntersectionObserver } from '../../scripts/utils.js';
 
+function getPreludeData(cfg) {
+  const dataObj = {
+    assetId: cfg.preludeState.assetId,
+    targetProduct: 'Photoshop',
+  };
+  if (cfg.preludeState?.adjustments 
+    && (cfg.preludeState?.adjustments.hue 
+    || cfg.preludeState?.adjustments.saturation)) {
+    dataObj["payload"] = { "steps": [] };
+    dataObj.payload.steps.push(
+      { "type": "imageAdjustment", 
+        "target": "foreground", 
+        "adjustments": { }
+      });
+      if (cfg.preludeState?.adjustments.hue) {
+        dataObj.payload.steps[0].adjustments['hue'] = parseInt(cfg.preludeState?.adjustments.hue.value);
+      }
+      if (cfg.preludeState?.adjustments.saturation) {
+        dataObj.payload.steps[0].adjustments['saturation'] = parseInt(cfg.preludeState?.adjustments.saturation.value);
+      }
+  }
+  return dataObj;
+}
+
 async function continueInApp(cfg, appName, btnConfig) {
   const { unityWidget, connectorApiEndPoint, apiKey } = cfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
   btn.addEventListener('click', async () => {
-    const data = {
-      assetId: cfg.preludeState.assetId,
-      targetProduct: 'Photoshop',
-    };
+    const data = getPreludeData(cfg);
     const connectorOptions = {
       method: 'POST',
       headers: {

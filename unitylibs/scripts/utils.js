@@ -104,12 +104,34 @@ export function createIntersectionObserver({ el, callback, cfg, options = {} }) 
   return io;
 }
 
-export const unityConfig = {
-  apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
-  connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
-  apiKey: 'leo',
-  progressCircleEvent: 'unity:progress-circle',
-  errorToastEvent: 'unity:error-toast',
-  refreshWidgetEvent: 'unity:refresh-widget',
-  interactiveSwitchEvent: 'unity:interactive-switch',
-};
+export const unityConfig = (() => {
+  const { host } = window.location;
+  const commoncfg = {
+    apiKey: 'leo',
+    progressCircleEvent: 'unity:progress-circle',
+    errorToastEvent: 'unity:error-toast',
+    refreshWidgetEvent: 'unity:refresh-widget',
+    interactiveSwitchEvent: 'unity:interactive-switch'
+  }
+  const cfg = {
+    prod: {
+      apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
+      connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
+      ...commoncfg
+    },
+    stage: {
+      apiEndPoint: 'https://unity-stage.adobe.io/api/v1',
+      connectorApiEndPoint: 'https://unity-stage.adobe.io/api/v1/asset/connector',
+      ...commoncfg
+    }
+  };
+  if (host.includes(`hlx.page`)
+    || host.includes('localhost')
+    || host.includes('stage.adobe')
+    || host.includes('corp.adobe')
+    || host.includes('graybox.adobe')) {
+      return cfg.stage;
+  }
+  return cfg.prod;
+})();
+
