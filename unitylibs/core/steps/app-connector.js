@@ -42,7 +42,8 @@ async function continueInApp(cfg, appName, btnConfig) {
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
     if (response.status !== 200) return '';
-    window.location.href = response.url;
+    const {url} = await response.json();
+    window.location.href = url;
     return true;
   });
   return btn;
