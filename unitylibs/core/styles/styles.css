@@ -535,7 +535,7 @@
     width: calc(100% + 4px);
     border-radius: 8px;
     z-index: -2;
-    animation: borderChange 900ms 1 ease-out;
+    animation: borderChange 900ms 7 ease-out;
   }
 
   @keyframes borderChange {
