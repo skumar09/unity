@@ -97,7 +97,7 @@ async function initWorkflow(cfg) {
   cfg.unityWidget?.classList.remove('decorating');
   const actionBtn = cfg.unityWidget.querySelector('.unity-action-btn');
   actionBtn?.classList.add('animate-btn');
-  actionBtn.addEventListener('mouseover', () => { actionBtn.classList.remove('animate-btn'); });
+  cfg.unityWidget.addEventListener('mouseover', () => { actionBtn.classList.remove('animate-btn'); });
 }
 
 export default async function init(el, project = 'unity', unityLibs = '/unitylibs') {
