@@ -509,7 +509,7 @@
   }
 
   .unity-enabled .interactive-area .unity-action-area .ps-action-btn.animate-btn {
-    border: 2px solid transparent;
+    /* border: 2px solid transparent; */
     z-index: 1;
   }
 
@@ -535,30 +535,45 @@
     width: calc(100% + 4px);
     border-radius: 8px;
     z-index: -2;
-    animation: borderChange 900ms 7 ease-out;
+    border: none;
+    box-sizing: border-box;
+    opacity: 0;
+    animation: borderChange 1500ms 300ms 7 ease-out;
   }
 
   @keyframes borderChange {
     0% {
-      background: linear-gradient(90deg, var(--animation-blue) 50%, #DADADA 100%);
+      background: #DADADA;
+      opacity: 0;
     }
-    33.3% {
-      background: linear-gradient(90deg, var(--animation-blue) 50%, #DADADA 100%);
+    20% {
+      opacity: 1;
+      background: linear-gradient(90deg, var(--animation-blue) 0%, #DADADA 100%);
     }
-    41.6% {
+    35% {
+      opacity: 1;
+      background: linear-gradient(90deg, var(--animation-blue) 0%, #DADADA 100%);
+    }
+    42.5% {
       background: linear-gradient(135deg, var(--animation-blue) 50%, #DADADA 100%);
     }
-    49.9% {
+    50% {
       background: linear-gradient(180deg, var(--animation-blue) 50%, #DADADA 100%);
     }
-    58.2% {
+    57.5% {
       background: linear-gradient(225deg, var(--animation-blue) 50%, #DADADA 100%);
     }
-    66.6% {
-      background: linear-gradient(225deg, var(--animation-blue) 50%, #DADADA 100%);
+    65% {
+      opacity: 1;
+      background: linear-gradient(225deg, var(--animation-blue) 00%, #DADADA 100%);
+    }
+    80% {
+      opacity: 1;
+      background: linear-gradient(225deg, var(--animation-blue) 00%, #DADADA 100%);
     }
     100% {
-      background: linear-gradient(270deg, var(--animation-blue) 50%, #DADADA 100%);
+      opacity: 0;
+      background: #DADADA;
     }
   }
 }
