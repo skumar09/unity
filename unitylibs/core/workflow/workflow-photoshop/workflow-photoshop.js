@@ -367,7 +367,7 @@ async function uploadCallback(cfg) {
 }
 
 export default async function init(cfg) {
-  const { unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
+  const { targetEl, unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
   resetWorkflowState(cfg);
   await addProductIcon(cfg);
   await changeVisibleFeature(cfg);
@@ -384,5 +384,5 @@ export default async function init(cfg) {
   unityEl.addEventListener(refreshWidgetEvent, async () => {
     await switchProdIcon(cfg, true);
   });
-  createIntersectionObserver({ el: unityWidget, callback: switchProdIcon, cfg });
+  createIntersectionObserver({ el: targetEl, callback: switchProdIcon, cfg });
 }
