@@ -106,7 +106,6 @@ export default async function init(el, project = 'unity', unityLibs = '/unitylib
     loadStyle(`${getUnityLibs()}/core/styles/styles.css`, resolve);
   });
   await stylePromise;
-  loadStyle(`${getUnityLibs()}/core/styles/styles.css`);
   const [targetBlock, unityWidget] = await getTargetArea(el);
   if (!targetBlock) return;
   const [wfName, wfDetail] = getWorkFlowInformation(el);
