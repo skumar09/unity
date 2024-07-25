@@ -514,7 +514,7 @@
 
   .unity-enabled .interactive-area .unity-action-area .ps-action-btn.animate-btn::before {
     content: '';
-    background: white;
+    background: var(--dark-bg);;
     height: 100%;
     width: 100%;
     border-radius: 6px;
@@ -522,6 +522,10 @@
     position: absolute;
     top: 0;
     left: 0;
+  }
+
+  .unity-enabled .interactive-area.light .unity-action-area .ps-action-btn.animate-btn::before {
+    background: var(--light-bg);
   }
 
   .unity-enabled .interactive-area .unity-action-area .ps-action-btn.animate-btn::after {
