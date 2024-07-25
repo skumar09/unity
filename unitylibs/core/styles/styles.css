@@ -540,7 +540,7 @@
     z-index: -2;
     border: none;
     box-sizing: border-box;
-    animation: borderChange 1800ms infinite ease-in;
+    animation: borderChange 1800ms 7 ease-in;
   }
 
   @keyframes borderChange {
