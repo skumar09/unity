@@ -5,6 +5,7 @@
   --highlight-blue: #1473E6;
   --alert-red: #D73220;
   --separator-gray: #CCC;
+  --animation-blue: #1273E6;
 }
 
 .unity,
@@ -505,6 +506,60 @@
   .unity-enabled .interactive-area .unity-widget .continue-in-app:focus-visible,
   .unity-enabled .interactive-area .unity-widget .continue-in-app:hover {
     border: 2px solid var(--color-black);
+  }
+
+  .unity-enabled .interactive-area .unity-action-area .ps-action-btn.animate-btn {
+    border: 2px solid transparent;
+    z-index: 1;
+  }
+
+  .unity-enabled .interactive-area .unity-action-area .ps-action-btn.animate-btn::before {
+    content: '';
+    background: white;
+    height: 100%;
+    width: 100%;
+    border-radius: 6px;
+    z-index: -1;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .unity-enabled .interactive-area .unity-action-area .ps-action-btn.animate-btn::after {
+    content: '';
+    background: #DADADA;
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    height: calc(100% + 4px);
+    width: calc(100% + 4px);
+    border-radius: 8px;
+    z-index: -2;
+    animation: borderChange 900ms 1 ease-out;
+  }
+
+  @keyframes borderChange {
+    0% {
+      background: linear-gradient(90deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
+    33.3% {
+      background: linear-gradient(90deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
+    41.6% {
+      background: linear-gradient(135deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
+    49.9% {
+      background: linear-gradient(180deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
+    58.2% {
+      background: linear-gradient(225deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
+    66.6% {
+      background: linear-gradient(225deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
+    100% {
+      background: linear-gradient(270deg, var(--animation-blue) 50%, #DADADA 100%);
+    }
   }
 }
 

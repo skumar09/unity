@@ -95,6 +95,9 @@ async function initWorkflow(cfg) {
   const { default: wfinit } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
   await wfinit(cfg);
   cfg.unityWidget?.classList.remove('decorating');
+  const actionBtn = cfg.unityWidget.querySelector('.unity-action-btn');
+  actionBtn?.classList.add('animate-btn');
+  actionBtn.addEventListener('mouseover', () => { actionBtn.classList.remove('animate-btn'); });
 }
 
 export default async function init(el, project = 'unity', unityLibs = '/unitylibs') {
