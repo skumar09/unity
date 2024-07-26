@@ -6,7 +6,8 @@ import {
   createActionBtn,
   loadSvg,
   decorateDefaultLinkAnalytics,
-  createIntersectionObserver } from '../../../scripts/utils.js';
+  createIntersectionObserver,
+} from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
@@ -59,9 +60,27 @@ async function addProductIcon(cfg) {
   targetEl.append(mobileRefreshHolder);
 }
 
+async function handleEvent(cfg, eventHandler) {
+  const { unityEl, progressCircleEvent, errorToastEvent } = cfg;
+  unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+  try {
+    await eventHandler();
+  } catch (e) {
+    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+  } finally {
+    unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+  }
+}
+
 async function removeBgHandler(cfg, changeDisplay = true) {
-  const { apiEndPoint, apiKey, targetEl } = cfg;
-  const { unityEl, interactiveSwitchEvent } = cfg;
+  const {
+    apiEndPoint,
+    apiKey,
+    errorToastEvent,
+    interactiveSwitchEvent,
+    targetEl,
+    unityEl,
+  } = cfg;
   const { endpoint } = cfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
   const hasExec = cfg.presentState.removeBgState.srcUrl;
@@ -90,6 +109,10 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
   cfg.presentState.removeBgState.srcUrl = imgUrl;
   const id = await uploadAsset(cfg, imgUrl);
+  if (!id) {
+    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    return false;
+  }
   const removeBgOptions = {
     method: 'POST',
     headers: {
@@ -100,7 +123,10 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     body: `{"surfaceId":"Unity","assets":[{"id": "${id}"}]}`,
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, removeBgOptions);
-  if (response.status !== 200) return true;
+  if (response.status !== 200) {
+    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    return false;
+  }
   const { outputUrl } = await response.json();
   const opId = new URL(outputUrl).pathname.split('/').pop();
   cfg.presentState.removeBgState.assetId = opId;
@@ -114,27 +140,28 @@ async function removeBgHandler(cfg, changeDisplay = true) {
 }
 
 async function removebg(cfg, featureName) {
-  const { wfDetail, unityWidget, unityEl, progressCircleEvent } = cfg;
+  const { wfDetail, unityWidget } = cfg;
   const removebgBtn = unityWidget.querySelector('.ps-action-btn.removebg-button');
   if (removebgBtn) return removebgBtn;
   const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'ps-action-btn removebg-button show');
   btn.addEventListener('click', async (evt) => {
     evt.preventDefault();
-    try {
-      unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-      await removeBgHandler(cfg);
-    } catch (e) {
-      // error
-    } finally {
-      unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-    }
+    handleEvent(cfg, () => removeBgHandler(cfg));
   });
   return btn;
 }
 
 async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   if (refreshState) resetWorkflowState();
-  const { apiEndPoint, apiKey, targetEl, unityWidget, unityEl, interactiveSwitchEvent } = cfg;
+  const {
+    apiEndPoint,
+    apiKey,
+    targetEl,
+    unityWidget,
+    unityEl,
+    interactiveSwitchEvent,
+    errorToastEvent,
+  } = cfg;
   const { endpoint } = cfg.wfDetail.changebg;
   const unityRetriggered = await removeBgHandler(cfg, false);
   const img = targetEl.querySelector('picture img');
@@ -166,7 +193,10 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
           }`,
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, changeBgOptions);
-  if (response.status !== 200) return;
+  if (response.status !== 200) {
+    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    return;
+  }
   const { outputUrl } = await response.json();
   const changeBgId = new URL(outputUrl).pathname.split('/').pop();
   cfg.presentState.changeBgState[bgImgUrl] = {};
@@ -179,7 +209,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
 }
 
 async function changebg(cfg, featureName) {
-  const { unityEl, unityWidget, wfDetail, progressCircleEvent } = cfg;
+  const { unityWidget, wfDetail } = cfg;
   const { authorCfg } = wfDetail[featureName];
   const changebgBtn = unityWidget.querySelector('.ps-action-btn.changebg-button');
   if (changebgBtn) return changebgBtn;
@@ -197,14 +227,7 @@ async function changebg(cfg, featureName) {
     bgSelectorTray.append(a);
     a.addEventListener('click', async (evt) => {
       evt.preventDefault();
-      try {
-        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-        await changeBgHandler(cfg, bgImg.src, false);
-      } catch (e) {
-        // error
-      } finally {
-        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-      }
+      handleEvent(cfg, () => changeBgHandler(cfg, bgImg.src, false));
     });
   });
   unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);

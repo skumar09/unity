@@ -1,8 +1,10 @@
 import { createTag, createActionBtn } from '../../scripts/utils.js';
 
-function showErrorToast(msg) {
-  document.querySelector('.unity-enabled .interactive-area .alert-toast .alert-text p').innerText = msg;
-  document.querySelector('.unity-enabled .interactive-area .alert-toast').style.display = 'flex';
+function showErrorToast(cfg, className) {
+  const { unityEl } = cfg;
+  const msg = unityEl.querySelector(className)?.nextSibling.textContent;
+  document.querySelector('.unity-enabled .interactive-area .alert-holder .alert-toast .alert-text p').innerText = msg;
+  document.querySelector('.unity-enabled .interactive-area .alert-holder').style.display = 'flex';
 }
 
 export function createErrorToast(cfg) {
@@ -24,6 +26,7 @@ export function createErrorToast(cfg) {
   </defs>
   </svg>`;
   const { unityEl, errorToastEvent } = cfg;
+  const errholder = createTag('div', { class: 'alert-holder' });
   const errdom = createTag('div', { class: 'alert-toast' });
   const alertContent = createTag('div', { class: 'alert-content' });
   const alertIcon = createTag('div', { class: 'alert-icon' });
@@ -36,23 +39,22 @@ export function createErrorToast(cfg) {
   alertClose.innerHTML = closeImg;
   alertContent.append(alertIcon, alertClose);
   errdom.append(alertContent);
+  errholder.append(errdom);
   unityEl.addEventListener(errorToastEvent, (e) => {
-    showErrorToast(e.detail.msg);
+    showErrorToast(cfg, e.detail.className);
   });
   alertClose.addEventListener('click', (e) => {
-    e.target.closest('.alert-toast').style.display = 'none';
+    e.target.closest('.alert-holder').style.display = 'none';
   });
-  return errdom;
+  return errholder;
 }
 
 export default async function createUpload(cfg, target, callback = null) {
-  const { unityEl, errorToastEvent } = cfg;
-  const { interactiveSwitchEvent, progressCircleEvent } = cfg;
+  const { unityEl, errorToastEvent, interactiveSwitchEvent, progressCircleEvent } = cfg;
   const li = unityEl.querySelector('.icon-upload').parentElement;
   const a = await createActionBtn(li, 'show');
   const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg', tabIndex: -1 });
   a.append(input);
-  const eft = unityEl.querySelector('.icon-error-filesize').nextSibling.textContent;
   a.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') input.click();
   });
@@ -60,23 +62,30 @@ export default async function createUpload(cfg, target, callback = null) {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 400000000) {
-      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { msg: eft } }));
+      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-filesize' } }));
       return;
     }
     const objUrl = URL.createObjectURL(file);
     target.src = objUrl;
-    cfg.uploadState.filetype = file.type;
-    if (callback) {
-      try {
-        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-        await callback(cfg);
-        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-      } catch (err) {
-        unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
-        return;
+    target.onload = async () => {
+      cfg.uploadState.filetype = file.type;
+      if (callback) {
+        try {
+          unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+          await callback(cfg);
+          unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+        } catch (err) {
+          unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+          return;
+        }
       }
-    }
-    unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
+      if (document.querySelector('.unity-enabled .interactive-area .alert-holder').style.display !== 'flex') {
+        unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
+      }
+    };
+    target.onerror = () => {
+      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    };
   });
   return a;
 }

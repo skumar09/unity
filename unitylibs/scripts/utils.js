@@ -35,8 +35,12 @@ const { decorateDefaultLinkAnalytics } = await import(`${miloLibs}/martech/attri
 export { decorateDefaultLinkAnalytics };
 
 export function getGuestAccessToken() {
-  const { token } = window.adobeIMS.getAccessToken();
-  return `Bearer ${token}`;
+  try {
+    const { token } = window.adobeIMS.getAccessToken();
+    return `Bearer ${token}`;
+  } catch (e) {
+    return '';
+  }
 }
 
 export function defineDeviceByScreenSize() {
@@ -111,27 +115,26 @@ export const unityConfig = (() => {
     progressCircleEvent: 'unity:progress-circle',
     errorToastEvent: 'unity:error-toast',
     refreshWidgetEvent: 'unity:refresh-widget',
-    interactiveSwitchEvent: 'unity:interactive-switch'
-  }
+    interactiveSwitchEvent: 'unity:interactive-switch',
+  };
   const cfg = {
     prod: {
       apiEndPoint: 'https://assistant-int.adobe.io/api/v1',
       connectorApiEndPoint: 'https://assistant-dev2.adobe.io/api/v1/asset/connector',
-      ...commoncfg
+      ...commoncfg,
     },
     stage: {
       apiEndPoint: 'https://unity-stage.adobe.io/api/v1',
       connectorApiEndPoint: 'https://unity-stage.adobe.io/api/v1/asset/connector',
-      ...commoncfg
-    }
+      ...commoncfg,
+    },
   };
-  if (host.includes(`hlx.page`)
+  if (host.includes('hlx.page')
     || host.includes('localhost')
     || host.includes('stage.adobe')
     || host.includes('corp.adobe')
     || host.includes('graybox.adobe')) {
-      return cfg.stage;
+    return cfg.stage;
   }
   return cfg.prod;
 })();
-

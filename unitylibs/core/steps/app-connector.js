@@ -5,27 +5,29 @@ function getPreludeData(cfg) {
     assetId: cfg.preludeState.assetId,
     targetProduct: 'Photoshop',
   };
-  if (cfg.preludeState?.adjustments 
-    && (cfg.preludeState?.adjustments.hue 
+  if (cfg.preludeState?.adjustments
+    && (cfg.preludeState?.adjustments.hue
     || cfg.preludeState?.adjustments.saturation)) {
-    dataObj["payload"] = { "steps": [] };
+    dataObj.payload = { steps: [] };
     dataObj.payload.steps.push(
-      { "type": "imageAdjustment", 
-        "target": "foreground", 
-        "adjustments": { }
-      });
-      if (cfg.preludeState?.adjustments.hue) {
-        dataObj.payload.steps[0].adjustments['hue'] = parseInt(cfg.preludeState?.adjustments.hue.value);
-      }
-      if (cfg.preludeState?.adjustments.saturation) {
-        dataObj.payload.steps[0].adjustments['saturation'] = parseInt(cfg.preludeState?.adjustments.saturation.value);
-      }
+      {
+        type: 'imageAdjustment',
+        target: 'foreground',
+        adjustments: { },
+      },
+    );
+    if (cfg.preludeState?.adjustments.hue) {
+      dataObj.payload.steps[0].adjustments.hue = parseInt(cfg.preludeState?.adjustments.hue.value);
+    }
+    if (cfg.preludeState?.adjustments.saturation) {
+      dataObj.payload.steps[0].adjustments.saturation = parseInt(cfg.preludeState?.adjustments.saturation.value);
+    }
   }
   return dataObj;
 }
 
 async function continueInApp(cfg, appName, btnConfig) {
-  const { unityWidget, connectorApiEndPoint, apiKey } = cfg;
+  const { unityEl, unityWidget, connectorApiEndPoint, apiKey, errorToastEvent } = cfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
@@ -41,8 +43,11 @@ async function continueInApp(cfg, appName, btnConfig) {
       body: JSON.stringify(data),
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
-    if (response.status !== 200) return '';
-    const {url} = await response.json();
+    if (response.status !== 200) {
+      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+      return '';
+    }
+    const { url } = await response.json();
     window.location.href = url;
     return true;
   });
