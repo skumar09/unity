@@ -86,6 +86,7 @@ export default async function createUpload(cfg, target, callback = null) {
     target.onerror = () => {
       unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
     };
+    e.target.value = '';
   });
   return a;
 }
