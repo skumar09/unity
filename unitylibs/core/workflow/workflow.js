@@ -1,4 +1,11 @@
-import { createTag, loadStyle, setUnityLibs, getUnityLibs, unityConfig, defineDeviceByScreenSize } from '../../scripts/utils.js';
+import {
+  createTag,
+  loadStyle,
+  setUnityLibs,
+  getUnityLibs,
+  unityConfig,
+  defineDeviceByScreenSize,
+} from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
 import createProgressCircle from '../features/progress-circle/progress-circle.js';
 
