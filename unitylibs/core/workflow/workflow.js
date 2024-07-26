@@ -5,6 +5,7 @@ import {
   getUnityLibs,
   unityConfig,
   defineDeviceByScreenSize,
+  getConfig
 } from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
 import createProgressCircle from '../features/progress-circle/progress-circle.js';
@@ -110,6 +111,8 @@ async function initWorkflow(cfg) {
 }
 
 export default async function init(el, project = 'unity', unityLibs = '/unitylibs') {
+  const { imsClientId } = getConfig();
+  if (imsClientId) unityConfig.apiKey = imsClientId;
   setUnityLibs(unityLibs, project);
   const stylePromise = new Promise((resolve) => {
     loadStyle(`${getUnityLibs()}/core/styles/styles.css`, resolve);
