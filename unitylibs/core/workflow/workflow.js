@@ -105,7 +105,7 @@ async function initWorkflow(cfg) {
   const actionBtn = cfg.unityWidget.querySelector('.unity-action-btn');
   actionBtn?.classList.add('animate-btn');
   cfg.unityWidget.addEventListener('mouseover', () => {
-    actionBtn.classList.remove('animate-btn');
+    actionBtn?.classList.remove('animate-btn');
   }, { once: true });
 }
 
