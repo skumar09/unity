@@ -114,10 +114,6 @@ export default async function init(el, project = 'unity', unityLibs = '/unitylib
   const { imsClientId } = getConfig();
   if (imsClientId) unityConfig.apiKey = imsClientId;
   setUnityLibs(unityLibs, project);
-  const stylePromise = new Promise((resolve) => {
-    loadStyle(`${getUnityLibs()}/core/styles/styles.css`, resolve);
-  });
-  await stylePromise;
   const [targetBlock, unityWidget] = await getTargetArea(el);
   if (!targetBlock) return;
   const [wfName, wfDetail] = getWorkFlowInformation(el);
