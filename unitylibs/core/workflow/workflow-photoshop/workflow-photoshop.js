@@ -22,7 +22,7 @@ function resetWorkflowState(cfg) {
     changeBgState: {},
     adjustments: {},
   };
-  cfg.preludeState = { assetId: null, adjustments: {} };
+  cfg.preludeState = { assetId: null, operations: [] };
   const img = cfg.targetEl.querySelector(':scope > picture img');
   img.style.filter = '';
 }
@@ -92,7 +92,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     cfg.presentState.changeBgState = {};
     cfg.presentState.adjustments = {};
     cfg.presentState.assetId = null;
-    cfg.preludeState.adjustments = {};
+    cfg.preludeState.operations = [];
   }
   const { srcUrl, assetUrl } = cfg.presentState.removeBgState;
   const urlIsValid = assetUrl ? await fetch(assetUrl) : null;
@@ -113,6 +113,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
     return false;
   }
+  cfg.preludeState.assetId = id;
   const removeBgOptions = {
     method: 'POST',
     headers: {
@@ -130,8 +131,8 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   const { outputUrl } = await response.json();
   const opId = new URL(outputUrl).pathname.split('/').pop();
   cfg.presentState.removeBgState.assetId = opId;
-  cfg.preludeState.assetId = opId;
   cfg.presentState.removeBgState.assetUrl = outputUrl;
+  cfg.preludeState.operations.push({ name: 'removeBackground' });
   if (!changeDisplay) return true;
   img.src = outputUrl;
   await loadImg(img);
@@ -202,7 +203,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   cfg.presentState.changeBgState[bgImgUrl] = {};
   cfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
   cfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
-  cfg.preludeState.assetId = changeBgId;
+  cfg.preludeState.operations.push({ name: 'changeBackground', assetIds: [bgId] });
   img.src = outputUrl;
   await loadImg(img);
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
@@ -263,11 +264,11 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal)
     actionSliderCircle.style.left = `${moveCircle}%`;
     const img = targetEl.querySelector(':scope > picture img');
     const filterValue = cssFilter.replace('inputValue', value);
-    cfg.preludeState.adjustments[propertyName] = { value, filterValue };
-    const imgFilters = Object.keys(cfg.preludeState.adjustments);
+    cfg.presentState.adjustments[propertyName] = { value, filterValue };
+    const imgFilters = Object.keys(cfg.presentState.adjustments);
     img.style.filter = '';
     imgFilters.forEach((f) => {
-      img.style.filter += `${cfg.preludeState.adjustments[f].filterValue} `;
+      img.style.filter += `${cfg.presentState.adjustments[f].filterValue} `;
     });
   });
   actionSliderInput.addEventListener('change', () => {
@@ -359,7 +360,7 @@ async function changeVisibleFeature(cfg) {
 async function resetWidgetState(cfg) {
   const { unityWidget, unityEl, targetEl } = cfg;
   cfg.presentState.activeIdx = -1;
-  cfg.preludeState.adjustments = {};
+  cfg.preludeState.operations = {};
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;

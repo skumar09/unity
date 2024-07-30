@@ -4,24 +4,18 @@ function getPreludeData(cfg) {
   const dataObj = {
     assetId: cfg.preludeState.assetId,
     targetProduct: 'Photoshop',
+    payload: { operations: [...cfg.preludeState.operations] },
   };
-  if (cfg.preludeState?.adjustments
-    && (cfg.preludeState?.adjustments.hue
-    || cfg.preludeState?.adjustments.saturation)) {
-    dataObj.payload = { steps: [] };
-    dataObj.payload.steps.push(
-      {
-        type: 'imageAdjustment',
-        target: 'foreground',
-        adjustments: { },
-      },
-    );
-    if (cfg.preludeState?.adjustments.hue) {
-      dataObj.payload.steps[0].adjustments.hue = parseInt(cfg.preludeState?.adjustments.hue.value);
-    }
-    if (cfg.preludeState?.adjustments.saturation) {
-      dataObj.payload.steps[0].adjustments.saturation = parseInt(cfg.preludeState?.adjustments.saturation.value);
-    }
+  if (cfg.presentState?.adjustments
+    && (cfg.presentState?.adjustments.hue
+    || cfg.presentState?.adjustments.saturation)) {
+    const imageAdjustment = {
+      name: 'imageAdjustment',
+      target: '',
+      hue: parseInt(cfg.presentState?.adjustments.hue.value, 10),
+      sat: parseInt(cfg.presentState?.adjustments.saturation.value, 10),
+    };
+    dataObj.payload.operations.push(imageAdjustment);
   }
   return dataObj;
 }
