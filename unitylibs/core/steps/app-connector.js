@@ -6,9 +6,7 @@ function getPreludeData(cfg) {
     targetProduct: 'Photoshop',
     payload: { operations: [...cfg.preludeState.operations] },
   };
-  if (cfg.presentState?.adjustments
-    && (cfg.presentState?.adjustments.hue
-    || cfg.presentState?.adjustments.saturation)) {
+  if (cfg.presentState?.adjustments && cfg.presentState?.adjustments.modified) {
     const imageAdjustment = {
       name: 'imageAdjustment',
       target: '',

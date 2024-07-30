@@ -270,6 +270,7 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal)
     actionSliderCircle.style.left = `${moveCircle}%`;
     const img = targetEl.querySelector(':scope > picture img');
     updateAdjustment(value);
+    cfg.presentState.adjustments.modified = true;
     const imgFilters = Object.keys(cfg.presentState.adjustments);
     img.style.filter = '';
     imgFilters.forEach((f) => {
