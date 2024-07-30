@@ -145,6 +145,7 @@ async function removebg(cfg, featureName) {
   if (removebgBtn) return removebgBtn;
   const btn = await createActionBtn(wfDetail[featureName].authorCfg, 'ps-action-btn removebg-button show');
   btn.addEventListener('click', async (evt) => {
+    evt.preventDefault();
     handleEvent(cfg, () => removeBgHandler(cfg));
   });
   return btn;
