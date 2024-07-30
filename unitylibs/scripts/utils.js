@@ -93,6 +93,9 @@ export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapO
     if (swapOrder) actionBtn.prepend(btnTxt);
     else actionBtn.append(btnTxt);
   }
+  actionBtn.addEventListener('click', (evt) => {
+    evt.preventDefault();
+  });
   return actionBtn;
 }
 
