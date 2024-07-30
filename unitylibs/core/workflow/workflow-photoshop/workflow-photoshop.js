@@ -366,7 +366,7 @@ async function changeVisibleFeature(cfg) {
 async function resetWidgetState(cfg) {
   const { unityWidget, unityEl, targetEl } = cfg;
   cfg.presentState.activeIdx = -1;
-  cfg.preludeState.operations = {};
+  cfg.preludeState.operations = [];
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;
