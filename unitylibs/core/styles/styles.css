@@ -499,6 +499,10 @@
     border: 2px solid var(--border-gray);
   }
 
+  .unity-enabled .interactive-area .unity-action-area .unity-action-btn.focus {
+    border: 2px solid var(--highlight-blue);
+  }
+
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn:focus-visible,
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn:hover {
     border: 2px solid var(--highlight-blue);

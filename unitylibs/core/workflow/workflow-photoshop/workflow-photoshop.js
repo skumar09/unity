@@ -215,6 +215,7 @@ async function changebg(cfg, featureName) {
   const changebgBtn = unityWidget.querySelector('.ps-action-btn.changebg-button');
   if (changebgBtn) return changebgBtn;
   const btn = await createActionBtn(authorCfg, 'ps-action-btn changebg-button subnav-active show');
+  btn.classList.add('focus');
   btn.dataset.optionsTray = 'changebg-options-tray';
   const bgSelectorTray = createTag('div', { class: 'changebg-options-tray show' });
   const bgOptions = authorCfg.querySelectorAll(':scope ul li');
@@ -237,6 +238,7 @@ async function changebg(cfg, featureName) {
     if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
     else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .changebg-options-tray'));
+    btn.classList.contains('focus') ? btn.classList.remove('focus') : btn.classList.add('focus');
   });
   return btn;
 }
@@ -296,6 +298,7 @@ async function changeAdjustments(cfg, featureName) {
     return adjustmentBtn;
   }
   const btn = await createActionBtn(authorCfg, 'ps-action-btn adjustment-button subnav-active show');
+  btn.classList.add('focus');
   btn.dataset.optionsTray = 'adjustment-options-tray';
   const sliderTray = createTag('div', { class: 'adjustment-options-tray show' });
   const sliderOptions = authorCfg.querySelectorAll(':scope > ul li');
@@ -321,6 +324,7 @@ async function changeAdjustments(cfg, featureName) {
     if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
     else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .adjustment-options-tray'));
+    btn.classList.contains('focus') ? btn.classList.remove('focus') : btn.classList.add('focus');
   });
   return btn;
 }
