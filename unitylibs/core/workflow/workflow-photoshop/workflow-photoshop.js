@@ -241,8 +241,9 @@ async function changebg(cfg, featureName) {
   return btn;
 }
 
-function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal) {
+function createSlider(cfg, tray, propertyName, label, cssFilter, valObj) {
   const { targetEl } = cfg;
+  const { minVal, maxVal, zeroVal } = valObj;
   const actionDiv = createTag('div', { class: 'adjustment-option' });
   const actionLabel = createTag('label', { class: 'adjustment-label' }, label);
   const actionSliderDiv = createTag('div', { class: `adjustment-container ${propertyName}` });
@@ -250,15 +251,14 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal)
     const filterValue = cssFilter.replace('inputValue', value);
     cfg.presentState.adjustments[propertyName] = { value, filterValue };
   };
-  const defaultValue = (minVal + maxVal) / 2;
   const actionSliderInput = createTag('input', {
     type: 'range',
     min: minVal,
     max: maxVal,
-    value: defaultValue,
+    value: zeroVal,
     class: `adjustment-slider ${propertyName}`,
   });
-  updateAdjustment(defaultValue);
+  updateAdjustment(zeroVal);
   const actionAnalytics = createTag('div', { class: 'analytics-content' }, `Adjust ${label} slider`);
   const actionSliderCircle = createTag('a', { href: '#', class: `adjustment-circle ${propertyName}` }, actionAnalytics);
   actionSliderDiv.append(actionSliderInput, actionSliderCircle);
@@ -306,10 +306,10 @@ async function changeAdjustments(cfg, featureName) {
     const [, actionName] = iconName.split('-');
     switch (actionName) {
       case 'hue':
-        createSlider(cfg, sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', -180, 180);
+        createSlider(cfg, sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', { 'minVal': -180, 'maxVal': 180, 'zeroVal': 0 });
         break;
       case 'saturation':
-        createSlider(cfg, sliderTray, 'saturation', o.innerText, 'saturate(inputValue%)', 0, 300);
+        createSlider(cfg, sliderTray, 'saturation', o.innerText, 'saturate(inputValue%)', { 'minVal': 0, 'maxVal': 300, 'zeroVal': 100 });
         break;
       default:
         break;
