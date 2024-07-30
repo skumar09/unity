@@ -232,6 +232,7 @@ async function changebg(cfg, featureName) {
   });
   unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);
   btn.addEventListener('click', () => {
+    evt.preventDefault();
     if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
     else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .changebg-options-tray'));
@@ -309,6 +310,7 @@ async function changeAdjustments(cfg, featureName) {
   });
   unityWidget.querySelector('.unity-option-area').append(sliderTray);
   btn.addEventListener('click', () => {
+    evt.preventDefault();
     if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
     else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .adjustment-options-tray'));
