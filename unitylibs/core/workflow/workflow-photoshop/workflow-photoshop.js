@@ -246,13 +246,19 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal)
   const actionDiv = createTag('div', { class: 'adjustment-option' });
   const actionLabel = createTag('label', { class: 'adjustment-label' }, label);
   const actionSliderDiv = createTag('div', { class: `adjustment-container ${propertyName}` });
+  const updateAdjustment = (value) => {
+    const filterValue = cssFilter.replace('inputValue', value);
+    cfg.presentState.adjustments[propertyName] = { value, filterValue };
+  };
+  const defaultValue = (minVal + maxVal) / 2;
   const actionSliderInput = createTag('input', {
     type: 'range',
     min: minVal,
     max: maxVal,
-    value: (minVal + maxVal) / 2,
+    value: defaultValue,
     class: `adjustment-slider ${propertyName}`,
   });
+  updateAdjustment(defaultValue);
   const actionAnalytics = createTag('div', { class: 'analytics-content' }, `Adjust ${label} slider`);
   const actionSliderCircle = createTag('a', { href: '#', class: `adjustment-circle ${propertyName}` }, actionAnalytics);
   actionSliderDiv.append(actionSliderInput, actionSliderCircle);
@@ -263,8 +269,7 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, minVal, maxVal)
     const moveCircle = 3 + (centerOffset * 94);
     actionSliderCircle.style.left = `${moveCircle}%`;
     const img = targetEl.querySelector(':scope > picture img');
-    const filterValue = cssFilter.replace('inputValue', value);
-    cfg.presentState.adjustments[propertyName] = { value, filterValue };
+    updateAdjustment(value);
     const imgFilters = Object.keys(cfg.presentState.adjustments);
     img.style.filter = '';
     imgFilters.forEach((f) => {
