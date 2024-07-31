@@ -101,10 +101,13 @@
     padding: 5px 5px 0;
     gap: 9px;
     border-radius: 8px 8px 0 0;
+    align-items: center;
+    justify-content: center;
   }
 
   .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
     width: 100%;
+    max-width: 93px;
   }
 
   .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option img {
