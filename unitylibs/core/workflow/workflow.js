@@ -5,7 +5,7 @@ import {
   getUnityLibs,
   unityConfig,
   defineDeviceByScreenSize,
-  getConfig
+  getConfig,
 } from '../../scripts/utils.js';
 import { createErrorToast } from '../steps/upload-btn.js';
 import createProgressCircle from '../features/progress-circle/progress-circle.js';

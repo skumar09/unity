@@ -12,6 +12,11 @@ import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
 import createUpload from '../../steps/upload-btn.js';
 
+function resetSliders(unityWidget) {
+  const adjustmentCircles = unityWidget.querySelectorAll('.adjustment-circle');
+  adjustmentCircles.forEach((c) => { c.style = ''; });
+}
+
 function resetWorkflowState(cfg) {
   cfg.presentState = {
     activeIdx: -1,
@@ -25,6 +30,7 @@ function resetWorkflowState(cfg) {
   cfg.preludeState = { assetId: null, operations: [] };
   const img = cfg.targetEl.querySelector(':scope > picture img');
   img.style.filter = '';
+  resetSliders(cfg.unityWidget);
 }
 
 function toggleDisplay(domEl) {
@@ -99,7 +105,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   if (cfg.presentState.removeBgState.assetId && urlIsValid?.status === 200) {
     if (changeDisplay) {
       img.src = cfg.presentState.removeBgState.assetUrl;
-      cfg.preludeState.assetId = cfg.presentState.removeBgState.assetId;
+      cfg.preludeState.operations.push({ name: 'removeBackground' });
       await loadImg(img);
       unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     }
@@ -170,14 +176,14 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   const bgImg = selectedUrl || unityWidget.querySelector('.unity-option-area .changebg-options-tray img').dataset.backgroundImg;
   const { origin, pathname } = new URL(bgImg);
   const bgImgUrl = `${origin}${pathname}`;
+  const bgId = await uploadAsset(cfg, bgImgUrl);
   if (!unityRetriggered && cfg.presentState.changeBgState[bgImgUrl]?.assetId) {
     img.src = cfg.presentState.changeBgState[bgImgUrl].assetUrl;
     await loadImg(img);
-    cfg.preludeState.assetId = cfg.presentState.changeBgState[bgImgUrl].assetId;
+    cfg.preludeState.operations.push({ name: 'changeBackground', assetIds: [bgId] });
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     return;
   }
-  const bgId = await uploadAsset(cfg, bgImgUrl);
   const changeBgOptions = {
     method: 'POST',
     headers: {
@@ -238,9 +244,18 @@ async function changebg(cfg, featureName) {
     if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
     else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .changebg-options-tray'));
-    btn.classList.contains('focus') ? btn.classList.remove('focus') : btn.classList.add('focus');
+    if (btn.classList.contains('focus')) {
+      btn.classList.remove('focus');
+    } else {
+      btn.classList.add('focus');
+    }
   });
   return btn;
+}
+
+function updateAdjustment(cfg, cssFilter, propertyName, value) {
+  const filterValue = cssFilter.replace('inputValue', value);
+  cfg.presentState.adjustments[propertyName] = { value, filterValue };
 }
 
 function createSlider(cfg, tray, propertyName, label, cssFilter, valObj) {
@@ -249,10 +264,6 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, valObj) {
   const actionDiv = createTag('div', { class: 'adjustment-option' });
   const actionLabel = createTag('label', { class: 'adjustment-label' }, label);
   const actionSliderDiv = createTag('div', { class: `adjustment-container ${propertyName}` });
-  const updateAdjustment = (value) => {
-    const filterValue = cssFilter.replace('inputValue', value);
-    cfg.presentState.adjustments[propertyName] = { value, filterValue };
-  };
   const actionSliderInput = createTag('input', {
     type: 'range',
     min: minVal,
@@ -260,7 +271,7 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, valObj) {
     value: zeroVal,
     class: `adjustment-slider ${propertyName}`,
   });
-  updateAdjustment(zeroVal);
+  updateAdjustment(cfg, cssFilter, propertyName, zeroVal);
   const actionAnalytics = createTag('div', { class: 'analytics-content' }, `Adjust ${label} slider`);
   const actionSliderCircle = createTag('a', { href: '#', class: `adjustment-circle ${propertyName}` }, actionAnalytics);
   actionSliderDiv.append(actionSliderInput, actionSliderCircle);
@@ -271,7 +282,7 @@ function createSlider(cfg, tray, propertyName, label, cssFilter, valObj) {
     const moveCircle = 3 + (centerOffset * 94);
     actionSliderCircle.style.left = `${moveCircle}%`;
     const img = targetEl.querySelector(':scope > picture img');
-    updateAdjustment(value);
+    updateAdjustment(cfg, cssFilter, propertyName, value);
     cfg.presentState.adjustments.modified = true;
     const imgFilters = Object.keys(cfg.presentState.adjustments);
     img.style.filter = '';
@@ -292,9 +303,15 @@ async function changeAdjustments(cfg, featureName) {
   const { unityWidget, wfDetail, targetEl } = cfg;
   const { authorCfg } = wfDetail[featureName];
   const adjustmentBtn = unityWidget.querySelector('.ps-action-btn.adjustment-button');
+  const hueCssFilter = 'hue-rotate(inputValuedeg)';
+  const saturationCssFilter = 'saturate(inputValue%)';
+  const hueZeroVal = 0;
+  const saturationZeroVal = 100;
   if (adjustmentBtn) {
     const img = targetEl.querySelector(':scope > picture img');
     img.style.filter = '';
+    updateAdjustment(cfg, hueCssFilter, 'hue', hueZeroVal);
+    updateAdjustment(cfg, saturationCssFilter, 'saturation', saturationZeroVal);
     return adjustmentBtn;
   }
   const btn = await createActionBtn(authorCfg, 'ps-action-btn adjustment-button subnav-active show');
@@ -309,10 +326,10 @@ async function changeAdjustments(cfg, featureName) {
     const [, actionName] = iconName.split('-');
     switch (actionName) {
       case 'hue':
-        createSlider(cfg, sliderTray, 'hue', o.innerText, 'hue-rotate(inputValuedeg)', { 'minVal': -180, 'maxVal': 180, 'zeroVal': 0 });
+        createSlider(cfg, sliderTray, 'hue', o.innerText, hueCssFilter, { minVal: -180, maxVal: 180, zeroVal: hueZeroVal });
         break;
       case 'saturation':
-        createSlider(cfg, sliderTray, 'saturation', o.innerText, 'saturate(inputValue%)', { 'minVal': 0, 'maxVal': 300, 'zeroVal': 100 });
+        createSlider(cfg, sliderTray, 'saturation', o.innerText, saturationCssFilter, { minVal: 0, maxVal: 300, zeroVal: saturationZeroVal });
         break;
       default:
         break;
@@ -324,7 +341,11 @@ async function changeAdjustments(cfg, featureName) {
     if (btn.classList.contains('subnav-active')) btn.classList.remove('subnav-active');
     else btn.classList.add('subnav-active');
     toggleDisplay(unityWidget.querySelector('.unity-option-area .adjustment-options-tray'));
-    btn.classList.contains('focus') ? btn.classList.remove('focus') : btn.classList.add('focus');
+    if (btn.classList.contains('focus')) {
+      btn.classList.remove('focus');
+    } else {
+      btn.classList.add('focus');
+    }
   });
   return btn;
 }
@@ -379,6 +400,7 @@ async function resetWidgetState(cfg) {
   unityWidget.querySelector('.widget-product-icon')?.classList.add('show');
   unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
   targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
+  resetSliders(unityWidget);
   await loadImg(img);
 }
 
