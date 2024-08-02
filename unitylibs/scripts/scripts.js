@@ -110,7 +110,11 @@ const CONFIG = {
   locales,
   geoRouting: 'off',
   imsClientId: 'adobedotcom-cc',
-  adobeid: { api_parameters: { check_token: { guest_allowed: true } } },
+  adobeid: {
+    api_parameters: { check_token: { guest_allowed: true } },
+    enableGuestAccounts: true,
+    enableGuestTokenForceRefresh: true,
+  },
   prodDomains: ['www.adobe.com'],
   decorateArea,
 };
