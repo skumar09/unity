@@ -43,6 +43,14 @@ export function getGuestAccessToken() {
   }
 }
 
+export function getHeaders(apiKey) {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: getGuestAccessToken(),
+    'x-api-key': apiKey,
+  };
+}
+
 export function defineDeviceByScreenSize() {
   const DESKTOP_SIZE = 1200;
   const MOBILE_SIZE = 600;
@@ -121,7 +129,7 @@ export const unityConfig = (() => {
     prod: {
       apiEndPoint: 'https://unity.adobe.io/api/v1',
       connectorApiEndPoint: 'https://unity.adobe.io/api/v1/asset/connector',
-      ...commoncfg
+      ...commoncfg,
     },
     stage: {
       apiEndPoint: 'https://unity-stage.adobe.io/api/v1',

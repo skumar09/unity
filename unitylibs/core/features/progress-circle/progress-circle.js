@@ -1,8 +1,6 @@
 import { createTag } from '../../../scripts/utils.js';
 
-export default function createProgressCircle(cfg) {
-  const { unityEl, targetEl, progressCircleEvent } = cfg;
-  const pdom = `<div class="spectrum-ProgressCircle-track"></div>
+const pdom = `<div class="spectrum-ProgressCircle-track"></div>
   <div class="spectrum-ProgressCircle-fills">
     <div class="spectrum-ProgressCircle-fillMask1">
       <div class="spectrum-ProgressCircle-fillSubMask1">
@@ -15,6 +13,9 @@ export default function createProgressCircle(cfg) {
       </div>
     </div>
   </div>`;
+
+export default function createProgressCircle(cfg) {
+  const { unityEl, targetEl, progressCircleEvent } = cfg;
   const prgc = createTag('div', { class: 'spectrum-ProgressCircle spectrum-ProgressCircle--indeterminate' }, pdom);
   const layer = createTag('div', { class: 'progress-holder' }, prgc);
   unityEl.addEventListener(progressCircleEvent, () => {

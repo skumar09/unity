@@ -1,4 +1,4 @@
-import { createActionBtn, getGuestAccessToken, createIntersectionObserver } from '../../scripts/utils.js';
+import { createActionBtn, createIntersectionObserver, getHeaders } from '../../scripts/utils.js';
 
 function getPreludeData(cfg) {
   const dataObj = {
@@ -28,11 +28,7 @@ async function continueInApp(cfg, appName, btnConfig) {
     const data = getPreludeData(cfg);
     const connectorOptions = {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: getGuestAccessToken(),
-        'x-api-key': apiKey,
-      },
+      headers: getHeaders(apiKey),
       body: JSON.stringify(data),
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);

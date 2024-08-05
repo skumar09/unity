@@ -1,7 +1,7 @@
 import {
   createTag,
   getUnityLibs,
-  getGuestAccessToken,
+  getHeaders,
   loadImg,
   createActionBtn,
   loadSvg,
@@ -122,11 +122,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   cfg.preludeState.assetId = id;
   const removeBgOptions = {
     method: 'POST',
-    headers: {
-      Authorization: getGuestAccessToken(),
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-    },
+    headers: getHeaders(apiKey),
     body: `{"surfaceId":"Unity","assets":[{"id": "${id}"}]}`,
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, removeBgOptions);
@@ -186,11 +182,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   }
   const changeBgOptions = {
     method: 'POST',
-    headers: {
-      Authorization: getGuestAccessToken(),
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-    },
+    headers: getHeaders(apiKey),
     body: `{
             "assets": [{ "id": "${fgId}" },{ "id": "${bgId}" }],
             "metadata": {

@@ -1,4 +1,4 @@
-import { getGuestAccessToken } from '../../scripts/utils.js';
+import { getHeaders } from '../../scripts/utils.js';
 
 export async function getImageBlobData(url) {
   return new Promise((res, rej) => {
@@ -40,11 +40,7 @@ export async function uploadAsset(cfg, imgUrl) {
   const { apiEndPoint, apiKey, unityEl, errorToastEvent } = cfg;
   const genIdOptions = {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: getGuestAccessToken(),
-      'x-api-key': apiKey,
-    },
+    headers: getHeaders(apiKey),
   };
   const response = await fetch(`${apiEndPoint}/asset`, genIdOptions);
   if (response.status !== 200) {
