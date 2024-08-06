@@ -105,8 +105,10 @@ export async function createActionBtn(btnCfg, btnClass, iconAsImg = false, swapO
 }
 
 async function createErrorToast() {
-  const alertImg = await fetch(`${getUnityLibs()}/img/icons/alert.svg`).then((res) => res.text());
-  const closeImg = await fetch(`${getUnityLibs()}/img/icons/close.svg`).then((res) => res.text());
+  const [alertImg, closeImg] = await Promise.all([
+    fetch(`${getUnityLibs()}/img/icons/alert.svg`).then((res) => res.text()),
+    fetch(`${getUnityLibs()}/img/icons/close.svg`).then((res) => res.text()),
+  ]);
   const errholder = createTag('div', { class: 'alert-holder' });
   const errdom = createTag('div', { class: 'alert-toast' });
   const alertContent = createTag('div', { class: 'alert-content' });

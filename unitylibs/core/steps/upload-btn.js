@@ -14,7 +14,8 @@ export default async function createUpload(cfg, target, callback = null) {
   a.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 400000000) {
+    const MAX_FILE_SIZE = 400000000;
+    if (file.size > MAX_FILE_SIZE) {
       await showErrorToast(targetEl, unityEl, '.icon-error-filesize');
       return;
     }

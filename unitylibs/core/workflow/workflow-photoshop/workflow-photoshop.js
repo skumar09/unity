@@ -10,7 +10,6 @@ import {
 } from '../../../scripts/utils.js';
 import { uploadAsset } from '../../steps/upload-step.js';
 import initAppConnector from '../../steps/app-connector.js';
-import createUpload from '../../steps/upload-btn.js';
 
 function resetSliders(unityWidget) {
   const adjustmentCircles = unityWidget.querySelectorAll('.adjustment-circle');
@@ -424,6 +423,7 @@ export default async function init(cfg) {
   await addProductIcon(cfg);
   await changeVisibleFeature(cfg);
   const img = cfg.targetEl.querySelector('picture img');
+  const { default: createUpload } = await import('../../steps/upload-btn.js');
   const uploadBtn = await createUpload(cfg, img, uploadCallback);
   unityWidget.querySelector('.unity-action-area').append(uploadBtn);
   await initAppConnector(cfg, 'photoshop');
