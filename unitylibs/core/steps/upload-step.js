@@ -23,7 +23,7 @@ async function uploadImgToUnity(cfg, storageUrl, id, blobData, fileType) {
   };
   const response = await fetch(storageUrl, uploadOptions);
   if (response.status !== 200) {
-    showErrorToast(targetEl, unityEl, '.icon-error-request');
+    await showErrorToast(targetEl, unityEl, '.icon-error-request');
     return '';
   }
   return id;
@@ -46,7 +46,7 @@ export async function uploadAsset(cfg, imgUrl) {
   };
   const response = await fetch(`${apiEndPoint}/asset`, genIdOptions);
   if (response.status !== 200) {
-    showErrorToast(targetEl, unityEl, '.icon-error-request');
+    await showErrorToast(targetEl, unityEl, '.icon-error-request');
     return '';
   }
   const { id, href } = await response.json();

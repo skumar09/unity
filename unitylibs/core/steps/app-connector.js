@@ -34,7 +34,7 @@ async function continueInApp(cfg, appName, btnConfig) {
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
     if (response.status !== 200) {
-      showErrorToast(targetEl, unityEl, '.icon-error-request');
+      await showErrorToast(targetEl, unityEl, '.icon-error-request');
       return '';
     }
     const { url } = await response.json();

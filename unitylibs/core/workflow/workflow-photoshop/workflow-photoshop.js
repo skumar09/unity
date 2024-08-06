@@ -74,7 +74,7 @@ async function handleEvent(cfg, eventHandler) {
   try {
     await eventHandler();
   } catch (e) {
-    showErrorToast(targetEl, unityEl, '.icon-error-request');
+    await showErrorToast(targetEl, unityEl, '.icon-error-request');
   } finally {
     showProgressCircle(targetEl);
   }
@@ -118,7 +118,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   cfg.presentState.removeBgState.srcUrl = imgUrl;
   const id = await uploadAsset(cfg, imgUrl);
   if (!id) {
-    showErrorToast(targetEl, unityEl, '.icon-error-request');
+    await showErrorToast(targetEl, unityEl, '.icon-error-request');
     return false;
   }
   cfg.preludeState.assetId = id;
@@ -129,7 +129,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, removeBgOptions);
   if (response.status !== 200) {
-    showErrorToast(targetEl, unityEl, '.icon-error-request');
+    await showErrorToast(targetEl, unityEl, '.icon-error-request');
     return false;
   }
   const { outputUrl } = await response.json();
@@ -195,7 +195,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, changeBgOptions);
   if (response.status !== 200) {
-    showErrorToast(targetEl, unityEl, '.icon-error-request');
+    await showErrorToast(targetEl, unityEl, '.icon-error-request');
     return;
   }
   const { outputUrl } = await response.json();

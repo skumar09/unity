@@ -15,7 +15,7 @@ export default async function createUpload(cfg, target, callback = null) {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 400000000) {
-      showErrorToast(targetEl, unityEl, '.icon-error-filesize');
+      await showErrorToast(targetEl, unityEl, '.icon-error-filesize');
       return;
     }
     const objUrl = URL.createObjectURL(file);
@@ -29,6 +29,7 @@ export default async function createUpload(cfg, target, callback = null) {
           showProgressCircle(targetEl);
         } catch (err) {
           showProgressCircle(targetEl);
+          await showErrorToast(targetEl, unityEl, '.icon-error-request');
           return;
         }
       }
@@ -37,8 +38,8 @@ export default async function createUpload(cfg, target, callback = null) {
         unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
       }
     };
-    target.onerror = () => {
-      showErrorToast(targetEl, unityEl, '.icon-error-request');
+    target.onerror = async () => {
+      await showErrorToast(targetEl, unityEl, '.icon-error-request');
     };
     e.target.value = '';
   });
