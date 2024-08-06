@@ -129,9 +129,4 @@ export default async function init(el, project = 'unity', unityLibs = '/unitylib
     ...unityConfig,
   };
   await initWorkflow(wfConfig);
-  const { createErrorToast } = await import('../steps/upload-btn.js');
-  const { default: createProgressCircle } = await import('../features/progress-circle/progress-circle.js');
-  const errorToast = await createErrorToast(wfConfig);
-  const progressCircle = createProgressCircle(wfConfig);
-  targetBlock.append(errorToast, progressCircle);
 }

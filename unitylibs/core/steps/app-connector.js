@@ -19,7 +19,8 @@ function getPreludeData(cfg) {
 }
 
 async function continueInApp(cfg, appName, btnConfig) {
-  const { unityEl, unityWidget, connectorApiEndPoint, apiKey, errorToastEvent } = cfg;
+  const { targetEl, unityEl, unityWidget, connectorApiEndPoint, apiKey } = cfg;
+  const { showErrorToast } = await import('../../scripts/utils.js');
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
@@ -33,7 +34,7 @@ async function continueInApp(cfg, appName, btnConfig) {
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
     if (response.status !== 200) {
-      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+      showErrorToast(targetEl, unityEl, '.icon-error-request');
       return '';
     }
     const { url } = await response.json();

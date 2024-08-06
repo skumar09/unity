@@ -67,14 +67,16 @@ async function addProductIcon(cfg) {
 }
 
 async function handleEvent(cfg, eventHandler) {
-  const { unityEl, progressCircleEvent, errorToastEvent } = cfg;
-  unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+  const { targetEl, unityEl } = cfg;
+  const { default: showProgressCircle } = await import('../../features/progress-circle/progress-circle.js');
+  const { showErrorToast } = await import('../../../scripts/utils.js');
+  showProgressCircle(targetEl);
   try {
     await eventHandler();
   } catch (e) {
-    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    showErrorToast(targetEl, unityEl, '.icon-error-request');
   } finally {
-    unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+    showProgressCircle(targetEl);
   }
 }
 
@@ -82,11 +84,11 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   const {
     apiEndPoint,
     apiKey,
-    errorToastEvent,
     interactiveSwitchEvent,
     targetEl,
     unityEl,
   } = cfg;
+  const { showErrorToast } = await import('../../../scripts/utils.js');
   const { endpoint } = cfg.wfDetail.removebg;
   const img = targetEl.querySelector('picture img');
   const hasExec = cfg.presentState.removeBgState.srcUrl;
@@ -116,7 +118,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   cfg.presentState.removeBgState.srcUrl = imgUrl;
   const id = await uploadAsset(cfg, imgUrl);
   if (!id) {
-    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    showErrorToast(targetEl, unityEl, '.icon-error-request');
     return false;
   }
   cfg.preludeState.assetId = id;
@@ -127,7 +129,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, removeBgOptions);
   if (response.status !== 200) {
-    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    showErrorToast(targetEl, unityEl, '.icon-error-request');
     return false;
   }
   const { outputUrl } = await response.json();
@@ -163,8 +165,8 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
     unityWidget,
     unityEl,
     interactiveSwitchEvent,
-    errorToastEvent,
   } = cfg;
+  const { showErrorToast } = await import('../../../scripts/utils.js');
   const { endpoint } = cfg.wfDetail.changebg;
   const unityRetriggered = await removeBgHandler(cfg, false);
   const img = targetEl.querySelector('picture img');
@@ -193,7 +195,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, changeBgOptions);
   if (response.status !== 200) {
-    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    showErrorToast(targetEl, unityEl, '.icon-error-request');
     return;
   }
   const { outputUrl } = await response.json();

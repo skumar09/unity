@@ -14,13 +14,18 @@ const pdom = `<div class="spectrum-ProgressCircle-track"></div>
     </div>
   </div>`;
 
-export default function createProgressCircle(cfg) {
-  const { unityEl, targetEl, progressCircleEvent } = cfg;
+function createProgressCircle() {
   const prgc = createTag('div', { class: 'spectrum-ProgressCircle spectrum-ProgressCircle--indeterminate' }, pdom);
   const layer = createTag('div', { class: 'progress-holder' }, prgc);
-  unityEl.addEventListener(progressCircleEvent, () => {
-    if (targetEl.classList.contains('loading')) targetEl.classList.remove('loading');
-    else targetEl.classList.add('loading');
-  });
   return layer;
+}
+
+export default function showProgressCircle(targetEl) {
+  const progressHolder = targetEl.querySelector('.progress-holder');
+  if (!progressHolder) {
+    const progressCircle = createProgressCircle();
+    targetEl.append(progressCircle);
+  }
+  if (targetEl.classList.contains('loading')) targetEl.classList.remove('loading');
+  else targetEl.classList.add('loading');
 }

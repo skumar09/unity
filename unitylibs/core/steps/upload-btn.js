@@ -1,41 +1,9 @@
-import { createTag, createActionBtn, getUnityLibs } from '../../scripts/utils.js';
-
-function showErrorToast(cfg, className) {
-  const { unityEl } = cfg;
-  const msg = unityEl.querySelector(className)?.nextSibling.textContent;
-  document.querySelector('.unity-enabled .interactive-area .alert-holder .alert-toast .alert-text p').innerText = msg;
-  document.querySelector('.unity-enabled .interactive-area .alert-holder').style.display = 'flex';
-}
-
-export async function createErrorToast(cfg) {
-  const alertImg = await fetch(`${getUnityLibs()}/img/icons/alert.svg`).then((res) => res.text());
-  const closeImg = await fetch(`${getUnityLibs()}/img/icons/close.svg`).then((res) => res.text());
-  const { unityEl, errorToastEvent } = cfg;
-  const errholder = createTag('div', { class: 'alert-holder' });
-  const errdom = createTag('div', { class: 'alert-toast' });
-  const alertContent = createTag('div', { class: 'alert-content' });
-  const alertIcon = createTag('div', { class: 'alert-icon' });
-  const alertText = createTag('div', { class: 'alert-text' });
-  const p = createTag('p', {}, 'Alert Text');
-  alertText.append(p);
-  alertIcon.innerHTML = alertImg;
-  alertIcon.append(alertText);
-  const alertClose = createTag('div', { class: 'alert-close' });
-  alertClose.innerHTML = closeImg;
-  alertContent.append(alertIcon, alertClose);
-  errdom.append(alertContent);
-  errholder.append(errdom);
-  unityEl.addEventListener(errorToastEvent, (e) => {
-    showErrorToast(cfg, e.detail.className);
-  });
-  alertClose.addEventListener('click', (e) => {
-    e.target.closest('.alert-holder').style.display = 'none';
-  });
-  return errholder;
-}
+import { createTag, createActionBtn } from '../../scripts/utils.js';
 
 export default async function createUpload(cfg, target, callback = null) {
-  const { unityEl, errorToastEvent, interactiveSwitchEvent, progressCircleEvent } = cfg;
+  const { targetEl, unityEl, interactiveSwitchEvent } = cfg;
+  const { default: showProgressCircle } = await import('../features/progress-circle/progress-circle.js');
+  const { showErrorToast } = await import('../../scripts/utils.js');
   const li = unityEl.querySelector('.icon-upload').parentElement;
   const a = await createActionBtn(li, 'show');
   const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg', tabIndex: -1 });
@@ -47,7 +15,7 @@ export default async function createUpload(cfg, target, callback = null) {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 400000000) {
-      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-filesize' } }));
+      showErrorToast(targetEl, unityEl, '.icon-error-filesize');
       return;
     }
     const objUrl = URL.createObjectURL(file);
@@ -56,20 +24,21 @@ export default async function createUpload(cfg, target, callback = null) {
       cfg.uploadState.filetype = file.type;
       if (callback) {
         try {
-          unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+          showProgressCircle(targetEl);
           await callback(cfg);
-          unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+          showProgressCircle(targetEl);
         } catch (err) {
-          unityEl.dispatchEvent(new CustomEvent(progressCircleEvent));
+          showProgressCircle(targetEl);
           return;
         }
       }
-      if (document.querySelector('.unity-enabled .interactive-area .alert-holder').style.display !== 'flex') {
+      const alertHolder = document.querySelector('.unity-enabled .interactive-area .alert-holder');
+      if (!alertHolder || alertHolder.style.display !== 'flex') {
         unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
       }
     };
     target.onerror = () => {
-      unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+      showErrorToast(targetEl, unityEl, '.icon-error-request');
     };
     e.target.value = '';
   });

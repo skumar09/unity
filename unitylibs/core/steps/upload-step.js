@@ -14,7 +14,8 @@ export async function getImageBlobData(url) {
 }
 
 async function uploadImgToUnity(cfg, storageUrl, id, blobData, fileType) {
-  const { unityEl, errorToastEvent } = cfg;
+  const { targetEl, unityEl } = cfg;
+  const { showErrorToast } = await import('../../scripts/utils.js');
   const uploadOptions = {
     method: 'PUT',
     headers: { 'Content-Type': fileType },
@@ -22,7 +23,7 @@ async function uploadImgToUnity(cfg, storageUrl, id, blobData, fileType) {
   };
   const response = await fetch(storageUrl, uploadOptions);
   if (response.status !== 200) {
-    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    showErrorToast(targetEl, unityEl, '.icon-error-request');
     return '';
   }
   return id;
@@ -37,14 +38,15 @@ function getFileType(cfg, imgUrl) {
 }
 
 export async function uploadAsset(cfg, imgUrl) {
-  const { apiEndPoint, apiKey, unityEl, errorToastEvent } = cfg;
+  const { apiEndPoint, apiKey, targetEl, unityEl } = cfg;
+  const { showErrorToast } = await import('../../scripts/utils.js');
   const genIdOptions = {
     method: 'POST',
     headers: getHeaders(apiKey),
   };
   const response = await fetch(`${apiEndPoint}/asset`, genIdOptions);
   if (response.status !== 200) {
-    unityEl.dispatchEvent(new CustomEvent(errorToastEvent, { detail: { className: '.icon-error-request' } }));
+    showErrorToast(targetEl, unityEl, '.icon-error-request');
     return '';
   }
   const { id, href } = await response.json();
