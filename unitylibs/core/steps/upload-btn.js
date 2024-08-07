@@ -2,8 +2,6 @@ import { createTag, createActionBtn } from '../../scripts/utils.js';
 
 export default async function createUpload(cfg, target, callback = null) {
   const { targetEl, unityEl, interactiveSwitchEvent } = cfg;
-  const { default: showProgressCircle } = await import('../features/progress-circle/progress-circle.js');
-  const { showErrorToast } = await import('../../scripts/utils.js');
   const li = unityEl.querySelector('.icon-upload').parentElement;
   const a = await createActionBtn(li, 'show');
   const input = createTag('input', { class: 'file-upload', type: 'file', accept: 'image/png,image/jpg,image/jpeg', tabIndex: -1 });
@@ -12,6 +10,8 @@ export default async function createUpload(cfg, target, callback = null) {
     if (e.key === 'Enter') input.click();
   });
   a.addEventListener('change', async (e) => {
+    const { default: showProgressCircle } = await import('../features/progress-circle/progress-circle.js');
+    const { showErrorToast } = await import('../../scripts/utils.js');
     const file = e.target.files[0];
     if (!file) return;
     const MAX_FILE_SIZE = 400000000;

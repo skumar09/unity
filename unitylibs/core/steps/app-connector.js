@@ -50,7 +50,7 @@ function resetAppConnector(cfg) {
 }
 
 export default async function initAppConnector(cfg, appName) {
-  const { unityEl, unityWidget, refreshWidgetEvent, interactiveSwitchEvent } = cfg;
+  const { unityEl, unityWidget, refreshWidgetEvent, appConnectorEvent } = cfg;
   const isContinueEnabled = unityEl.querySelector('.icon-app-connector');
   if (!isContinueEnabled) return;
   const btnConfig = isContinueEnabled.closest('li');
@@ -59,7 +59,7 @@ export default async function initAppConnector(cfg, appName) {
   unityEl.addEventListener(refreshWidgetEvent, () => {
     connectBtn?.classList.remove('show');
   });
-  unityEl.addEventListener(interactiveSwitchEvent, () => {
+  unityEl.addEventListener(appConnectorEvent, () => {
     connectBtn?.classList.add('show');
   });
   createIntersectionObserver({ el: connectBtn, callback: resetAppConnector, cfg });

@@ -8,8 +8,6 @@ import {
   decorateDefaultLinkAnalytics,
   createIntersectionObserver,
 } from '../../../scripts/utils.js';
-import { uploadAsset } from '../../steps/upload-step.js';
-import initAppConnector from '../../steps/app-connector.js';
 
 function resetSliders(unityWidget) {
   const adjustmentCircles = unityWidget.querySelectorAll('.adjustment-circle');
@@ -115,6 +113,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   const { origin, pathname } = new URL(img.src);
   const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
   cfg.presentState.removeBgState.srcUrl = imgUrl;
+  const { uploadAsset } = await import('../../steps/upload-step.js');
   const id = await uploadAsset(cfg, imgUrl);
   if (!id) {
     await showErrorToast(targetEl, unityEl, '.icon-error-request');
@@ -173,6 +172,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   const bgImg = selectedUrl || unityWidget.querySelector('.unity-option-area .changebg-options-tray img').dataset.backgroundImg;
   const { origin, pathname } = new URL(bgImg);
   const bgImgUrl = `${origin}${pathname}`;
+  const { uploadAsset } = await import('../../steps/upload-step.js');
   const bgId = await uploadAsset(cfg, bgImgUrl);
   if (!unityRetriggered && cfg.presentState.changeBgState[bgImgUrl]?.assetId) {
     img.src = cfg.presentState.changeBgState[bgImgUrl].assetUrl;
@@ -418,7 +418,9 @@ async function uploadCallback(cfg) {
 }
 
 export default async function init(cfg) {
-  const { targetEl, unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
+  const {
+    targetEl, unityEl, unityWidget, appConnectorEvent, interactiveSwitchEvent, refreshWidgetEvent,
+  } = cfg;
   resetWorkflowState(cfg);
   await addProductIcon(cfg);
   await changeVisibleFeature(cfg);
@@ -426,9 +428,15 @@ export default async function init(cfg) {
   const { default: createUpload } = await import('../../steps/upload-btn.js');
   const uploadBtn = await createUpload(cfg, img, uploadCallback);
   unityWidget.querySelector('.unity-action-area').append(uploadBtn);
-  await initAppConnector(cfg, 'photoshop');
   await decorateDefaultLinkAnalytics(unityWidget);
+  let appConnectorLoaded = false;
   unityEl.addEventListener(interactiveSwitchEvent, async () => {
+    if (!appConnectorLoaded) {
+      const { default: initAppConnector } = await import('../../steps/app-connector.js');
+      await initAppConnector(cfg, 'photoshop');
+      appConnectorLoaded = true;
+    }
+    unityEl.dispatchEvent(new CustomEvent(appConnectorEvent));
     await changeVisibleFeature(cfg);
     await switchProdIcon(cfg, false);
     await decorateDefaultLinkAnalytics(unityWidget);

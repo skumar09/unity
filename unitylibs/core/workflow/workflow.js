@@ -97,7 +97,6 @@ function getWorkFlowInformation(el) {
 
 async function initWorkflow(cfg) {
   loadStyle(`${getUnityLibs()}/core/workflow/${cfg.wfName}/${cfg.wfName}.css`);
-  loadStyle(`${getUnityLibs()}/core/features/progress-circle/progress-circle.css`);
   const { default: wfinit } = await import(`./${cfg.wfName}/${cfg.wfName}.js`);
   await wfinit(cfg);
   cfg.unityWidget?.classList.remove('decorating');

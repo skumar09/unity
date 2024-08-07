@@ -158,6 +158,7 @@ export const unityConfig = (() => {
     apiKey: 'leo',
     refreshWidgetEvent: 'unity:refresh-widget',
     interactiveSwitchEvent: 'unity:interactive-switch',
+    appConnectorEvent: 'unity:app-connector',
   };
   const cfg = {
     prod: {
