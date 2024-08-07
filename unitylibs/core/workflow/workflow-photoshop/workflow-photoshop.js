@@ -418,9 +418,7 @@ async function uploadCallback(cfg) {
 }
 
 export default async function init(cfg) {
-  const {
-    targetEl, unityEl, unityWidget, appConnectorEvent, interactiveSwitchEvent, refreshWidgetEvent,
-  } = cfg;
+  const { targetEl, unityEl, unityWidget, interactiveSwitchEvent, refreshWidgetEvent } = cfg;
   resetWorkflowState(cfg);
   await addProductIcon(cfg);
   await changeVisibleFeature(cfg);
@@ -428,15 +426,10 @@ export default async function init(cfg) {
   const { default: createUpload } = await import('../../steps/upload-btn.js');
   const uploadBtn = await createUpload(cfg, img, uploadCallback);
   unityWidget.querySelector('.unity-action-area').append(uploadBtn);
+  const { default: initAppConnector } = await import('../../steps/app-connector.js');
+  await initAppConnector(cfg, 'photoshop');
   await decorateDefaultLinkAnalytics(unityWidget);
-  let appConnectorLoaded = false;
   unityEl.addEventListener(interactiveSwitchEvent, async () => {
-    if (!appConnectorLoaded) {
-      const { default: initAppConnector } = await import('../../steps/app-connector.js');
-      await initAppConnector(cfg, 'photoshop');
-      appConnectorLoaded = true;
-    }
-    unityEl.dispatchEvent(new CustomEvent(appConnectorEvent));
     await changeVisibleFeature(cfg);
     await switchProdIcon(cfg, false);
     await decorateDefaultLinkAnalytics(unityWidget);

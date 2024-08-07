@@ -20,7 +20,6 @@ function getPreludeData(cfg) {
 
 async function continueInApp(cfg, appName, btnConfig) {
   const { targetEl, unityEl, unityWidget, connectorApiEndPoint, apiKey } = cfg;
-  const { showErrorToast } = await import('../../scripts/utils.js');
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
@@ -34,6 +33,7 @@ async function continueInApp(cfg, appName, btnConfig) {
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
     if (response.status !== 200) {
+      const { showErrorToast } = await import('../../scripts/utils.js');
       await showErrorToast(targetEl, unityEl, '.icon-error-request');
       return '';
     }
@@ -50,7 +50,7 @@ function resetAppConnector(cfg) {
 }
 
 export default async function initAppConnector(cfg, appName) {
-  const { unityEl, unityWidget, refreshWidgetEvent, appConnectorEvent } = cfg;
+  const { unityEl, unityWidget, refreshWidgetEvent, interactiveSwitchEvent } = cfg;
   const isContinueEnabled = unityEl.querySelector('.icon-app-connector');
   if (!isContinueEnabled) return;
   const btnConfig = isContinueEnabled.closest('li');
@@ -59,7 +59,7 @@ export default async function initAppConnector(cfg, appName) {
   unityEl.addEventListener(refreshWidgetEvent, () => {
     connectBtn?.classList.remove('show');
   });
-  unityEl.addEventListener(appConnectorEvent, () => {
+  unityEl.addEventListener(interactiveSwitchEvent, () => {
     connectBtn?.classList.add('show');
   });
   createIntersectionObserver({ el: connectBtn, callback: resetAppConnector, cfg });
