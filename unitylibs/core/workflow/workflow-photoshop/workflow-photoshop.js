@@ -14,6 +14,15 @@ function resetSliders(unityWidget) {
   adjustmentCircles.forEach((c) => { c.style = ''; });
 }
 
+function addOrUpdateOperation(array, keyToCheck, valueToCheck, keyToUpdate, newValue, newObject) {
+  const existingObject = array.find((obj) => obj[keyToCheck] === valueToCheck);
+  if (existingObject) {
+    existingObject[keyToUpdate] = newValue;
+  } else {
+    array.push(newObject);
+  }
+}
+
 function resetWorkflowState(cfg) {
   cfg.presentState = {
     activeIdx: -1,
@@ -177,7 +186,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   if (!unityRetriggered && cfg.presentState.changeBgState[bgImgUrl]?.assetId) {
     img.src = cfg.presentState.changeBgState[bgImgUrl].assetUrl;
     await loadImg(img);
-    cfg.preludeState.operations.push({ name: 'changeBackground', assetIds: [bgId] });
+    addOrUpdateOperation(cfg.preludeState.operations, 'name', 'changeBackground', 'assetIds', [bgId], { name: 'changeBackground', assetIds: [bgId] });
     unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
     return;
   }
@@ -202,7 +211,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   cfg.presentState.changeBgState[bgImgUrl] = {};
   cfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
   cfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
-  cfg.preludeState.operations.push({ name: 'changeBackground', assetIds: [bgId] });
+  addOrUpdateOperation(cfg.preludeState.operations, 'name', 'changeBackground', 'assetIds', [bgId], { name: 'changeBackground', assetIds: [bgId] });
   img.src = outputUrl;
   await loadImg(img);
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
