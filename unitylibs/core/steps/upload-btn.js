@@ -10,6 +10,7 @@ export default async function createUpload(cfg, target, callback = null) {
     if (e.key === 'Enter') input.click();
   });
   a.addEventListener('change', async (e) => {
+    let flag = true;
     const { default: showProgressCircle } = await import('../features/progress-circle/progress-circle.js');
     const { showErrorToast } = await import('../../scripts/utils.js');
     const file = e.target.files[0];
@@ -23,7 +24,8 @@ export default async function createUpload(cfg, target, callback = null) {
     target.src = objUrl;
     target.onload = async () => {
       cfg.uploadState.filetype = file.type;
-      if (callback) {
+      if (callback && flag) {
+        flag = false;
         try {
           showProgressCircle(targetEl);
           await callback(cfg);
