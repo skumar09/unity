@@ -211,6 +211,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   cfg.presentState.changeBgState[bgImgUrl] = {};
   cfg.presentState.changeBgState[bgImgUrl].assetId = changeBgId;
   cfg.presentState.changeBgState[bgImgUrl].assetUrl = outputUrl;
+  cfg.preludeState.finalAssetId = changeBgId;
   addOrUpdateOperation(cfg.preludeState.operations, 'name', 'changeBackground', 'assetIds', [bgId], { name: 'changeBackground', assetIds: [bgId] });
   img.src = outputUrl;
   await loadImg(img);
