@@ -4,7 +4,10 @@ function getPreludeData(cfg) {
   const dataObj = {
     assetId: cfg.preludeState.assetId,
     targetProduct: 'Photoshop',
-    payload: { operations: [...cfg.preludeState.operations] },
+    payload: {
+      finalAssetId: cfg.preludeState.finalAssetId,
+      operations: [...cfg.preludeState.operations]
+    },
   };
   if (cfg.presentState?.adjustments && cfg.presentState?.adjustments.modified) {
     const imageAdjustment = {
