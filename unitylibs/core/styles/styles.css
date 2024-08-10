@@ -170,7 +170,7 @@
   background: var(--alert-red);
   border-radius: 10px;
   width: 339px;
-  height: 56px;
+  min-height: 56px;
   position: absolute;
   bottom: 312px;
   margin-left: auto;
@@ -205,22 +205,20 @@
 }
 
 .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-text {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 239px;
-  height: 18px;
-  padding: 18px 16px 20px 8px;
+  min-height: 18px;
+  padding-left: 8px;
+  padding-right: 16px;
   gap: 10px;
   align-self: stretch;
 }
 
 .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-text p {
-  display: flex;
   color: var(--color-white);
   font-weight: 400;
   font-size: var(--type-body-m-size);
   line-height: var(--type-body-m-lh);
+  margin: 12px 0;
 }
 
 .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close {
