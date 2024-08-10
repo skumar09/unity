@@ -6,7 +6,7 @@ function getPreludeData(cfg) {
     targetProduct: 'Photoshop',
     payload: {
       finalAssetId: cfg.preludeState.finalAssetId,
-      operations: [...cfg.preludeState.operations]
+      operations: [...cfg.preludeState.operations],
     },
   };
   if (cfg.presentState?.adjustments && cfg.presentState?.adjustments.modified) {

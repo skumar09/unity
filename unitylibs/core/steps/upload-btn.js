@@ -27,8 +27,34 @@ export default async function createUpload(cfg, target, callback = null) {
       if (callback && flag) {
         flag = false;
         try {
+          const isLandscape = target.naturalWidth > target.naturalHeight;
+          const isPortrait = target.naturalWidth < target.naturalHeight;
+          const isSquare = target.naturalWidth === target.naturalHeight;
+          if (isLandscape || isPortrait) {
+            const containObjectClass = 'contain-object';
+            const landscapeClass = 'contain-object-landscape';
+            const portraitClass = 'contain-object-portrait';
+            const mobileGrayBgClass = 'mobile-gray-bg';
+            const grayBgClass = 'gray-bg';
+            if (!target.classList.contains(containObjectClass)) {
+              target.classList.add(containObjectClass);
+            }
+            if (!target.classList.contains(mobileGrayBgClass)) {
+              target.classList.add(mobileGrayBgClass);
+            }
+            if (!targetEl.classList.contains(grayBgClass)) targetEl.classList.add(grayBgClass);
+            if (isLandscape && !target.classList.contains(landscapeClass)) {
+              target.classList.add(landscapeClass);
+            } else if (isPortrait && !target.classList.contains(portraitClass)) {
+              target.classList.add(portraitClass);
+            }
+          } else if (isSquare) {
+            target.classList.remove('contain-object-landscape', 'contain-object-portrait');
+            targetEl.classList.remove('gray-bg');
+          }
           showProgressCircle(targetEl);
           await callback(cfg);
+          if (target.classList.contains('mobile-gray-bg')) target.classList.remove('mobile-gray-bg');
           showProgressCircle(targetEl);
         } catch (err) {
           showProgressCircle(targetEl);
