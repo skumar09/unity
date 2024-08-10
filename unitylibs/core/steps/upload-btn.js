@@ -1,5 +1,13 @@
 import { createTag, createActionBtn } from '../../scripts/utils.js';
 
+export function resetClasses(img, targetEl) {
+  if (img.classList.contains('contain-object')) img.classList.remove('contain-object');
+  if (img.classList.contains('contain-object-landscape')) img.classList.remove('contain-object-landscape');
+  if (img.classList.contains('contain-object-portrait')) img.classList.remove('contain-object-portrait');
+  if (img.classList.contains('mobile-gray-bg')) img.classList.remove('mobile-gray-bg');
+  if (targetEl.classList.contains('gray-bg')) targetEl.classList.remove('gray-bg');
+}
+
 export default async function createUpload(cfg, target, callback = null) {
   const { targetEl, unityEl, interactiveSwitchEvent } = cfg;
   const li = unityEl.querySelector('.icon-upload').parentElement;
@@ -21,6 +29,7 @@ export default async function createUpload(cfg, target, callback = null) {
       return;
     }
     const objUrl = URL.createObjectURL(file);
+    resetClasses(target, targetEl);
     target.src = objUrl;
     target.onload = async () => {
       cfg.uploadState.filetype = file.type;

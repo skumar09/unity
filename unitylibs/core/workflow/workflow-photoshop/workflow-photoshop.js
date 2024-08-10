@@ -404,11 +404,8 @@ async function resetWidgetState(cfg) {
   unityWidget.querySelector('.widget-product-icon')?.classList.add('show');
   unityWidget.querySelector('.widget-refresh-button').classList.remove('show');
   targetEl.querySelector(':scope > .widget-refresh-button').classList.remove('show');
-  if (img.classList.contains('contain-object')) img.classList.remove('contain-object');
-  if (img.classList.contains('contain-object-landscape')) img.classList.remove('contain-object-landscape');
-  if (img.classList.contains('contain-object-portrait')) img.classList.remove('contain-object-portrait');
-  if (img.classList.contains('mobile-gray-bg')) img.classList.remove('mobile-gray-bg');
-  if (targetEl.classList.contains('gray-bg')) targetEl.classList.remove('gray-bg');
+  const { resetClasses } = await import('../../steps/upload-btn.js');
+  resetClasses(img, targetEl);
   resetSliders(unityWidget);
   await loadImg(img);
 }
