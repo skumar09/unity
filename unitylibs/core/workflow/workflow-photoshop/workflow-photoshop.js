@@ -25,7 +25,7 @@ function addOrUpdateOperation(array, keyToCheck, valueToCheck, keyToUpdate, newV
 
 function resetWorkflowState(cfg) {
   cfg.presentState = {
-    activeIdx: -1,
+    activeIdx: cfg.isUpload ? 0 : -1,
     removeBgState: {
       assetId: null,
       assetUrl: null,
@@ -83,6 +83,29 @@ async function handleEvent(cfg, eventHandler) {
     await showErrorToast(targetEl, unityEl, '.icon-error-request');
   } finally {
     showProgressCircle(targetEl);
+  }
+}
+
+async function updateImgClasses(cfg, img) {
+  const { imgDisplay } = cfg;
+  if (imgDisplay === 'landscape' || imgDisplay === 'portrait') {
+    const {
+      IMG_LANDSCAPE,
+      IMG_LANDSCAPE_REMOVE_BG,
+      IMG_PORTRAIT,
+      IMG_PORTRAIT_REMOVE_BG,
+    } = await import('../../steps/upload-btn.js');
+    if (cfg.imgDisplay === 'landscape') {
+      if (img.classList.contains(IMG_LANDSCAPE)) img.classList.remove(IMG_LANDSCAPE);
+      if (!img.classList.contains(IMG_LANDSCAPE_REMOVE_BG)) {
+        img.classList.add(IMG_LANDSCAPE_REMOVE_BG);
+      }
+    } else if (cfg.imgDisplay === 'portrait') {
+      if (img.classList.contains(IMG_PORTRAIT)) img.classList.remove(IMG_PORTRAIT);
+      if (!img.classList.contains(IMG_PORTRAIT_REMOVE_BG)) {
+        img.classList.add(IMG_PORTRAIT_REMOVE_BG);
+      }
+    }
   }
 }
 
@@ -145,6 +168,7 @@ async function removeBgHandler(cfg, changeDisplay = true) {
   cfg.presentState.removeBgState.assetUrl = outputUrl;
   cfg.preludeState.operations.push({ name: 'removeBackground' });
   if (!changeDisplay) return true;
+  await updateImgClasses(cfg, img);
   img.src = outputUrl;
   await loadImg(img);
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
@@ -428,6 +452,7 @@ async function uploadCallback(cfg) {
   resetWorkflowState(cfg);
   if (enabledFeatures.length === 1) return;
   await removeBgHandler(cfg);
+  cfg.isUpload = false;
 }
 
 export default async function init(cfg) {

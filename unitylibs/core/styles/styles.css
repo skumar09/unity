@@ -29,13 +29,6 @@
   background-position: 0 0, 12.5px 0, 12.5px -12.5px, 0px 12.5px;
 }
 
-.unity-enabled .gray-bg {
-  background-color: #444;
-  background-image: unset;
-  background-size: unset;
-  background-position: unset;
-}
-
 .unity-enabled .interactive-area,
 .unity-enabled .interactive-area .image img {
   position: relative;
@@ -264,11 +257,15 @@
   background-position: 0 0, 12.5px 0, 12.5px -12.5px, 0px 12.5px;
 }
 
-.marquee.split.unity-enabled .asset.bleed .interactive-area > picture .contain-object-landscape {
-  height: auto;
+.marquee.split.unity-enabled .asset.bleed .interactive-area > picture .img-landscape {
+  height: 100%;
+  background-color: unset;
+  background-image: unset;
+  background-size: unset;
+  background-position: unset;
 }
 
-.marquee.split.unity-enabled .asset.bleed .interactive-area > picture .contain-object-portrait {
+.marquee.split.unity-enabled .asset.bleed .interactive-area > picture .img-portrait {
   width: auto;
 }
 
@@ -404,7 +401,7 @@
     transform: unset;
   }
   
-  .marquee.split.unity-enabled .asset.bleed .interactive-area > picture .contain-object-portrait {
+  .marquee.split.unity-enabled .asset.bleed .interactive-area > picture .img-portrait {
     object-fit: contain;
     width: 100%;
     height: auto;
@@ -494,6 +491,29 @@
 }
 
 @media screen and (min-width: 600px) {
+  .unity-enabled .gray-bg {
+    background-color: #444;
+    background-image: unset;
+    background-size: unset;
+    background-position: unset;
+  }
+
+  .marquee.split.unity-enabled .asset.bleed .interactive-area > picture .contain {
+    background-color: unset;
+    background-image: unset;
+    background-size: unset;
+    background-position: unset;
+  }
+
+  .marquee.split.unity-enabled .asset.bleed .interactive-area > picture .img-landscape-removebg {
+    height: auto;
+  }
+
+  .marquee.split.unity-enabled .asset.bleed .interactive-area > picture .img-portrait-removebg {
+    height: 100%;
+    width: auto;
+  }
+  
   .unity-enabled .interactive-area .unity-widget {
     max-width: 90%;
   }
