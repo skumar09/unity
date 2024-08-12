@@ -4,18 +4,14 @@ const CONTAIN_OBJECT = 'contain-object';
 const MOBILE_GRAY_BG = 'mobile-gray-bg';
 const GRAY_BG = 'gray-bg';
 export const IMG_LANDSCAPE = 'img-landscape';
-export const IMG_LANDSCAPE_REMOVE_BG = 'img-landscape-removebg';
 export const IMG_PORTRAIT = 'img-portrait';
-export const IMG_PORTRAIT_REMOVE_BG = 'img-portrait-removebg';
+export const IMG_REMOVE_BG = 'img-removebg';
 
 export function resetClasses(img, targetEl) {
   if (img.classList.contains(CONTAIN_OBJECT)) img.classList.remove(CONTAIN_OBJECT);
   if (img.classList.contains(IMG_LANDSCAPE)) img.classList.remove(IMG_LANDSCAPE);
-  if (img.classList.contains(IMG_LANDSCAPE_REMOVE_BG)) {
-    img.classList.remove(IMG_LANDSCAPE_REMOVE_BG);
-  }
   if (img.classList.contains(IMG_PORTRAIT)) img.classList.remove(IMG_PORTRAIT);
-  if (img.classList.contains(IMG_PORTRAIT_REMOVE_BG)) img.classList.remove(IMG_PORTRAIT_REMOVE_BG);
+  if (img.classList.contains(IMG_REMOVE_BG)) img.classList.remove(IMG_REMOVE_BG);
   if (img.classList.contains(MOBILE_GRAY_BG)) img.classList.remove(MOBILE_GRAY_BG);
   if (targetEl.classList.contains(GRAY_BG)) targetEl.classList.remove(GRAY_BG);
 }

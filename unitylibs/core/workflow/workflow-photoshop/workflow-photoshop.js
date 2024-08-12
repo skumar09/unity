@@ -91,21 +91,15 @@ async function updateImgClasses(cfg, img) {
   if (imgDisplay === 'landscape' || imgDisplay === 'portrait') {
     const {
       IMG_LANDSCAPE,
-      IMG_LANDSCAPE_REMOVE_BG,
       IMG_PORTRAIT,
-      IMG_PORTRAIT_REMOVE_BG,
+      IMG_REMOVE_BG,
     } = await import('../../steps/upload-btn.js');
     if (cfg.imgDisplay === 'landscape') {
       if (img.classList.contains(IMG_LANDSCAPE)) img.classList.remove(IMG_LANDSCAPE);
-      if (!img.classList.contains(IMG_LANDSCAPE_REMOVE_BG)) {
-        img.classList.add(IMG_LANDSCAPE_REMOVE_BG);
-      }
     } else if (cfg.imgDisplay === 'portrait') {
       if (img.classList.contains(IMG_PORTRAIT)) img.classList.remove(IMG_PORTRAIT);
-      if (!img.classList.contains(IMG_PORTRAIT_REMOVE_BG)) {
-        img.classList.add(IMG_PORTRAIT_REMOVE_BG);
-      }
     }
+    if (!img.classList.contains(IMG_REMOVE_BG)) img.classList.add(IMG_REMOVE_BG);
   }
 }
 
@@ -420,6 +414,8 @@ async function resetWidgetState(cfg) {
   const { unityWidget, unityEl, targetEl } = cfg;
   cfg.presentState.activeIdx = -1;
   cfg.preludeState.operations = [];
+  cfg.isUpload = false;
+  cfg.imgDisplay = '';
   const initImg = unityEl.querySelector(':scope picture img');
   const img = targetEl.querySelector(':scope > picture img');
   img.src = initImg.src;
