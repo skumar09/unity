@@ -118,14 +118,18 @@ async function createErrorToast() {
   alertText.append(p);
   alertIcon.innerHTML = alertImg;
   alertIcon.append(alertText);
-  const alertClose = createTag('div', { class: 'alert-close' });
+  const alertClose = createTag('a', { class: 'alert-close', href: '#' });
+  const alertCloseText = createTag('span', { class: 'alert-close-text' }, 'Close error toast');
   alertClose.innerHTML = closeImg;
+  alertClose.append(alertCloseText);
   alertContent.append(alertIcon, alertClose);
   errdom.append(alertContent);
   errholder.append(errdom);
   alertClose.addEventListener('click', (e) => {
+    e.preventDefault();
     e.target.closest('.alert-holder').style.display = 'none';
   });
+  decorateDefaultLinkAnalytics(errholder);
   return errholder;
 }
 

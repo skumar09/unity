@@ -241,6 +241,10 @@
   max-width: auto;
 }
 
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close .alert-close-text {
+  display: none;
+}
+
 .marquee.split.unity-enabled .asset.bleed .interactive-area > picture .contain-object {
   object-fit: contain;
   position: absolute;
