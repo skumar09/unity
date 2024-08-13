@@ -22,12 +22,26 @@ function getPreludeData(cfg) {
 }
 
 async function continueInApp(cfg, appName, btnConfig) {
-  const { targetEl, unityEl, unityWidget, connectorApiEndPoint, apiKey } = cfg;
+  const {
+    apiKey,
+    connectorApiEndPoint,
+    refreshWidgetEvent,
+    targetEl,
+    unityEl,
+    unityWidget,
+  } = cfg;
   const continuebtn = unityWidget.querySelector(`continue-in-${appName}`);
   if (continuebtn) return continuebtn;
   const btn = await createActionBtn(btnConfig, `continue-in-app continue-in-${appName}`, true, true);
   btn.addEventListener('click', async (evt) => {
     evt.preventDefault();
+    const { showErrorToast } = await import('../../scripts/utils.js');
+    cfg.continueRetrying = false;
+    if (cfg.scanResponseAfterRetries && cfg.scanResponseAfterRetries.status === 403) {
+      unityEl.dispatchEvent(new CustomEvent(refreshWidgetEvent));
+      await showErrorToast(targetEl, unityEl, '.icon-error-acmp');
+      return false;
+    }
     const data = getPreludeData(cfg);
     const connectorOptions = {
       method: 'POST',
@@ -36,7 +50,6 @@ async function continueInApp(cfg, appName, btnConfig) {
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
     if (response.status !== 200) {
-      const { showErrorToast } = await import('../../scripts/utils.js');
       await showErrorToast(targetEl, unityEl, '.icon-error-request');
       return '';
     }

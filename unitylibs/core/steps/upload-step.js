@@ -55,3 +55,14 @@ export async function uploadAsset(cfg, imgUrl) {
   const assetId = await uploadImgToUnity(cfg, href, id, blobData, fileType);
   return assetId;
 }
+
+export async function scanImgForSafety(cfg, assetId) {
+  const { apiEndPoint, apiKey } = cfg;
+  const assetData = { assetId, targetProduct: 'Photoshop' };
+  const imgScanOptions = {
+    method: 'POST',
+    headers: getHeaders(apiKey),
+    body: JSON.stringify(assetData),
+  };
+  return fetch(`${apiEndPoint}/asset/finalize`, imgScanOptions);
+}

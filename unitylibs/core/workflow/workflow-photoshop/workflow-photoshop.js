@@ -103,11 +103,23 @@ async function updateImgClasses(cfg, img) {
   }
 }
 
+function checkImgModified(hostname) {
+  let isModified = false;
+  try {
+    const pageUrlObject = new URL(window.location.href);
+    isModified = hostname !== pageUrlObject.hostname;
+  } catch (e) {
+    return '';
+  }
+  return isModified;
+}
+
 async function removeBgHandler(cfg, changeDisplay = true) {
   const {
     apiEndPoint,
     apiKey,
     interactiveSwitchEvent,
+    refreshWidgetEvent,
     targetEl,
     unityEl,
   } = cfg;
@@ -136,14 +148,29 @@ async function removeBgHandler(cfg, changeDisplay = true) {
     }
     return false;
   }
-  const { origin, pathname } = new URL(img.src);
+  const { hostname, origin, pathname } = new URL(img.src);
   const imgUrl = srcUrl || (img.src.startsWith('blob:') ? img.src : `${origin}${pathname}`);
+  const isImgModified = checkImgModified(hostname);
   cfg.presentState.removeBgState.srcUrl = imgUrl;
   const { uploadAsset } = await import('../../steps/upload-step.js');
   const id = await uploadAsset(cfg, imgUrl);
   if (!id) {
     await showErrorToast(targetEl, unityEl, '.icon-error-request');
     return false;
+  }
+  if (isImgModified) {
+    const { scanImgForSafety } = await import('../../steps/upload-step.js');
+    let scanResponse = await scanImgForSafety(cfg, id);
+    if (scanResponse.status === 403) {
+      unityEl.dispatchEvent(new CustomEvent(refreshWidgetEvent));
+      await showErrorToast(targetEl, unityEl, '.icon-error-acmp');
+      return false;
+    }
+    if (scanResponse.status === 429
+      || (scanResponse.status >= 500 && scanResponse.status < 600)) {
+      const { retryRequestUntilProductRedirect } = await import('../../../scripts/utils.js');
+      scanResponse = await retryRequestUntilProductRedirect(cfg, () => scanImgForSafety(cfg, id));
+    }
   }
   cfg.preludeState.assetId = id;
   const removeBgOptions = {

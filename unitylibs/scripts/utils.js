@@ -140,6 +140,23 @@ export async function showErrorToast(targetEl, unityEl, className) {
   document.querySelector('.unity-enabled .interactive-area .alert-holder').style.display = 'flex';
 }
 
+export async function retryRequestUntilProductRedirect(cfg, requestFunction, delay = 1000) {
+  while (cfg.continueRetrying) {
+    try {
+      const scanResponse = await requestFunction();
+      if (scanResponse.status === 429 || (scanResponse.status >= 500 && scanResponse.status < 600)) {
+        await new Promise((res) => setTimeout(res, delay));
+      } else {
+        cfg.scanResponseAfterRetries = scanResponse;
+        return scanResponse;
+      }
+    } catch (e) {
+      await new Promise((res) => setTimeout(res, delay));
+    }
+  }
+  return cfg.scanResponseAfterRetries;
+}
+
 export function createIntersectionObserver({ el, callback, cfg, options = {} }) {
   const io = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
