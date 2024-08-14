@@ -3,6 +3,7 @@ import { createTag, createActionBtn } from '../../scripts/utils.js';
 const CONTAIN_OBJECT = 'contain-object';
 const MOBILE_GRAY_BG = 'mobile-gray-bg';
 const GRAY_BG = 'gray-bg';
+const FULL_HEIGHT = 'full-height';
 export const IMG_LANDSCAPE = 'img-landscape';
 export const IMG_PORTRAIT = 'img-portrait';
 export const IMG_REMOVE_BG = 'img-removebg';
@@ -49,25 +50,25 @@ export default async function createUpload(cfg, target, callback = null) {
       if (callback && flag) {
         flag = false;
         try {
-          const isLandscape = target.naturalWidth > target.naturalHeight;
-          const isPortrait = target.naturalWidth < target.naturalHeight;
-          const isSquare = target.naturalWidth === target.naturalHeight;
-          if (isLandscape || isPortrait) {
-            if (!target.classList.contains(CONTAIN_OBJECT)) {
-              target.classList.add(CONTAIN_OBJECT);
-            }
-            if (!target.classList.contains(MOBILE_GRAY_BG)) {
-              target.classList.add(MOBILE_GRAY_BG);
-            }
-            if (!targetEl.classList.contains(GRAY_BG)) targetEl.classList.add(GRAY_BG);
-            if (isLandscape && !target.classList.contains(IMG_LANDSCAPE)) {
+          const targetElWidth = targetEl.offsetWidth;
+          const targetElHeight = targetEl.offsetHeight;
+          if (!target.classList.contains(CONTAIN_OBJECT)) {
+            target.classList.add(CONTAIN_OBJECT);
+          }
+          if (!target.classList.contains(MOBILE_GRAY_BG)) {
+            target.classList.add(MOBILE_GRAY_BG);
+          }
+          if (!targetEl.classList.contains(GRAY_BG)) targetEl.classList.add(GRAY_BG);
+          if (target.naturalWidth > targetElWidth) {
               cfg.imgDisplay = 'landscape';
-              target.classList.add(IMG_LANDSCAPE);
-            } else if (isPortrait && !target.classList.contains(IMG_PORTRAIT)) {
-              cfg.imgDisplay = 'portrait';
-              target.classList.add(IMG_PORTRAIT);
-            }
-          } else if (isSquare) {
+              if (!target.classList.contains(IMG_LANDSCAPE)) target.classList.add(IMG_LANDSCAPE);
+              if (target.classList.contains(FULL_HEIGHT)) target.classList.remove(FULL_HEIGHT);
+          } else {
+            cfg.imgDisplay = 'portrait';
+            if (!target.classList.contains(IMG_PORTRAIT)) target.classList.add(IMG_PORTRAIT);
+            if (!target.classList.contains(FULL_HEIGHT)) target.classList.add(FULL_HEIGHT);
+          }
+          if (target.naturalWidth == targetElWidth && target.naturalHeight == targetElHeight) {
             cfg.imgDisplay = '';
             resetClasses(target, targetEl);
           }
