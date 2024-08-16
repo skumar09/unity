@@ -1,4 +1,5 @@
 import { setLibs, decorateArea } from './utils.js';
+
 const STYLES = '/unitylibs/styles/styles.css';
 const LIBS = '/libs';
 
@@ -107,7 +108,13 @@ const locales = {
 const CONFIG = {
   codeRoot: '/unitylibs',
   locales,
-  geoRouting: 'on',
+  geoRouting: 'off',
+  imsClientId: 'adobedotcom-cc',
+  adobeid: {
+    api_parameters: { check_token: { guest_allowed: true } },
+    enableGuestAccounts: true,
+    enableGuestTokenForceRefresh: true,
+  },
   prodDomains: ['www.adobe.com'],
   decorateArea,
 };
