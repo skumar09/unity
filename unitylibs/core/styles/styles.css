@@ -704,6 +704,10 @@
     object-position: center;
   }
 
+  .marquee.split.unity-enabled .asset.bleed .interactive-area > picture img {
+    min-height: unset;
+  }
+
   .unity-enabled .interactive-area .unity-widget {
     bottom: 63px;
     margin-left: auto;
