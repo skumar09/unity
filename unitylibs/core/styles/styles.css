@@ -8,7 +8,10 @@
   --animation-blue: #1273E6;
 }
 
-.unity,
+.unity {
+  display: none !important;
+}
+
 .unity-enabled .interactive-area .unity-widget.decorating {
   display: none;
 }
@@ -140,12 +143,12 @@
 }
 
 .unity-enabled .interactive-area .widget-refresh-button svg path,
-.unity-enabled .interactive-area .unity-action-btn .btn-icon svg path {
+.unity-enabled .interactive-area .unity-action-btn:not(.continue-in-app-button) .btn-icon svg path {
   fill: var(--color-white);
 }
 
 .unity-enabled .interactive-area.light .widget-refresh-button svg path,
-.unity-enabled .interactive-area.light .unity-action-btn .btn-icon svg path {
+.unity-enabled .interactive-area.light .unity-action-btn:not(.continue-in-app-button) .btn-icon svg path {
   fill: var(--color-black);
 }
 

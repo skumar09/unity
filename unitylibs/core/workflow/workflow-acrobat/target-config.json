@@ -1,0 +1,53 @@
+{
+  "verb-widget.fillsign": {
+    "type": "pdf",
+    "selector": ".verb-wrapper",
+    "handler": "render",
+    "renderWidget": false,
+    "source": ".verb-wrapper .verb-container",
+    "target": ".verb-wrapper .verb-container",
+    "limits": {
+      "maxNumFiles": 1,
+      "maxFileSize": 104857600,
+      "maxNumPages": 100
+    },
+    "showSplashScreen": true,
+    "splashScreenConfig": {
+      "fragmentLink": "/dc-shared/fragments/shared-fragments/frictionless/splash-page/splashscreen",
+      "splashScreenParent": "body"
+    },
+    "actionMap": {
+      ".verb-wrapper": [
+        {
+          "actionType": "fillsign"
+        },
+        {
+          "actionType": "continueInApp"
+        }
+      ],
+      "#file-upload": [
+        {
+          "actionType": "fillsign"
+        },
+        {
+          "actionType": "continueInApp"
+        }
+      ]
+    }
+  },
+  "marquee": {
+    "type": "pdf",
+    "selector": ".action-area",
+    "handler": "render",
+    "renderWidget": false,
+    "source": ".action-area .con-button",
+    "target": ".action-area .con-button",
+    "actionMap": {
+      ".action-area .con-button": [
+        {
+          "actionType": "upload"
+        }
+      ]
+    }
+  }
+}
