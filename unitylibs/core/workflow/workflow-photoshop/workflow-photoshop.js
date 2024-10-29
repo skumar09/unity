@@ -7,6 +7,7 @@ import {
   loadSvg,
   decorateDefaultLinkAnalytics,
   createIntersectionObserver,
+  priorityLoad,
 } from '../../../scripts/utils.js';
 
 function resetSliders(unityWidget) {
@@ -265,6 +266,14 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true) {
   unityEl.dispatchEvent(new CustomEvent(interactiveSwitchEvent));
 }
 
+function updateQueryParam(url, params) {
+  const parsedUrl = new URL(url);
+  Object.entries(params).forEach(([key, value]) => {
+    parsedUrl.searchParams.set(key, value);
+  });
+  return parsedUrl;
+}
+
 async function changebg(cfg, featureName) {
   const { unityWidget, wfDetail } = cfg;
   const { authorCfg } = wfDetail[featureName];
@@ -275,12 +284,15 @@ async function changebg(cfg, featureName) {
   btn.dataset.optionsTray = 'changebg-options-tray';
   const bgSelectorTray = createTag('div', { class: 'changebg-options-tray show' });
   const bgOptions = authorCfg.querySelectorAll(':scope ul li');
+  const thumbnailSrc = [];
   [...bgOptions].forEach((o) => {
     let thumbnail = null;
     let bgImg = null;
-    [thumbnail, bgImg] = o.querySelectorAll('img');
-    if (!bgImg) bgImg = thumbnail;
+    bgImg = o.querySelector('img');
+    thumbnail = bgImg;
     thumbnail.dataset.backgroundImg = bgImg.src;
+    thumbnail.setAttribute('src', updateQueryParam(bgImg.src, { format: 'webply', width: '68', height: '68' }));
+    thumbnailSrc.push(thumbnail.getAttribute('src'));
     const a = createTag('a', { href: '#', class: 'changebg-option' }, thumbnail);
     bgSelectorTray.append(a);
     a.addEventListener('click', async (evt) => {
@@ -288,6 +300,7 @@ async function changebg(cfg, featureName) {
       handleEvent(cfg, () => changeBgHandler(cfg, bgImg.src, false));
     });
   });
+  priorityLoad(thumbnailSrc);
   unityWidget.querySelector('.unity-option-area').append(bgSelectorTray);
   btn.addEventListener('click', (evt) => {
     evt.preventDefault();
