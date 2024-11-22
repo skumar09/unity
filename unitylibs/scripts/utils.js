@@ -35,8 +35,6 @@ const {
 export {
   createTag, loadStyle, getConfig, loadLink, loadScript, localizeLink, loadArea,
 };
-const { decorateDefaultLinkAnalytics } = await import(`${miloLibs}/martech/attributes.js`);
-export { decorateDefaultLinkAnalytics };
 
 export function getGuestAccessToken() {
   try {
@@ -133,6 +131,10 @@ export async function priorityLoad(parr) {
     } else if (p.endsWith('.css')) {
       const pr = new Promise((res) => { loadLink(p, { rel: 'stylesheet', callback: res }); });
       promiseArr.push(pr);
+    }else if (p.endsWith('.json')) {
+      const pr = new Promise((res) => { loadLink(p, { as: 'fetch', crossorigin: 'anonymous', rel: 'preload', callback: res  }); });
+      promiseArr.push(pr);
+      
     } else {
       promiseArr.push(fetch(p));
     }
@@ -165,6 +167,7 @@ async function createErrorToast() {
     e.preventDefault();
     e.target.closest('.alert-holder').style.display = 'none';
   });
+  const { decorateDefaultLinkAnalytics } = await import(`${miloLibs}/martech/attributes.js`);
   decorateDefaultLinkAnalytics(errholder);
   return errholder;
 }
