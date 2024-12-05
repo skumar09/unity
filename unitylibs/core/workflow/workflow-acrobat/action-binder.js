@@ -85,7 +85,6 @@ export default class ActionBinder {
           break;
         case value.actionType === 'continueInApp':
           this.LOADER_LIMIT = 100;
-          this.updateProgressBar(this.splashScreenEl, 100);
           await this.continueInApp();
           break;
         case value.actionType === 'interrupt':
@@ -147,17 +146,34 @@ export default class ActionBinder {
     return files;
   }
 
-  async dispatchErrorToast(code, showError = true, status = null) {
+  getAccountType() {
+    try {
+      return window.adobeIMS.getAccountType();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async dispatchErrorToast(code, status, info = null, showError = true) {
     if (showError) {
-      const message = code in this.workflowCfg.errors
+      const errorMessage = code in this.workflowCfg.errors
         ? this.workflowCfg.errors[code]
         : await (async () => {
           const getError = (await import('../../../scripts/errors.js')).default;
           return getError(this.workflowCfg.enabledFeatures[0], code);
         })();
+      const message = code.includes('cookie_not_set') ? '' : errorMessage || 'Unable to process the request';
       this.block.dispatchEvent(new CustomEvent(
         unityConfig.errorToastEvent,
-        { detail: { code, message: message || 'Unable to process the request', ...(status !== null && { status }) } },
+        {
+          detail: {
+            code,
+            message: `${message}`,
+            status,
+            info,
+            accountType: this.getAccountType(),
+          }
+        }
       ));
     }
   }
@@ -209,6 +225,27 @@ export default class ActionBinder {
     await Promise.all(this.promiseStack);
   }
 
+  checkCookie = () => {
+    const cookies = document.cookie.split(';').map((item) => item.trim());
+    const target = /^UTS_Uploaded=/;
+    return cookies.some((item) => target.test(item));
+  };
+
+  waitForCookie = (timeout) => {
+    return new Promise((resolve) => {
+      const interval = 100;
+      let elapsed = 0;
+      const intervalId = setInterval(() => {
+        if (this.checkCookie() || elapsed >= timeout) {
+          clearInterval(intervalId);
+          resolve();
+        }
+        elapsed += interval;
+      }, interval);
+    });
+  };
+
+
   async continueInApp() {
     if (!this.operations.length) return;
     const { assetId, filename, filesize, filetype } = this.operations[this.operations.length - 1];
@@ -235,20 +272,27 @@ export default class ActionBinder {
       ),
     );
     await Promise.all(this.promiseStack)
-      .then((resArr) => {
+      .then(async (resArr) => {
         const response = resArr[resArr.length - 1];
         if (!response?.url) throw new Error('Error connecting to App');
         this.block.dispatchEvent(new CustomEvent(unityConfig.trackAnalyticsEvent, { detail: { event: 'redirect to product' } }));
+        await this.waitForCookie(2000);
+        this.updateProgressBar(this.splashScreenEl, 100);
+        if (!this.checkCookie()) {
+          await this.dispatchErrorToast('verb_cookie_not_set', 200, "Not all cookies found, redirecting anyway", true);
+          await new Promise(r => setTimeout(r, 500));
+        }
         window.location.href = response.url;
       })
       .catch(async (e) => {
         await this.showSplashScreen();
-        await this.dispatchErrorToast('verb_upload_error_generic', e?.showError);
+        await this.dispatchErrorToast('verb_upload_error_generic', 500, "Exception thrown when redirecting to product.", e.showError);
       });
   }
 
   async cancelAcrobatOperation() {
     await this.showSplashScreen();
+    this.block.dispatchEvent(new CustomEvent(unityConfig.trackAnalyticsEvent, { detail: { event: 'cancel' } }));
     const e = new Error();
     e.message = 'Operation termination requested.';
     e.showError = false;
@@ -366,7 +410,7 @@ export default class ActionBinder {
       );
       if (!finalizeJson || Object.keys(finalizeJson).length !== 0) {
         await this.showSplashScreen();
-        await this.dispatchErrorToast('verb_upload_error_generic');
+        await this.dispatchErrorToast('verb_upload_error_generic', 500, `Unexpected response from finalize call: ${finalizeJson}`, e.showError);
         this.operations = [];
         return false;
       }
@@ -409,7 +453,7 @@ export default class ActionBinder {
       });
     } catch (e) {
       await this.showSplashScreen();
-      await this.dispatchErrorToast('verb_upload_error_generic', e?.showError, e?.status);
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, "Exception thrown when verifying content.", e.showError);
       this.operations = [];
       return false;
     }
@@ -467,17 +511,18 @@ export default class ActionBinder {
       await this.showSplashScreen();
       switch (e.status) {
         case 409:
-          await this.dispatchErrorToast('verb_upload_error_duplicate_asset', e.showError);
+          await this.dispatchErrorToast('verb_upload_error_duplicate_asset', e.status, null, e.showError);
           break;
         case 401:
-          await this.dispatchErrorToast(e.message === 'notentitled' ? 'verb_upload_error_no_storage_provision' : 'verb_upload_error_generic', e.showError);
+          if (e.message === 'notentitled') await this.dispatchErrorToast('verb_upload_error_no_storage_provision', e.status, null, e.showError);
+          else await this.dispatchErrorToast('verb_upload_error_generic', e.status, e.message, e.showError);
           break;
         case 403:
-          if (e.message === 'quotaexceeded') await this.dispatchErrorToast('verb_upload_error_max_quota_exceeded', e.showError);
-          else await this.dispatchErrorToast('verb_upload_error_no_storage_provision', e.showError);
+          if (e.message === 'quotaexceeded') await this.dispatchErrorToast('verb_upload_error_max_quota_exceeded', e.status, null, e.showError);
+          else await this.dispatchErrorToast('verb_upload_error_no_storage_provision', e.status, null, e.showError);
           break;
         default:
-          await this.dispatchErrorToast('verb_upload_error_generic', e.showError, e.status);
+          await this.dispatchErrorToast('verb_upload_error_generic', e.status, null, e.showError);
           break;
       }
       return;
