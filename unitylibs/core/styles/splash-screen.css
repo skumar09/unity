@@ -120,6 +120,15 @@ body > .splash-loader {
   height: auto;
 }
 
+.splash-loader .text video {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+}
+
 @media screen and (min-width: 600px) {
   .splash-loader .text .icon-area img,
   .splash-loader .text video {
@@ -138,7 +147,7 @@ body > .splash-loader {
   }
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (min-width: 1000px) {
   .splash-loader .text .con-button {
     display: flex;
   }
