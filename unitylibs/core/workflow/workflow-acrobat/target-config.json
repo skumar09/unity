@@ -9,7 +9,9 @@
     "limits": {
       "maxNumFiles": 1,
       "maxFileSize": 104857600,
-      "maxNumPages": 100
+      "maxNumPages": 100,
+      "allowedFileTypes": ["application/pdf"],
+      "batchSize": 10
     },
     "showSplashScreen": true,
     "splashScreenConfig": {
@@ -28,6 +30,65 @@
       "#file-upload": [
         {
           "actionType": "fillsign"
+        },
+        {
+          "actionType": "continueInApp"
+        }
+      ]
+    }
+  },
+  "verb-widget.compress-pdf": {
+    "type": "pdf",
+    "selector": ".verb-wrapper",
+    "handler": "render",
+    "renderWidget": false,
+    "source": ".verb-wrapper .verb-container",
+    "target": ".verb-wrapper .verb-container",
+    "limits": {
+      "maxFileSize": 2147483648,
+      "allowedFileTypes": [
+        "application/pdf",
+        "application/msword",
+        "application/xml",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/x-tika-ooxml",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/x-tika-msworks-spreadsheet",
+        "application/vnd.adobe.form.fillsign",
+        "application/illustrator",
+        "application/rtf",
+        "application/x-indesign",
+        "image/jpeg",
+        "image/png",
+        "image/bmp",
+        "image/gif",
+        "image/vnd.adobe.photoshop",
+        "image/tiff",
+        "message/rfc822",
+        "text/plain"
+      ],
+      "batchSize": 10
+    },
+    "showSplashScreen": true,
+    "splashScreenConfig": {
+      "fragmentLink": "/dc-shared/fragments/shared-fragments/frictionless/splash-page/splashscreen",
+      "splashScreenParent": "body"
+    },
+    "actionMap": {
+      ".verb-wrapper": [
+        {
+          "actionType": "compress"
+        },
+        {
+          "actionType": "continueInApp"
+        }
+      ],
+      "#file-upload": [
+        {
+          "actionType": "compress"
         },
         {
           "actionType": "continueInApp"
