@@ -772,12 +772,13 @@ export default class ActionBinder {
         }
       });
       const cOpts = {
+        assetId: assetDataArray[0].id,
         targetProduct: this.workflowCfg.productName,
         payload: {
           languageRegion: this.workflowCfg.langRegion,
           languageCode: this.workflowCfg.langCode,
           verb: this.workflowCfg.enabledFeatures[0],
-          feedback: 'multifile',
+          multifile: true,
           workflowId: workflowId,
         },
       };
