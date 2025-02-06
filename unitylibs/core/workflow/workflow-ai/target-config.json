@@ -1,0 +1,44 @@
+{
+  "aside": {
+    "type": "text",
+    "selector": ".text",
+    "handler": "render",
+    "renderWidget": true,
+    "source": ".text .body-m",
+    "target": "p:last-of-type",
+    "insert": "before",
+    "floatPrompt": true,
+    "actionMap": {
+      ".inp-field": [
+        {
+          "actionType": "autocomplete"
+        }
+      ],
+      ".surprise-btn": [
+        {
+          "actionType": "surprise"
+        }
+      ],
+      ".gen-btn": [
+        {
+          "actionType": "generate"
+        }
+      ],
+      ".drop-item": [
+        {
+          "actionType": "setPromptValue"
+        }
+      ],
+      ".refresh-btn": [
+        {
+          "actionType": "refreshSuggestion"
+        }
+      ],
+      ".close-btn": [
+        {
+          "actionType": "closeDropdown"
+        }
+      ]
+    }
+  }
+}
