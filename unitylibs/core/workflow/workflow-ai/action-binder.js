@@ -61,6 +61,16 @@ export default class ActionBinder {
     });
   }
 
+  async loadServiceHandler() {
+    const { default: ServiceHandler } = await import(
+      `${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/service-handler.js`
+    );
+    this.serviceHandler = new ServiceHandler(
+      this.workflowCfg.targetCfg.renderWidget,
+      this.canvasArea,
+    );
+  }
+
   addEventListeners(el, actionsList) {
     const handleClick = async (event) => {
       event.preventDefault();
@@ -109,15 +119,6 @@ export default class ActionBinder {
   }
 
   async execActions(actions, el = null) {
-    if (!this.serviceHandler) {
-      const { default: ServiceHandler } = await import(
-        `${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/service-handler.js`
-      );
-      this.serviceHandler = new ServiceHandler(
-        this.workflowCfg.targetCfg.renderWidget,
-        this.canvasArea,
-      );
-    }
     await Promise.all(
       actions.map(async (act) => {
         try {
@@ -145,6 +146,7 @@ export default class ActionBinder {
 
   async fetchAutoComplete(fetchType = 'default') {
     try {
+      if (!this.serviceHandler) await this.loadServiceHandler();
       this.maxResults = fetchType === 'refresh' ? this.maxResults * 2 : 12;
       if (fetchType !== 'refresh' && this.query) {
         sendAnalyticsEvent(
@@ -207,6 +209,7 @@ export default class ActionBinder {
   }
 
   async generateContent() {
+    if (!this.serviceHandler) await this.loadServiceHandler();
     try {
       const payload = {
         query: this.query,
@@ -404,9 +407,15 @@ export default class ActionBinder {
       this.activeIndex = -1;
       return;
     }
-    const targetElement = focusElems[currIdx] || ev.target;
-    if (targetElement && (currIdx !== -1 || targetElement.classList.contains('unity-act-btn'))) {
-      targetElement.click();
+    const tarElem = focusElems[currIdx] || ev.target;
+    const actions = { 'inp-field': () => this.inpRedirect() };
+    if (tarElem) {
+      const matchCls = Object.keys(actions).find((cls) => tarElem.classList.contains(cls));
+      if (matchCls) {
+        actions[matchCls]();
+      } else if (currIdx !== -1) {
+        tarElem.click();
+      }
     }
   }
 
@@ -417,6 +426,11 @@ export default class ActionBinder {
         item.focus();
       }
     });
+  }
+
+  async inpRedirect() {
+    if (!this.query) return;
+    await this.generateContent();
   }
 
   clearDropdown() {

@@ -331,7 +331,7 @@
 .unity-enabled .interactive-area .ex-unity-wrap .ex-unity-widget .drop .drop-item.dynamic:before {
   background-image: url(../../../img/icons/search.svg);
 }
-.unity-enabled .interactive-area .ex-unity-wrap .ex-unity-widget .drop .drop-separator {
+.unity-enabled .interactive-area .ex-unity-wrap .ex-unity-widget .drop .drop-sep {
   border-top: 1px solid #E1E1E1;
   margin: 0 16px;
 }
@@ -449,7 +449,7 @@
     justify-content: flex-end;
     width: 100%;
   }
-  .aside.unity-enabled .interactive-area .ex-unity-wrap .ex-unity-widget .drop .drop-separator,
+  .aside.unity-enabled .interactive-area .ex-unity-wrap .ex-unity-widget .drop .drop-sep,
   .aside.unity-enabled .interactive-area .ex-unity-wrap .ex-unity-widget .drop .drop-footer {
     display: none;
   }
