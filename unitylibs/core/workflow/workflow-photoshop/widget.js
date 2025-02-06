@@ -3,6 +3,7 @@ import {
   decorateDefaultLinkAnalytics,
   loadSvgs,
   priorityLoad,
+  defineDeviceByScreenSize,
 } from '../../../scripts/utils.js';
 
 export default class UnityWidget {
@@ -229,33 +230,21 @@ export default class UnityWidget {
     }
   }
 
-  updateQueryParam(url, params) {
-    const parsedUrl = new URL(url);
-    Object.entries(params).forEach(([key, value]) => {
-      parsedUrl.searchParams.set(key, value);
-    });
-    return parsedUrl;
-  }
-
   addChangeBgTray(btn, authCfg, optionArea, isVisible) {
     const bgSelectorTray = createTag('div', { class: `changebg-options-tray ${isVisible ? 'show' : ''}` });
     const bgOptions = authCfg.querySelectorAll(':scope ul li');
-    const thumbnailSrc = [];
     [...bgOptions].forEach((o, num) => {
       let thumbnail = null;
       let bgImg = null;
-      bgImg = o.querySelector('img');
-      thumbnail = bgImg;
+      [thumbnail, bgImg] = o.querySelectorAll('img');
+      if (!bgImg) bgImg = thumbnail;
       thumbnail.dataset.backgroundImg = bgImg.src;
-      thumbnail.setAttribute('src', this.updateQueryParam(bgImg.src, { format: 'webply', width: '68', height: '68' }));
-      thumbnailSrc.push(thumbnail.getAttribute('src'));
       const optionSelector = `changebg-option option-${num}`;
       const a = createTag('a', { href: '#', class: optionSelector }, thumbnail);
       bgSelectorTray.append(a);
       this.initChangeBgActions(`.changebg-option.option-${num}`, btn, bgImg, bgSelectorTray);
       a.addEventListener('click', (e) => { e.preventDefault(); });
     });
-    priorityLoad(thumbnailSrc);
     optionArea.append(bgSelectorTray);
     return bgSelectorTray;
   }
