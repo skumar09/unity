@@ -123,14 +123,14 @@ export default class UploadHandler {
         { body: JSON.stringify(finalAssetData), signal: AbortSignal.timeout?.(80000) },
       );
       if (!finalizeJson || Object.keys(finalizeJson).length !== 0) {
-        if (this.MULTI_FILE) return false;
+        if (this.actionBinder.MULTI_FILE) return false;
         await this.actionBinder.showSplashScreen();
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, `Unexpected response from finalize call: ${finalizeJson}`);
         this.actionBinder.operations = [];
         return false;
       }
     } catch (e) {
-      if (this.MULTI_FILE) return false;
+      if (this.actionBinder.MULTI_FILE) return false;
       await this.actionBinder.showSplashScreen();
       await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, 'Exception thrown when verifying content.', false, e.showError);
       this.actionBinder.operations = [];
@@ -354,7 +354,7 @@ export default class UploadHandler {
       return;
     }
     this.actionBinder.LOADER_LIMIT = 75;
-    this.actionBinder.updateProgressBar(this.splashScreenEl, 75);
+    this.actionBinder.updateProgressBar(this.actionBinder.splashScreenEl, 75);
     cOpts = {
       targetProduct: this.actionBinder.workflowCfg.productName,
       assetId: assetDataArray[0].id,
