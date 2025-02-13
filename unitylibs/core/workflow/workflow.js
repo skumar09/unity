@@ -121,21 +121,35 @@ class WfInitiator {
     this.actionMap = {};
   }
 
-  async priorityLibFetch(renderWidget, workflowName) {
-    const priorityList = [
-      `${getUnityLibs()}/core/workflow/${workflowName}/action-binder.js`,
-      `${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/target-config.json`,
+  async priorityLibFetch(workflowName) {
+    const baseWfPath = `${getUnityLibs()}/core/workflow/${workflowName}`;
+    const sharedWfRes = [
+      `${baseWfPath}/sprite.svg`,
+      `${baseWfPath}/widget.css`,
+      `${baseWfPath}/widget.js`,
     ];
-    if (renderWidget) {
-      priorityList.push(
-        `${getUnityLibs()}/core/workflow/${workflowName}/widget.css`,
-        `${getUnityLibs()}/core/workflow/${workflowName}/widget.js`,
-      );
-    }
-    await priorityLoad(priorityList);
+    const workflowRes = {
+      'workflow-photoshop': [
+        ...sharedWfRes,
+        `${getUnityLibs()}/core/features/progress-circle/progress-circle.css`,
+      ],
+      'workflow-ai': sharedWfRes,
+    };
+    const commonResources = [
+      `${baseWfPath}/target-config.json`,
+      `${baseWfPath}/action-binder.js`,
+    ];
+    const wfRes = workflowRes[workflowName] || [];
+    const priorityList = [...commonResources, ...wfRes];
+    const pfr = await priorityLoad(priorityList);
+
+    return {
+      targetConfigCallRes: pfr[0],
+      spriteCallRes: pfr.length > 2 ? pfr[2] : null,
+    };
   }
 
-  async init(el, project = 'unity', unityLibs = '/unitylibs', langRegion, langCode) {
+  async init(el, project = 'unity', unityLibs = '/unitylibs', langRegion = '', langCode = '') {
     setUnityLibs(unityLibs, project);
     this.el = el;
     this.unityLibs = unityLibs;
@@ -144,18 +158,20 @@ class WfInitiator {
     this.workflowCfg = this.getWorkFlowInformation();
     this.workflowCfg.langRegion = langRegion;
     this.workflowCfg.langCode = langCode;
-    await this.priorityLibFetch(this.targetConfig.renderWidget, this.workflowCfg.name);
-    [this.targetBlock, this.interactiveArea, this.targetConfig] = await this.getTarget();
+    // eslint-disable-next-line max-len
+    const { targetConfigCallRes: tcfg, spriteCallRes: spriteSvg } = await this.priorityLibFetch(this.workflowCfg.name);
+    [this.targetBlock, this.interactiveArea, this.targetConfig] = await this.getTarget(tcfg);
     this.getEnabledFeatures();
     this.callbackMap = {};
     this.workflowCfg.targetCfg = this.targetConfig;
     if (this.targetConfig.renderWidget) {
-      loadStyle(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/widget.css`);
       const { default: UnityWidget } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/widget.js`);
+      const spriteContent = await spriteSvg.text();
       this.actionMap = await new UnityWidget(
         this.interactiveArea,
         this.el,
         this.workflowCfg,
+        spriteContent,
       ).initWidget();
     } else {
       this.actionMap = this.targetConfig.actionMap;
@@ -186,16 +202,16 @@ class WfInitiator {
     });
   }
 
-  async getTarget() {
-    const res = await fetch(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/target-config.json`);
-    const targetConfig = await res.json();
+  async getTarget(rawTargetConfig) {
+    const targetConfig = await rawTargetConfig.json();
     const prevElem = this.el.previousElementSibling;
     const supportedBlocks = Object.keys(targetConfig);
     let targetCfg = null;
     for (let k = 0; k < supportedBlocks.length; k += 1) {
       const classes = supportedBlocks[k].split('.');
       let hasAllClasses = true;
-      for (let c of classes) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const c of classes) {
         const hasClass = prevElem.classList.contains(c);
         const hasChild = prevElem.querySelector(`.${c}`);
         if (!(hasClass || hasChild)) {
@@ -267,7 +283,7 @@ class WfInitiator {
       enabledFeatures: [],
       featureCfg: [],
       errors: {},
-      supportedTexts: workflowCfg[wfName]?.stList ?? {},
+      supportedTexts: workflowCfg[wfName]?.stList ?? null,
     };
   }
 
@@ -277,13 +293,13 @@ class WfInitiator {
     configuredFeatures.forEach((cf) => {
       const cfName = [...cf.classList].find((cn) => cn.match('icon-'));
       if (!cfName) return;
-      const fn = cfName.trim().replace('icon-','');
+      const fn = cfName.trim().replace('icon-', '');
       if (supportedFeatures.has(fn)) {
         this.workflowCfg.enabledFeatures.push(fn);
         this.workflowCfg.featureCfg.push(cf.closest('li'));
       } else if (fn.includes('error')) {
         this.workflowCfg.errors[fn] = cf.closest('li').innerText;
-      } else if (supportedTexts.has(fn)) {
+      } else if (supportedTexts && supportedTexts.has(fn)) {
         this.workflowCfg.supportedTexts[fn] = this.workflowCfg.supportedTexts[fn] || [];
         this.workflowCfg.supportedTexts[fn].push(cf.closest('li').innerText);
       }
@@ -298,7 +314,7 @@ export default async function init(el, project = 'unity', unityLibs = '/unitylib
   if (imsClientId) unityConfig.apiKey = imsClientId;
   setUnityLibs(unityLibs, project);
   switch (uv) {
-    case 'v1':
+    case 'v1': {
       const [targetBlock, unityWidget] = await getTargetArea(el);
       if (!targetBlock) return;
       const [wfName, wfDetail] = getWorkFlowInformation(el);
@@ -316,6 +332,7 @@ export default async function init(el, project = 'unity', unityLibs = '/unitylib
         ...unityConfig,
       };
       await initWorkflow(wfConfig);
+    }
       break;
     case 'v2':
       await new WfInitiator().init(el, project, unityLibs, langRegion, langCode);
