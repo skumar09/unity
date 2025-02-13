@@ -211,7 +211,7 @@ export default class UploadHandler {
 
   getConcurrentLimits() {
     const deviceType = this.getDeviceType();
-    if (!this.MULTI_FILE) {
+    if (!this.actionBinder.MULTI_FILE) {
       return { maxConcurrentChunks: UploadHandler.UPLOAD_LIMITS[deviceType].chunks };
     }
     return {
@@ -401,7 +401,7 @@ export default class UploadHandler {
     try {
       await this.actionBinder.showSplashScreen(true);
       await this.actionBinder.delay(3000);
-      this.LOADER_LIMIT = 85;
+      this.actionBinder.LOADER_LIMIT = 85;
       this.actionBinder.updateProgressBar(this.actionBinder.splashScreenEl, 85);
       const redirectSuccess = await this.actionBinder.handleRedirect(this.getGuestConnPayload('multifile'));
       if (!redirectSuccess) return;
