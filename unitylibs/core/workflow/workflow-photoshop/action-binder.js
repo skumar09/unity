@@ -482,23 +482,31 @@ export default class ActionBinder {
   }
 
   changeAdjustments(value, params) {
+    const l = this.operations.length;
+    if (l > 0 && this.operations[l - 1].operationType !== 'imageAdjustment') {
+      this.operations.push({ operationType: 'imageAdjustment', adjustmentType: 'hue', filterValue: 0 });
+      this.operations.push({ operationType: 'imageAdjustment', adjustmentType: 'sat', filterValue: 100 });
+    }
     const { filterType, target } = params;
-    const operationItem = {
-      operationType: 'imageAdjustment',
-      adjustmentType: filterType,
-      filterValue: params,
-    };
     const currFilter = target.style.filter;
+    let optype = null;
     switch (filterType) {
       case 'hue':
+        optype = 'hue';
         target.style.filter = this.getFilterAttrValue(currFilter, 'hue-rotate', `hue-rotate(${value}deg)`);
         break;
       case 'saturation':
+        optype = 'sat';
         target.style.filter = this.getFilterAttrValue(currFilter, 'saturate', `saturate(${value}%)`);
         break;
       default:
         break;
     }
+    const operationItem = {
+      operationType: 'imageAdjustment',
+      adjustmentType: optype,
+      filterValue: params.sliderElem.value,
+    };
     this.operations.push(operationItem);
   }
 
@@ -510,14 +518,19 @@ export default class ActionBinder {
         operations: [],
       },
     };
+    const continueOperations = ['removeBackground', 'changeBackground', 'imageAdjustment'];
     this.operations.forEach((op, i) => {
+      if (!continueOperations.includes(op.operationType)) return;
       if (!cOpts.assetId && !cOpts.href) {
         if (op.sourceAssetUrl) cOpts.href = op.sourceAssetUrl;
         else if (op.sourceAssetId) cOpts.assetId = op.sourceAssetId;
       }
-      const idx = cOpts.payload.operations.length;
-      if (idx > 0 && cOpts.payload.operations[idx - 1] == op.operationType) cOpts.pop();
-      cOpts.payload.operations.push({ name: op.operationType });
+      let idx = cOpts.payload.operations.length;
+      if (idx > 0 && cOpts.payload.operations[idx - 1].name === op.operationType) {
+        idx -= 1;
+      } else {
+        cOpts.payload.operations.push({ name: op.operationType });
+      }
       if (op.assetId) {
         cOpts.payload.finalAssetId = op.assetId;
         if (op.operationType == 'changeBackground') cOpts.payload.operations[idx].assetIds = [op.bgId];
@@ -525,11 +538,8 @@ export default class ActionBinder {
         cOpts.payload.finalAssetUrl = op.assetUrl;
         if (op.operationType == 'changeBackground') cOpts.payload.operations[idx].hrefs = [op.backgroundSrc];
       }
-      if (op.operationType == 'imageAdjustment' && op.adjustmentType && op.filterValue) {
-        cOpts.payload.operations[idx][op.adjustmentType] = parseInt(
-          op.filterValue.sliderElem.value,
-          10,
-        );
+      if (op.operationType == 'imageAdjustment' && op.adjustmentType) {
+        cOpts.payload.operations[idx][op.adjustmentType] = parseInt(op.filterValue, 10);
       }
     });
     const { url } = await this.serviceHandler.postCallToService(
