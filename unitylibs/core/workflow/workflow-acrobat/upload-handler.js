@@ -54,6 +54,7 @@ export default class UploadHandler {
       body: blobData,
     };
     const response = await fetch(storageUrl, uploadOptions);
+    console.log(response);
     if (!response.ok) throw new Error(`Failed to upload: ${response.status}`);
     return response;
   }
@@ -84,7 +85,7 @@ export default class UploadHandler {
 
   async chunkPdf(assetDataArray, blobDataArray, filetypeArray, batchSize) {
     const uploadTasks = [];
-    const failedFiles = [];
+    const failedFiles = new Set();
     assetDataArray.forEach((assetData, fileIndex) => {
       const blobData = blobDataArray[fileIndex];
       const fileType = filetypeArray[fileIndex];
@@ -98,9 +99,10 @@ export default class UploadHandler {
         const url = assetData.uploadUrls[i];
         return () => {
           if (fileUploadFailed) return Promise.resolve();
-          return this.uploadFileToUnity(url.href, chunk, fileType).catch(async () => {
+          return this.uploadFileToUnity(url.href, chunk, fileType).catch(async (e) => {
+            console.log(e);
             await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, `Error uploading chunk ${i + 1}/${totalChunks} of file ${fileIndex + 1}/${assetDataArray.length}: ${assetData.id}`, true);
-            failedFiles.push(fileIndex);
+            failedFiles.add(fileIndex);
             fileUploadFailed = true;
           });
         };
@@ -288,7 +290,7 @@ export default class UploadHandler {
       [file.type],
       maxConcurrentChunks,
     );
-    if (uploadResult.length === 1) {
+    if (uploadResult.size === 1) {
       await this.dispatchGenericError('Error uploading file chunks.');
       return;
     }
@@ -375,11 +377,11 @@ export default class UploadHandler {
       fileTypeArray,
       maxConcurrentChunks,
     );
-    if (uploadResult.length === files.length) {
+    if (uploadResult.size === files.length) {
       await this.dispatchGenericError();
       return;
     }
-    const uploadedAssets = assetDataArray.filter((_, index) => !uploadResult.includes(index));
+    const uploadedAssets = assetDataArray.filter((_, index) => !uploadResult.has(index));
     this.actionBinder.operations.push(workflowId);
     let allVerified = 0;
     await this.executeInBatches(uploadedAssets, maxConcurrentFiles, async (assetData) => {
