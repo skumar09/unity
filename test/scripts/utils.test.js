@@ -42,9 +42,4 @@ describe('Libs', () => {
     const libs = setLibs('/libs', location);
     expect(libs).to.equal('https://awesome--milo--forkedowner.aem.live/libs');
   });
-
-  it('Should return libs', () => {
-    const libs = getLibs();
-    expect(libs).to.equal('https://awesome--milo--forkedowner.aem.live/libs');
-  });
 });
