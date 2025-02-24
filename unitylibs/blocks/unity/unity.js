@@ -1,19 +1,18 @@
 import { loadStyle } from '../../scripts/utils.js';
 
 function getUnityLibs(prodLibs, project = 'unity') {
-  let libs = '';
   const { hostname, origin } = window.location;
-  if (project === 'unity') { libs = `${origin}/unitylibs`; return libs; }
-  if (!hostname.includes('hlx.page')
-    && !hostname.includes('hlx.live')
+  if (project === 'unity') { return `${origin}/unitylibs`; }
+  if (!hostname.includes('.hlx.')
+    && !hostname.includes('.aem.')
     && !hostname.includes('localhost')) {
-    libs = prodLibs;
-    return libs;
+    return prodLibs;
   }
   const branch = new URLSearchParams(window.location.search).get('unitylibs') || 'main';
-  if (branch.indexOf('--') > -1) { libs = `https://${branch}.hlx.live/unitylibs`; return libs; }
-  libs = `https://${branch}--unity--adobecom.hlx.live/unitylibs`;
-  return libs;
+  const helixVersion = hostname.includes('.hlx.') ? 'hlx' : 'aem';
+  return branch.indexOf('--') > -1 
+  ? `https://${branch}.${helixVersion}.live/unitylibs` 
+  : `https://${branch}--unity--adobecom.${helixVersion}.live/unitylibs`;
 }
 
 export default async function init(el) {
