@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable max-classes-per-file */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable class-methods-use-this */
@@ -184,6 +185,22 @@ export default class ActionBinder {
     this.LOADER_INCREMENT = 30;
     this.LOADER_LIMIT = 95;
     this.MULTI_FILE = false;
+    this.applySignedInSettings();
+  }
+
+  acrobatSignedInSettings() {
+    if (this.limits.signedInallowedFileTypes) this.limits.allowedFileTypes.push(...this.limits.signedInallowedFileTypes);
+  }
+
+  async applySignedInSettings() {
+    if (this.block.classList.contains('signed-in')
+      && this.getAccountType() === 'type1') {
+      this.acrobatSignedInSettings();
+      return;
+    }
+    window.addEventListener('IMS:Ready', () => {
+      this.acrobatSignedInSettings();
+    });
   }
 
   getAcrobatApiConfig() {
@@ -372,7 +389,7 @@ export default class ActionBinder {
     else await this.uploadHandler.multiFileUserUpload(files, filesData);
   }
 
-  async fillsign(files, eventName) {
+  async processSingleFile(files, eventName) {
     if (!files || files.length > this.limits.maxNumFiles) {
       await this.dispatchErrorToast('verb_upload_error_only_accept_one_file');
       return;
@@ -380,6 +397,26 @@ export default class ActionBinder {
     const file = files[0];
     if (!file) return;
     await this.handleSingleFileUpload(file, eventName);
+  }
+
+  async fillsign(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async addComment(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async numberPages(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async splitPdf(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async cropPages(files, eventName) {
+    await this.processSingleFile(files, eventName);
   }
 
   async compress(files, totalFileSize, eventName) {
@@ -455,6 +492,22 @@ export default class ActionBinder {
         case value.actionType === 'compress':
           this.promiseStack = [];
           await this.compress(files, totalFileSize, eventName);
+          break;
+        case value.actionType === 'addcomment':
+          this.promiseStack = [];
+          await this.addComment(files, eventName);
+          break;
+        case value.actionType === 'numberpages':
+          this.promiseStack = [];
+          await this.numberPages(files, eventName);
+          break;
+        case value.actionType === 'splitpdf':
+          this.promiseStack = [];
+          await this.splitPdf(files, eventName);
+          break;
+        case value.actionType === 'croppages':
+          this.promiseStack = [];
+          await this.cropPages(files, eventName);
           break;
         case value.actionType === 'continueInApp':
           await this.continueInApp();

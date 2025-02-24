@@ -266,7 +266,14 @@ class WfInitiator {
       },
       'workflow-acrobat': {
         productName: 'acrobat',
-        sfList: new Set(['fillsign', 'compress-pdf']),
+        sfList: new Set([
+          'fillsign',
+          'compress-pdf',
+          'add-comment',
+          'number-pages',
+          'split-pdf',
+          'crop-pages',
+        ]),
       },
       'workflow-ai': {
         productName: 'Express',

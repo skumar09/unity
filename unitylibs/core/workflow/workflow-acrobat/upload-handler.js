@@ -157,7 +157,7 @@ export default class UploadHandler {
     return true;
   }
 
-  async isMaxPageLimitExceeded(assetData) {
+  async checkPageNumCount(assetData) {
     try {
       const intervalDuration = 500;
       const totalDuration = 5000;
@@ -167,9 +167,19 @@ export default class UploadHandler {
       let metadataExists = false;
       return new Promise((resolve) => {
         const handleMetadata = async () => {
-          if (metadata.numPages > this.actionBinder.limits.maxNumPages) {
+          if (this.actionBinder?.limits?.pageLimit?.maxNumPages
+            && metadata.numPages > this.actionBinder.limits.pageLimit.maxNumPages
+          ) {
             await this.actionBinder.showSplashScreen();
             await this.actionBinder.dispatchErrorToast('verb_upload_error_max_page_count');
+            resolve(true);
+            return;
+          }
+          if (this.actionBinder?.limits?.pageLimit?.minNumPages
+            && metadata.numPages < this.actionBinder.limits.pageLimit.minNumPages
+          ) {
+            await this.actionBinder.showSplashScreen();
+            await this.actionBinder.dispatchErrorToast('verb_upload_error_min_page_count');
             resolve(true);
             return;
           }
@@ -208,9 +218,9 @@ export default class UploadHandler {
     let validated = true;
     for (const limit of Object.keys(this.actionBinder.limits)) {
       switch (limit) {
-        case 'maxNumPages': {
-          const maxPageLimitExceeded = await this.isMaxPageLimitExceeded(assetData);
-          if (maxPageLimitExceeded) validated = false;
+        case 'pageLimit': {
+          const pageLimitRes = await this.checkPageNumCount(assetData);
+          if (pageLimitRes) validated = false;
           break;
         }
         default:
@@ -313,8 +323,10 @@ export default class UploadHandler {
     this.actionBinder.operations.push(assetData.id);
     const verified = await this.verifyContent(assetData);
     if (!verified) return;
-    const validated = await this.handleValidations(assetData);
-    if (!validated) return;
+    if (!isNonPdf) {
+      const validated = await this.handleValidations(assetData);
+      if (!validated) return;
+    }
     this.actionBinder.dispatchAnalyticsEvent('uploaded');
   }
 
