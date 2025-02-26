@@ -12,10 +12,52 @@ import {
   priorityLoad,
   loadArea,
   loadImg,
-  getHeaders
 } from '../../../scripts/utils.js';
 
 class ServiceHandler {
+  getGuestAccessToken() {
+    try {
+      return window.adobeIMS.getAccessToken();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async getRefreshToken() {
+    try {
+      const { tokenInfo } = await window.adobeIMS.refreshToken();
+      return `Bearer ${tokenInfo.token}`;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async getHeaders() {
+    let token = '';
+    let refresh = false;
+    const guestAccessToken = this.getGuestAccessToken();
+    if (!guestAccessToken || guestAccessToken.expire.valueOf() <= Date.now() + (5 * 60 * 1000)) {
+      token = await this.getRefreshToken();
+      refresh = true;
+    } else {
+      token = `Bearer ${guestAccessToken.token}`;
+    }
+
+    if (!token) {
+      const error = new Error();
+      error.status = 401;
+      error.message = `Access Token is null. Refresh token call was executed: ${refresh}`
+      throw error;
+    }
+
+    return {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token,
+        'x-api-key': unityConfig.apiKey,
+      },
+    };
+  }
 
   async fetchFromService(url, options) {
     try {
@@ -79,42 +121,8 @@ class ServiceHandler {
     }
   }
 
-  async fetchFromServiceWithRetry(url, options, timeLapsed=0, maxRetryDelay=120) {
-    try {
-      const response = await fetch(url, options);
-      const error = new Error();
-      const contentLength = response.headers.get('Content-Length');
-      if (response.status !== 200 && response.status !== 202) {
-        if (contentLength !== '0') {
-          const resJson = await response.json();
-          ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
-            if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
-          });
-        }
-        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
-        error.status = response.status;
-        throw error;
-      } else if (response.status === 202) {
-        if (timeLapsed < maxRetryDelay && response.headers.get("retry-after")) {
-          const retryDelay = parseInt(response.headers.get("retry-after"));
-          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
-          timeLapsed += retryDelay;
-          return this.fetchFromServiceWithRetry(url, options, timeLapsed, maxRetryDelay);
-        }
-      }
-      if (contentLength === '0') return {};
-      return await response.json();
-    } catch (e) {
-      if (['TimeoutError', 'AbortError'].includes(e.name)) {
-        e.status = 504;
-        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
-      }
-      throw e;
-    }
-  }
-
   async postCallToService(api, options) {
-    const headers = await getHeaders(unityConfig.apiKey);
+    const headers = await this.getHeaders();
     const postOpts = {
       method: 'POST',
       ...headers,
@@ -124,7 +132,7 @@ class ServiceHandler {
   }
 
   async postCallToServiceWithRetry(api, options) {
-    const headers = await getHeaders(unityConfig.apiKey);
+    const headers = await this.getHeaders();
     const postOpts = {
       method: 'POST',
       ...headers,
@@ -134,7 +142,7 @@ class ServiceHandler {
   }
 
   async getCallToService(api, params) {
-    const headers = await getHeaders(unityConfig.apiKey);
+    const headers = await this.getHeaders();
     const getOpts = {
       method: 'GET',
       ...headers,
