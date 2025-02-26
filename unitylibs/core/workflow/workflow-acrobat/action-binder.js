@@ -228,14 +228,9 @@ export default class ActionBinder {
 
   async getAccountType() {
     try {
-      const accountType = window.adobeIMS.getAccountType();
-      if (!accountType) {
-        await this.dispatchErrorToast('verb_upload_error_generic', 500, 'Account type is empty', false);
-        return '';
-      }
-      return accountType;
+      return window.adobeIMS.getAccountType();
     } catch (e) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `${e.message}; Account type not found`, false);
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception raised when getting account type: ${e.message}`, true);
       return '';
     }
   }
@@ -380,7 +375,10 @@ export default class ActionBinder {
     const fileData = { type: file.type, size: file.size, count: 1 };
     this.dispatchAnalyticsEvent(eventName, fileData);
     if (!await this.validateFiles([file])) return;
-    if (!this.accountType) return;
+    if (!this.accountType) {
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Account type is empty or invalid: ${this.accountType}`, false);
+      return;
+    }
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
     if (this.accountType === 'guest') await this.uploadHandler.singleFileGuestUpload(file);
@@ -395,7 +393,10 @@ export default class ActionBinder {
     this.dispatchAnalyticsEvent(eventName, filesData);
     this.dispatchAnalyticsEvent('multifile', filesData);
     if (!await this.validateFiles(files)) return;
-    if (!this.accountType) return;
+    if (!this.accountType) {
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Account type is empty or invalid: ${this.accountType}`, false);
+      return;
+    }
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
     if (this.accountType === 'guest') await this.uploadHandler.multiFileGuestUpload();
