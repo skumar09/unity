@@ -228,9 +228,14 @@ export default class ActionBinder {
 
   async getAccountType() {
     try {
-      return window.adobeIMS.getAccountType();
+      const accountType = window.adobeIMS.getAccountType();
+      if (!accountType) {
+        await this.dispatchErrorToast('verb_upload_error_generic', 500, 'Account type is empty', false);
+        return '';
+      }
+      return accountType;
     } catch (e) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception raised when getting account type: ${e.message}`, true);
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `${e.message}; Account type not found`, false);
       return '';
     }
   }
@@ -251,7 +256,7 @@ export default class ActionBinder {
             code,
             message: `${message}`,
             status,
-            info: `Upload Type: ${this.MULTI_FILE ? 'multi' : 'single'}; ${info}`,
+            info,
             accountType: this.accountType,
           },
         },
@@ -375,14 +380,11 @@ export default class ActionBinder {
     const fileData = { type: file.type, size: file.size, count: 1 };
     this.dispatchAnalyticsEvent(eventName, fileData);
     if (!await this.validateFiles([file])) return;
-    if (!this.accountType) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Account type is empty or invalid: ${this.accountType}`, false);
-      return;
-    }
+    if (!this.accountType) return;
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.accountType === 'guest') await this.uploadHandler.singleFileGuestUpload(file, fileData);
-    else await this.uploadHandler.singleFileUserUpload(file, fileData);
+    if (this.accountType === 'guest') await this.uploadHandler.singleFileGuestUpload(file);
+    else await this.uploadHandler.singleFileUserUpload(file);
   }
 
   async handleMultiFileUpload(files, totalFileSize, eventName) {
@@ -393,10 +395,7 @@ export default class ActionBinder {
     this.dispatchAnalyticsEvent(eventName, filesData);
     this.dispatchAnalyticsEvent('multifile', filesData);
     if (!await this.validateFiles(files)) return;
-    if (!this.accountType) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Account type is empty or invalid: ${this.accountType}`, false);
-      return;
-    }
+    if (!this.accountType) return;
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
     if (this.accountType === 'guest') await this.uploadHandler.multiFileGuestUpload();
