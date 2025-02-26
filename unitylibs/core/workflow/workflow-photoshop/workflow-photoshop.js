@@ -193,7 +193,7 @@ async function removeBgHandler(cfg, changeDisplay = true, cachedImg=null) {
   cfg.preludeState.assetId = id;
   const removeBgOptions = {
     method: 'POST',
-    headers: await getHeaders(apiKey),
+    headers: getHeaders(apiKey),
     body: `{"surfaceId":"Unity","assets":[{"id": "${id}"}]}`,
   };
   const response = await fetch(`${apiEndPoint}/${endpoint}`, removeBgOptions);
@@ -267,7 +267,7 @@ async function changeBgHandler(cfg, selectedUrl = null, refreshState = true, cac
   }
   const changeBgOptions = {
     method: 'POST',
-    headers: await getHeaders(apiKey),
+    headers: getHeaders(apiKey),
     body: `{
             "assets": [{ "id": "${fgId}" },{ "id": "${bgId}" }],
             "metadata": {
