@@ -70,16 +70,18 @@ class ServiceHandler {
             if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
           });
         }
+        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
         error.status = response.status;
         throw error;
       }
       if (contentLength === '0') return {};
       return response.json();
-    } catch (error) {
-      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-        error.status = 504;
+    } catch (e) {
+      if (['TimeoutError', 'AbortError'].includes(e.name)) {
+        e.status = 504;
+        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
       }
-      throw error;
+      throw e;
     }
   }
 
