@@ -194,8 +194,8 @@ export default class ActionBinder {
   }
 
   async applySignedInSettings() {
+    this.accountType = await this.getAccountType();
     if (this.block.classList.contains('signed-in')) {
-      this.accountType = await this.getAccountType();
       if (this.accountType === 'type1') {
         this.acrobatSignedInSettings();
         return;
