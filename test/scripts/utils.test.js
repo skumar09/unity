@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { setLibs } from '../../scripts/utils.js';
+import { setLibs, getLibs } from '../../unitylibs/scripts/utils.js';
 
 describe('Libs', () => {
   it('Default Libs', () => {
@@ -40,6 +40,11 @@ describe('Libs', () => {
       search: '?milolibs=awesome--milo--forkedowner',
     };
     const libs = setLibs('/libs', location);
+    expect(libs).to.equal('https://awesome--milo--forkedowner.aem.live/libs');
+  });
+
+  it('Should return libs', () => {
+    const libs = getLibs();
     expect(libs).to.equal('https://awesome--milo--forkedowner.aem.live/libs');
   });
 });
