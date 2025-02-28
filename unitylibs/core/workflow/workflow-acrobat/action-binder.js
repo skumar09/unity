@@ -381,8 +381,8 @@ export default class ActionBinder {
     }
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.accountType === 'guest') await this.uploadHandler.singleFileGuestUpload(file);
-    else await this.uploadHandler.singleFileUserUpload(file);
+    if (this.accountType === 'guest') await this.uploadHandler.singleFileGuestUpload(file, fileData);
+    else await this.uploadHandler.singleFileUserUpload(file, fileData);
   }
 
   async handleMultiFileUpload(files, totalFileSize, eventName) {
