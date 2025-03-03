@@ -43,7 +43,16 @@ export default class UnityWidget {
     if (continueInApp) this.addFeatureButtons('continue-in-app', continueInApp.closest('li'), unityaa, unityoa, '');
     const { decorateDefaultLinkAnalytics } = await import(`${getLibs()}/martech/attributes.js`);
     decorateDefaultLinkAnalytics(iWidget);
+    this.addBtnAnimation();
     return this.actionMap;
+  }
+
+  addBtnAnimation() {
+    const actionBtn = this.widget.querySelector('.ps-action-btn.show');
+    actionBtn?.classList.add('animate-btn');
+    this.widget.addEventListener('mouseover', () => {
+      actionBtn?.classList.remove('animate-btn');
+    }, { once: true });
   }
 
   createActionBtn(btnCfg, btnClass, imgId, swapOrder = false) {
