@@ -130,7 +130,7 @@ export default class UploadHandler {
         targetProduct: this.actionBinder.workflowCfg.productName,
         assetId: assetData.id,
       };
-      const finalizeJson = await this.serviceHandler.postCallToService(
+      const finalizeJson = await this.serviceHandler.postCallToServiceWithRetry(
         this.actionBinder.acrobatApiConfig.acrobatEndpoint.finalizeAsset,
         { body: JSON.stringify(finalAssetData), signal: AbortSignal.timeout?.(80000) },
       );
