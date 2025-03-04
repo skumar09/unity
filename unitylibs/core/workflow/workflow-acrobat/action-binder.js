@@ -88,6 +88,40 @@ class ServiceHandler {
     }
   }
 
+  async fetchFromServiceWithRetry(url, options, timeLapsed=0, maxRetryDelay=120) {
+    try {
+      const response = await fetch(url, options);
+      const error = new Error();
+      const contentLength = response.headers.get('Content-Length');
+      if (response.status !== 200 && response.status !== 202) {
+        if (contentLength !== '0') {
+          const resJson = await response.json();
+          ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
+            if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
+          });
+        }
+        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        error.status = response.status;
+        throw error;
+      } else if (response.status === 202) {
+        if (timeLapsed < maxRetryDelay && response.headers.get("retry-after")) {
+          const retryDelay = parseInt(response.headers.get("retry-after"));
+          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
+          timeLapsed += retryDelay;
+          return this.fetchFromServiceWithRetry(url, options, timeLapsed, maxRetryDelay);
+        }
+      }
+      if (contentLength === '0') return {};
+      return await response.json();
+    } catch (e) {
+      if (['TimeoutError', 'AbortError'].includes(e.name)) {
+        e.status = 504;
+        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
+      }
+      throw e;
+    }
+  }
+
   async postCallToService(api, options) {
     const headers = await this.getHeaders();
     const postOpts = {
@@ -96,6 +130,16 @@ class ServiceHandler {
       ...options,
     };
     return this.fetchFromService(api, postOpts);
+  }
+
+  async postCallToServiceWithRetry(api, options) {
+    const headers = await this.getHeaders();
+    const postOpts = {
+      method: 'POST',
+      ...headers,
+      ...options,
+    };
+    return this.fetchFromServiceWithRetry(api, postOpts);
   }
 
   async getCallToService(api, params) {
