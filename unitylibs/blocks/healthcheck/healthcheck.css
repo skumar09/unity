@@ -1,0 +1,26 @@
+.healthcheck-container {
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin: 10px;
+  border-radius: 5px;
+  background-color: #f1f1f1;
+}
+.healthcheck-container.success {
+  background-color: #d4edda;
+}
+.healthcheck-container.error {
+  background-color: #f8d7da;
+}
+.healthcheck-container h3 {
+  margin: 0;
+  padding-bottom: 5px;
+}
+.healthcheck-container p {
+  margin: 5px 0;
+}
+.healthcheck-container p.success {
+  color: green;
+}
+.healthcheck-container p.error {
+  color: red;
+}
