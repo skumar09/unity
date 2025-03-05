@@ -215,6 +215,10 @@
   bottom: 18px;
 }
 
+[dir="rtl"] .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon svg {
+  padding: 18px 16px 18px 0;
+}
+
 .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-text {
   width: 239px;
   min-height: 18px;
@@ -241,6 +245,10 @@
   padding: 12px 8px 12px 0;
   z-index: 2;
   cursor: pointer;
+}
+
+[dir="rtl"] .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close {
+  padding: 12px 0 12px 8px;
 }
 
 .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close svg {

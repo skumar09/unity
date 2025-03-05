@@ -123,6 +123,7 @@
 
   .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
     width: 100%;
+    max-width: 93px;
   }
 
   .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option img {
@@ -174,9 +175,5 @@
 
   .unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-label {
     font-weight: bold;
-  }
-
-  [dir="rtl"] .removebg-button {
-    order: 1;
   }
 }
