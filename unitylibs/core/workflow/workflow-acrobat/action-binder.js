@@ -207,7 +207,7 @@ export default class ActionBinder {
             code,
             message: `${message}`,
             status,
-            info,
+            info: `Upload Type: ${this.MULTI_FILE ? 'multi' : 'single'}; ${info}`,
             accountType: this.accountType,
           },
         },
@@ -355,7 +355,7 @@ export default class ActionBinder {
     }
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.accountType === 'guest') await this.uploadHandler.multiFileGuestUpload();
+    if (this.accountType === 'guest') await this.uploadHandler.multiFileGuestUpload(filesData);
     else await this.uploadHandler.multiFileUserUpload(files, filesData);
   }
 
