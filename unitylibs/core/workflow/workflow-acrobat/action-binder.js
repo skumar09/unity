@@ -88,7 +88,7 @@ class ServiceHandler {
     }
   }
 
-  async fetchFromServiceWithRetry(url, options, timeLapsed=0, maxRetryDelay=120) {
+  async fetchFromServiceWithRetry(url, options, timeLapsed = 0, maxRetryDelay = 120) {
     try {
       const response = await fetch(url, options);
       const error = new Error();
@@ -96,16 +96,14 @@ class ServiceHandler {
       if (response.status !== 200 && response.status !== 202) {
         if (contentLength !== '0') {
           const resJson = await response.json();
-          ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
-            if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
-          });
+          return resJson;
         }
         if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
         error.status = response.status;
         throw error;
       } else if (response.status === 202) {
-        if (timeLapsed < maxRetryDelay && response.headers.get("retry-after")) {
-          const retryDelay = parseInt(response.headers.get("retry-after"));
+        if (timeLapsed < maxRetryDelay && response.headers.get('retry-after')) {
+          const retryDelay = parseInt(response.headers.get('retry-after'));
           await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
           timeLapsed += retryDelay;
           return this.fetchFromServiceWithRetry(url, options, timeLapsed, maxRetryDelay);
