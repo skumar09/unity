@@ -1,0 +1,114 @@
+{
+  "photoshop": [
+    { "name": "Create Asset", "apiKey": "adobedotcom-cc", "url": "{{apiEndPoint}}/asset", "method": "POST", "replaceKey": ["id","href"] },
+    { "name": "acmpCheck", "apiKey": "adobedotcom-cc", "url": "{{apiEndPoint}}/asset/finalize", "method": "POST", "body": { "assetId": "{{id}}", "targetProduct": "Photoshop" } },
+    { "name": "S3 Asset Upload", "apiKey": "adobedotcom-cc", "url": "{{href}}", "method": "PUT", "workFlow":"getBlobData"},
+    { "name": "Remove Background", "apiKey": "adobedotcom-cc", "url": "{{apiEndPoint}}/providers/PhotoshopRemoveBackground", "method": "POST", "body": { "surfaceId": "Unity", "assets": [{ "id": "{{id}}" }] }, "replaceKey": ["assetId"]},
+    {
+      "name": "Change Background",
+      "apiKey": "adobedotcom-cc",
+      "url": "{{apiEndPoint}}/providers/PhotoshopChangeBackground",
+      "method": "POST",
+      "body": {
+        "metadata": {
+          "foregroundImageId": "{{assetId}}",
+          "backgroundImageId": "{{id}}"
+        },
+        "assets": [
+          { "id": "{{assetId}}" },
+          { "id": "{{id}}" }
+        ]
+      }
+    },
+    {
+      "name": "Connector",
+      "apiKey": "adobedotcom-cc",
+      "url": "{{apiEndPoint}}/asset/connector",
+      "method": "POST",
+      "body":
+        {
+          "targetProduct":"Photoshop",
+          "locale":"in",
+          "operations":[{"name":"removeBackground"}],
+          "finalAssetId":"{{assetId}}",
+          "assetId":"{{id}}"
+        }
+    }
+  ],
+  "acrobat": [
+    {
+      "name": "Create Asset",
+      "apiKey": "acrobatmilo",
+      "url": "{{apiEndPoint}}/asset",
+      "method": "POST",
+      "body": {
+        "targetProduct": "acrobat",
+        "format": "application/pdf",
+        "name": "dummyfile.pdf",
+        "size": 13264,
+        "surfaceId": "unity"
+      },
+      "replaceKey": ["id", "href"]
+    },
+    {
+      "name": "Connector",
+      "apiKey": "acrobatmilo",
+      "url": "{{apiEndPoint}}/asset/connector",
+      "method": "POST",
+      "body": {
+        "assetId": "{{id}}",
+        "targetProduct": "acrobat",
+        "languageRegion": "us",
+        "languageCode": "en",
+        "verb": "fillsign",
+        "assetMetadata": {
+          "{{id}}": {
+            "name": "dummyfile.pdf",
+            "size": 13264,
+            "type": "application/pdf"
+          }
+        }
+      }
+    },
+    { "name": "S3 PDF Upload", "apiKey": "acrobatmilo", "url": "{{href}}", "method": "PUT", "workFlow":"uploadPdf"},
+    {
+      "name": "Asset Finalize",
+      "apiKey": "acrobatmilo",
+      "url": "{{apiEndPoint}}/asset/finalize",
+      "method": "POST",
+      "body": {
+        "assetId": "{{id}}",
+        "surfaceId": "unity",
+        "targetProduct": "acrobat"
+      }
+    },
+    {
+      "name": "Metadata",
+      "apiKey": "acrobatmilo",
+      "url": "{{apiEndPoint}}/asset/metadata?id={{id}}",
+      "method": "GET"
+    }
+  ],
+  "express": [
+    {
+      "name": "Connector",
+      "apiKey": "adobedotcom-cc",
+      "url": "{{apiEndPoint}}/asset/connector",
+      "method": "POST",
+      "body": {
+        "targetProduct": "Express",
+        "query": "Soccer tournament finals poster"
+      }
+    },
+    {
+      "name": "Auto Complete",
+      "apiKey": "adobedotcom-cc",
+      "url": "{{apiEndPoint}}/providers/AutoComplete",
+      "method": "POST",
+      "body": {
+        "query": "hello",
+        "maxResults": 12
+      }
+    }
+  ]
+}

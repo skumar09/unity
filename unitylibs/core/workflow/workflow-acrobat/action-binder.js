@@ -70,16 +70,53 @@ class ServiceHandler {
             if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
           });
         }
+        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
         error.status = response.status;
         throw error;
       }
       if (contentLength === '0') return {};
       return response.json();
-    } catch (error) {
-      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-        error.status = 504;
+    } catch (e) {
+      if (e instanceof TypeError) {
+        e.status = 0;
+        e.message = `Network error. URL: ${url}, Options: ${JSON.stringify(options)}`;
+      } else if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+        e.status = 504;
+        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
       }
-      throw error;
+      throw e;
+    }
+  }
+
+  async fetchFromServiceWithRetry(url, options, timeLapsed = 0, maxRetryDelay = 120) {
+    try {
+      const response = await fetch(url, options);
+      const error = new Error();
+      const contentLength = response.headers.get('Content-Length');
+      if (response.status !== 200 && response.status !== 202) {
+        if (contentLength !== '0') {
+          const resJson = await response.json();
+          return resJson;
+        }
+        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        error.status = response.status;
+        throw error;
+      } else if (response.status === 202) {
+        if (timeLapsed < maxRetryDelay && response.headers.get('retry-after')) {
+          const retryDelay = parseInt(response.headers.get('retry-after'));
+          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
+          timeLapsed += retryDelay;
+          return this.fetchFromServiceWithRetry(url, options, timeLapsed, maxRetryDelay);
+        }
+      }
+      if (contentLength === '0') return {};
+      return await response.json();
+    } catch (e) {
+      if (['TimeoutError', 'AbortError'].includes(e.name)) {
+        e.status = 504;
+        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
+      }
+      throw e;
     }
   }
 
@@ -91,6 +128,16 @@ class ServiceHandler {
       ...options,
     };
     return this.fetchFromService(api, postOpts);
+  }
+
+  async postCallToServiceWithRetry(api, options) {
+    const headers = await this.getHeaders();
+    const postOpts = {
+      method: 'POST',
+      ...headers,
+      ...options,
+    };
+    return this.fetchFromServiceWithRetry(api, postOpts);
   }
 
   async getCallToService(api, params) {
@@ -179,7 +226,7 @@ export default class ActionBinder {
             code,
             message: `${message}`,
             status,
-            info,
+            info: `Upload Type: ${this.MULTI_FILE ? 'multi' : 'single'}; ${info}`,
             accountType: this.getAccountType(),
           },
         },
@@ -265,7 +312,7 @@ export default class ActionBinder {
           const errorType = Array.from(errorTypes)[0];
           await this.dispatchErrorToast(errorMessages[errorType]);
         } else {
-          await this.dispatchErrorToast('verb_upload_error_generic');
+          await this.dispatchErrorToast('verb_upload_error_generic', null, `All ${files.length} files failed validation. Error Types: ${Array.from(errorTypes).join(', ')}`, false);
         }
       }
       return false;
@@ -288,7 +335,7 @@ export default class ActionBinder {
       })
       .catch(async (e) => {
         await this.showSplashScreen();
-        await this.dispatchErrorToast('verb_upload_error_generic', 500, 'Exception thrown when retrieving redirect URL.', false, e.showError);
+        await this.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError);
       });
   }
 
@@ -321,7 +368,7 @@ export default class ActionBinder {
     const isGuest = this.getAccountType() === 'guest';
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (isGuest) await this.uploadHandler.multiFileGuestUpload();
+    if (isGuest) await this.uploadHandler.multiFileGuestUpload(filesData);
     else await this.uploadHandler.multiFileUserUpload(files, filesData);
   }
 
@@ -382,7 +429,7 @@ export default class ActionBinder {
       } else window.location.href = this.redirectUrl;
     } catch (e) {
       await this.showSplashScreen();
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, 'Exception thrown when redirecting to product.', false, e.showError);
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception thrown when redirecting to product; ${e.message}`, false, e.showError);
     }
   }
 
