@@ -334,6 +334,7 @@ export default class ActionBinder {
     };
     const objUrl = URL.createObjectURL(file);
     params.target.src = objUrl;
+    e.target.value = null;
     let loadSuccessful = false;
     await new Promise((res) => {
       params.target.onload = () => {
