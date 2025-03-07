@@ -137,10 +137,12 @@
     object-fit: cover;
   }
 
+  .unity-enabled .interactive-area .unity-action-btn.focus .btn-text,
+  .unity-enabled .interactive-area .unity-action-btn.focus:not(.continue-in-app) .btn-icon svg path,
   .unity-enabled .interactive-area .unity-action-btn:active .btn-text,
-  .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
+  .unity-enabled .interactive-area .unity-action-btn:active:not(.continue-in-app) .btn-icon svg path {
     color: var(--highlight-blue);
-    fill: var(--highlight-blue);
+    fill: var(--highlight-blue) !important;
   }
 }
 

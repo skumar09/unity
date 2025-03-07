@@ -56,7 +56,7 @@ export default class UnityWidget {
   }
 
   createActionBtn(btnCfg, btnClass, imgId, swapOrder = false) {
-    const btnIcon = createTag('div', { class: 'btn-icon' }, `<svg><use xlink:href="#unity-${imgId}-icon"></use></svg>`);
+    const btnIcon = createTag('div', { class: 'btn-icon' }, this.widget.querySelector(`#unity-${imgId}-icon svg`).outerHTML);
     const btnText = createTag('div', { class: 'btn-text' }, btnCfg.innerText.split('\n')[0].trim());
     const actionBtn = createTag('a', { href: '#', class: `unity-action-btn ${btnClass}` }, btnText);
     if (swapOrder) actionBtn.append(btnIcon);
@@ -343,9 +343,10 @@ export default class UnityWidget {
     [...bgOptions].forEach((o, num) => {
       let thumbnail = null;
       let bgImg = null;
-      [thumbnail, bgImg] = o.querySelectorAll('img');
+      [thumbnail, bgImg] = o.querySelectorAll(':scope > picture > img');
       if (!bgImg) bgImg = thumbnail;
       thumbnail.dataset.backgroundImg = bgImg.src;
+      thumbnail.setAttribute('src', this.updateQueryParam(bgImg.src, { format: 'webply', width: '68', height: '68' }));
       const optionSelector = `changebg-option option-${num}`;
       const a = createTag('a', { href: '#', class: optionSelector }, thumbnail);
       bgSelectorTray.append(a);

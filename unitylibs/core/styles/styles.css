@@ -364,10 +364,17 @@
     display: none;
     height: 100%;
   }
-
+  
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn.show ~ .unity-action-btn.show {
     border-left: 1px solid var(--separator-gray);
+    border-right: none;
   }
+
+  [dir="rtl"] .unity-enabled .interactive-area .unity-action-area .unity-action-btn.show ~ .unity-action-btn.show {
+    border-right: 1px solid var(--separator-gray);
+    border-left: none;
+  }
+
 
   .unity-enabled .interactive-area.light .unity-action-area {
     background: var(--light-bg);
