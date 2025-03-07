@@ -420,6 +420,7 @@
     fill: var(--highlight-blue);
   }
 
+  .unity-enabled .interactive-area .unity-action-area .unity-action-btn,
   .unity-enabled .interactive-area .unity-action-area .unity-action-btn:hover {
     text-decoration: none;
   }
