@@ -37,28 +37,19 @@ export {
   createTag, loadStyle, getConfig, loadLink, loadScript, localizeLink, loadArea,
 };
 
-async function getRefreshToken() {
+export function getGuestAccessToken() {
   try {
-    const { tokenInfo } = window.adobeIMS ? await window.adobeIMS.refreshToken() : {};
-    return `Bearer ${tokenInfo.token}`;
+    const { token } = window.adobeIMS.getAccessToken();
+    return `Bearer ${token}`;
   } catch (e) {
     return '';
   }
 }
 
-export async function getGuestAccessToken() {
-  const guestAccessToken = window.adobeIMS?.getAccessToken();
-  if (guestAccessToken?.expire.valueOf() <= Date.now() + (5 * 60 * 1000)) {
-    const refreshToken = await getRefreshToken();
-    return refreshToken;
-  }
-  return `Bearer ${guestAccessToken?.token}`;
-}
-
-export async function getHeaders(apiKey) {
+export function getHeaders(apiKey) {
   return {
     'Content-Type': 'application/json',
-    Authorization: await getGuestAccessToken(),
+    Authorization: getGuestAccessToken(),
     'x-api-key': apiKey,
   };
 }

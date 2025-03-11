@@ -12,10 +12,53 @@ import {
   priorityLoad,
   loadArea,
   loadImg,
-  getHeaders,
 } from '../../../scripts/utils.js';
 
 class ServiceHandler {
+  getGuestAccessToken() {
+    try {
+      return window.adobeIMS.getAccessToken();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async getRefreshToken() {
+    try {
+      const { tokenInfo } = await window.adobeIMS.refreshToken();
+      return `Bearer ${tokenInfo.token}`;
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async getHeaders() {
+    let token = '';
+    let refresh = false;
+    const guestAccessToken = this.getGuestAccessToken();
+    if (!guestAccessToken || guestAccessToken.expire.valueOf() <= Date.now() + (5 * 60 * 1000)) {
+      token = await this.getRefreshToken();
+      refresh = true;
+    } else {
+      token = `Bearer ${guestAccessToken.token}`;
+    }
+
+    if (!token) {
+      const error = new Error();
+      error.status = 401;
+      error.message = `Access Token is null. Refresh token call was executed: ${refresh}`
+      throw error;
+    }
+
+    return {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token,
+        'x-api-key': unityConfig.apiKey,
+      },
+    };
+  }
+
   async fetchFromService(url, options) {
     try {
       const response = await fetch(url, options);
@@ -79,7 +122,7 @@ class ServiceHandler {
   }
 
   async postCallToService(api, options) {
-    const headers = await getHeaders(unityConfig.apiKey);
+    const headers = await this.getHeaders();
     const postOpts = {
       method: 'POST',
       ...headers,
@@ -89,7 +132,7 @@ class ServiceHandler {
   }
 
   async postCallToServiceWithRetry(api, options) {
-    const headers = await getHeaders(unityConfig.apiKey);
+    const headers = await this.getHeaders();
     const postOpts = {
       method: 'POST',
       ...headers,
@@ -99,7 +142,7 @@ class ServiceHandler {
   }
 
   async getCallToService(api, params) {
-    const headers = await getHeaders(unityConfig.apiKey);
+    const headers = await this.getHeaders();
     const getOpts = {
       method: 'GET',
       ...headers,
