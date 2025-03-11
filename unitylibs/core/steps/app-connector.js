@@ -51,7 +51,7 @@ async function continueInApp(cfg, appName, btnConfig) {
     const data = getPreludeData(cfg);
     const connectorOptions = {
       method: 'POST',
-      headers: getHeaders(apiKey),
+      headers: await getHeaders(apiKey),
       body: JSON.stringify(data),
     };
     const response = await fetch(connectorApiEndPoint, connectorOptions);
