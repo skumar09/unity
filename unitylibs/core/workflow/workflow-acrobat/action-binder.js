@@ -133,7 +133,7 @@ export default class ActionBinder {
     this.uploadHandler = null;
     this.splashScreenEl = null;
     this.promiseStack = [];
-    this.accountType = '';
+    this.signedOut = this.isSignedOut();
     this.redirectUrl = '';
     this.redirectWithoutUpload = false;
     this.LOADER_DELAY = 800;
@@ -143,14 +143,21 @@ export default class ActionBinder {
     this.applySignedInSettings();
   }
 
+  isSignedOut() {
+    const serverTiming = window.performance.getEntriesByType('navigation')[0].serverTiming?.reduce(
+      (acc, { name, description }) => ({ ...acc, [name]: description }),
+      {},
+    );
+    return !Object.keys(serverTiming || {}).length || serverTiming?.sis === '0';
+  }
+
   acrobatSignedInSettings() {
     if (this.limits.signedInallowedFileTypes) this.limits.allowedFileTypes.push(...this.limits.signedInallowedFileTypes);
   }
 
   async applySignedInSettings() {
-    this.accountType = await this.getAccountType();
     if (this.block.classList.contains('signed-in')) {
-      if (this.accountType === 'type1') {
+      if (!this.signedOut) {
         this.acrobatSignedInSettings();
         return;
       }
@@ -206,7 +213,7 @@ export default class ActionBinder {
             message: `${message}`,
             status,
             info: `Upload Type: ${this.MULTI_FILE ? 'multi' : 'single'}; ${info}`,
-            accountType: this.accountType,
+            accountType: this.signedOut ? 'guest' : 'signed-in',
           },
         },
       ));
@@ -329,13 +336,9 @@ export default class ActionBinder {
     const fileData = { type: file.type, size: file.size, count: 1 };
     this.dispatchAnalyticsEvent(eventName, fileData);
     if (!await this.validateFiles([file])) return;
-    if (!this.accountType) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Account type is empty or invalid: ${this.accountType}`, false);
-      return;
-    }
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.accountType === 'guest') await this.uploadHandler.singleFileGuestUpload(file, fileData);
+    if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(file, fileData);
     else await this.uploadHandler.singleFileUserUpload(file, fileData);
   }
 
@@ -347,13 +350,9 @@ export default class ActionBinder {
     this.dispatchAnalyticsEvent(eventName, filesData);
     this.dispatchAnalyticsEvent('multifile', filesData);
     if (!await this.validateFiles(files)) return;
-    if (!this.accountType) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Account type is empty or invalid: ${this.accountType}`, false);
-      return;
-    }
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.accountType === 'guest') await this.uploadHandler.multiFileGuestUpload(filesData);
+    if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(filesData);
     else await this.uploadHandler.multiFileUserUpload(files, filesData);
   }
 
