@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable max-classes-per-file */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable class-methods-use-this */
@@ -11,53 +12,10 @@ import {
   priorityLoad,
   loadArea,
   loadImg,
+  getHeaders,
 } from '../../../scripts/utils.js';
 
 class ServiceHandler {
-  getGuestAccessToken() {
-    try {
-      return window.adobeIMS.getAccessToken();
-    } catch (e) {
-      return '';
-    }
-  }
-
-  async getRefreshToken() {
-    try {
-      const { tokenInfo } = await window.adobeIMS.refreshToken();
-      return `Bearer ${tokenInfo.token}`;
-    } catch (e) {
-      return '';
-    }
-  }
-
-  async getHeaders() {
-    let token = '';
-    let refresh = false;
-    const guestAccessToken = this.getGuestAccessToken();
-    if (!guestAccessToken || guestAccessToken.expire.valueOf() <= Date.now() + (5 * 60 * 1000)) {
-      token = await this.getRefreshToken();
-      refresh = true;
-    } else {
-      token = `Bearer ${guestAccessToken.token}`;
-    }
-
-    if (!token) {
-      const error = new Error();
-      error.status = 401;
-      error.message = `Access Token is null. Refresh token call was executed: ${refresh}`
-      throw error;
-    }
-
-    return {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token,
-        'x-api-key': unityConfig.apiKey,
-      },
-    };
-  }
-
   async fetchFromService(url, options) {
     try {
       const response = await fetch(url, options);
@@ -121,30 +79,27 @@ class ServiceHandler {
   }
 
   async postCallToService(api, options) {
-    const headers = await this.getHeaders();
     const postOpts = {
       method: 'POST',
-      ...headers,
+      headers: await getHeaders(unityConfig.apiKey),
       ...options,
     };
     return this.fetchFromService(api, postOpts);
   }
 
   async postCallToServiceWithRetry(api, options) {
-    const headers = await this.getHeaders();
     const postOpts = {
       method: 'POST',
-      ...headers,
+      headers: await getHeaders(unityConfig.apiKey),
       ...options,
     };
     return this.fetchFromServiceWithRetry(api, postOpts);
   }
 
   async getCallToService(api, params) {
-    const headers = await this.getHeaders();
     const getOpts = {
       method: 'GET',
-      ...headers,
+      headers: await getHeaders(unityConfig.apiKey),
     };
     const queryString = new URLSearchParams(params).toString();
     const url = `${api}?${queryString}`;
@@ -178,12 +133,38 @@ export default class ActionBinder {
     this.uploadHandler = null;
     this.splashScreenEl = null;
     this.promiseStack = [];
+    this.signedOut = this.isSignedOut();
     this.redirectUrl = '';
     this.redirectWithoutUpload = false;
     this.LOADER_DELAY = 800;
     this.LOADER_INCREMENT = 30;
     this.LOADER_LIMIT = 95;
     this.MULTI_FILE = false;
+    this.applySignedInSettings();
+  }
+
+  isSignedOut() {
+    const serverTiming = window.performance.getEntriesByType('navigation')[0].serverTiming?.reduce(
+      (acc, { name, description }) => ({ ...acc, [name]: description }),
+      {},
+    );
+    return !Object.keys(serverTiming || {}).length || serverTiming?.sis === '0';
+  }
+
+  acrobatSignedInSettings() {
+    if (this.limits.signedInallowedFileTypes) this.limits.allowedFileTypes.push(...this.limits.signedInallowedFileTypes);
+  }
+
+  async applySignedInSettings() {
+    if (this.block.classList.contains('signed-in')) {
+      if (!this.signedOut) {
+        this.acrobatSignedInSettings();
+        return;
+      }
+    }
+    window.addEventListener('IMS:Ready', () => {
+      this.acrobatSignedInSettings();
+    });
   }
 
   getAcrobatApiConfig() {
@@ -206,8 +187,13 @@ export default class ActionBinder {
     await priorityLoad(parr);
   }
 
-  getAccountType() {
-    return window.adobeIMS?.getAccountType?.() || '';
+  async getAccountType() {
+    try {
+      return window.adobeIMS.getAccountType();
+    } catch (e) {
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception raised when getting account type: ${e.message}`, true);
+      return '';
+    }
   }
 
   async dispatchErrorToast(code, status, info = null, lanaOnly = false, showError = true) {
@@ -227,7 +213,7 @@ export default class ActionBinder {
             message: `${message}`,
             status,
             info: `Upload Type: ${this.MULTI_FILE ? 'multi' : 'single'}; ${info}`,
-            accountType: this.getAccountType(),
+            accountType: this.signedOut ? 'guest' : 'signed-in',
           },
         },
       ));
@@ -350,11 +336,10 @@ export default class ActionBinder {
     const fileData = { type: file.type, size: file.size, count: 1 };
     this.dispatchAnalyticsEvent(eventName, fileData);
     if (!await this.validateFiles([file])) return;
-    const isGuest = this.getAccountType() === 'guest';
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (isGuest) await this.uploadHandler.singleFileGuestUpload(file);
-    else await this.uploadHandler.singleFileUserUpload(file);
+    if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(file, fileData);
+    else await this.uploadHandler.singleFileUserUpload(file, fileData);
   }
 
   async handleMultiFileUpload(files, totalFileSize, eventName) {
@@ -365,14 +350,13 @@ export default class ActionBinder {
     this.dispatchAnalyticsEvent(eventName, filesData);
     this.dispatchAnalyticsEvent('multifile', filesData);
     if (!await this.validateFiles(files)) return;
-    const isGuest = this.getAccountType() === 'guest';
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (isGuest) await this.uploadHandler.multiFileGuestUpload(filesData);
+    if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(filesData);
     else await this.uploadHandler.multiFileUserUpload(files, filesData);
   }
 
-  async fillsign(files, eventName) {
+  async processSingleFile(files, eventName) {
     if (!files || files.length > this.limits.maxNumFiles) {
       await this.dispatchErrorToast('verb_upload_error_only_accept_one_file');
       return;
@@ -380,6 +364,26 @@ export default class ActionBinder {
     const file = files[0];
     if (!file) return;
     await this.handleSingleFileUpload(file, eventName);
+  }
+
+  async fillsign(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async addComment(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async numberPages(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async splitPdf(files, eventName) {
+    await this.processSingleFile(files, eventName);
+  }
+
+  async cropPages(files, eventName) {
+    await this.processSingleFile(files, eventName);
   }
 
   async compress(files, totalFileSize, eventName) {
@@ -455,6 +459,22 @@ export default class ActionBinder {
         case value.actionType === 'compress':
           this.promiseStack = [];
           await this.compress(files, totalFileSize, eventName);
+          break;
+        case value.actionType === 'addcomment':
+          this.promiseStack = [];
+          await this.addComment(files, eventName);
+          break;
+        case value.actionType === 'numberpages':
+          this.promiseStack = [];
+          await this.numberPages(files, eventName);
+          break;
+        case value.actionType === 'splitpdf':
+          this.promiseStack = [];
+          await this.splitPdf(files, eventName);
+          break;
+        case value.actionType === 'croppages':
+          this.promiseStack = [];
+          await this.cropPages(files, eventName);
           break;
         case value.actionType === 'continueInApp':
           await this.continueInApp();

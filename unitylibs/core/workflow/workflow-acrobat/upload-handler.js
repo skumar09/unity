@@ -157,7 +157,7 @@ export default class UploadHandler {
     return true;
   }
 
-  async isMaxPageLimitExceeded(assetData) {
+  async checkPageNumCount(assetData) {
     try {
       const intervalDuration = 500;
       const totalDuration = 5000;
@@ -167,9 +167,19 @@ export default class UploadHandler {
       let metadataExists = false;
       return new Promise((resolve) => {
         const handleMetadata = async () => {
-          if (metadata.numPages > this.actionBinder.limits.maxNumPages) {
+          if (this.actionBinder?.limits?.pageLimit?.maxNumPages
+            && metadata.numPages > this.actionBinder.limits.pageLimit.maxNumPages
+          ) {
             await this.actionBinder.showSplashScreen();
             await this.actionBinder.dispatchErrorToast('verb_upload_error_max_page_count');
+            resolve(true);
+            return;
+          }
+          if (this.actionBinder?.limits?.pageLimit?.minNumPages
+            && metadata.numPages < this.actionBinder.limits.pageLimit.minNumPages
+          ) {
+            await this.actionBinder.showSplashScreen();
+            await this.actionBinder.dispatchErrorToast('verb_upload_error_min_page_count');
             resolve(true);
             return;
           }
@@ -208,9 +218,9 @@ export default class UploadHandler {
     let validated = true;
     for (const limit of Object.keys(this.actionBinder.limits)) {
       switch (limit) {
-        case 'maxNumPages': {
-          const maxPageLimitExceeded = await this.isMaxPageLimitExceeded(assetData);
-          if (maxPageLimitExceeded) validated = false;
+        case 'pageLimit': {
+          const pageLimitRes = await this.checkPageNumCount(assetData);
+          if (pageLimitRes) validated = false;
           break;
         }
         default:
@@ -273,7 +283,7 @@ export default class UploadHandler {
     return files.some((file) => file.type !== 'application/pdf');
   }
 
-  async uploadSingleFile(file, isNonPdf = false) {
+  async uploadSingleFile(file, fileData, isNonPdf = false) {
     const { maxConcurrentChunks } = this.getConcurrentLimits();
     let cOpts = {};
     const [blobData, assetData] = await Promise.all([
@@ -299,7 +309,7 @@ export default class UploadHandler {
     };
     const redirectSuccess = await this.actionBinder.handleRedirect(cOpts);
     if (!redirectSuccess) return;
-    this.actionBinder.dispatchAnalyticsEvent('uploading', assetData);
+    this.actionBinder.dispatchAnalyticsEvent('uploading', fileData);
     const uploadResult = await this.chunkPdf(
       [assetData],
       [blobData],
@@ -313,12 +323,14 @@ export default class UploadHandler {
     this.actionBinder.operations.push(assetData.id);
     const verified = await this.verifyContent(assetData);
     if (!verified) return;
-    const validated = await this.handleValidations(assetData);
-    if (!validated) return;
-    this.actionBinder.dispatchAnalyticsEvent('uploaded');
+    if (!isNonPdf) {
+      const validated = await this.handleValidations(assetData);
+      if (!validated) return;
+    }
+    this.actionBinder.dispatchAnalyticsEvent('uploaded', fileData);
   }
 
-  async singleFileGuestUpload(file) {
+  async singleFileGuestUpload(file, fileData) {
     try {
       await this.actionBinder.showSplashScreen(true);
       if (this.isNonPdf([file])) {
@@ -328,7 +340,7 @@ export default class UploadHandler {
         this.actionBinder.redirectWithoutUpload = true;
         return;
       }
-      await this.uploadSingleFile(file);
+      await this.uploadSingleFile(file, fileData);
     } catch (e) {
       await this.actionBinder.showSplashScreen();
       this.actionBinder.operations = [];
@@ -336,10 +348,10 @@ export default class UploadHandler {
     }
   }
 
-  async singleFileUserUpload(file) {
+  async singleFileUserUpload(file, fileData) {
     try {
       await this.actionBinder.showSplashScreen(true);
-      await this.uploadSingleFile(file, this.isNonPdf([file]));
+      await this.uploadSingleFile(file, fileData, this.isNonPdf([file]));
     } catch (e) {
       await this.actionBinder.showSplashScreen();
       this.actionBinder.operations = [];

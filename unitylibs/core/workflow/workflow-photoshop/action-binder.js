@@ -6,13 +6,13 @@
 /* eslint-disable no-restricted-syntax */
 
 import {
-  getGuestAccessToken,
   unityConfig,
   loadImg,
   createTag,
   getLocale,
   delay,
   getLibs,
+  getHeaders,
 } from '../../../scripts/utils.js';
 
 const CONTAIN_OBJECT = 'contain-object';
@@ -30,20 +30,10 @@ class ServiceHandler {
     this.unityEl = unityEl;
   }
 
-  getHeaders() {
-    return {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: getGuestAccessToken(),
-        'x-api-key': unityConfig.apiKey,
-      },
-    };
-  }
-
   async postCallToService(api, options, errorCallbackOptions = {}, failOnError = true) {
     const postOpts = {
       method: 'POST',
-      ...this.getHeaders(),
+      headers: await getHeaders(unityConfig.apiKey),
       ...options,
     };
     try {
@@ -103,19 +93,20 @@ export default class ActionBinder {
     else item?.classList.add('show');
   }
 
-  toggleElement(item, b) {
-    if (typeof item === 'string') {
-      if (b?.querySelector(item)?.classList.contains('show')) b?.querySelector(item)?.classList.remove('show');
-      else b?.querySelector(item)?.classList.add('show');
+  toggleElement(item, actionValue, b) {
+    let tel = typeof item === 'string' ? b?.querySelector(item) : item;
+    if (tel?.classList.contains('show')) {
+      item?.classList.remove('show');
+      actionValue.controlClass.forEach((c) => actionValue.controlEl.classList.remove(c));
       return;
     }
-    if (item?.classList.contains('show')) item?.classList.remove('show');
-    else item?.classList.add('show');
+    tel?.classList.add('show');
+    actionValue.controlClass.forEach((c) => actionValue.controlEl.classList.add(c));
   }
 
   styleElement(itemSelector, propertyName, propertyValue) {
-    const item = this.block.querySelector(itemSelector);
-    item.style[propertyName] = propertyValue;
+    const item = this.block.querySelectorAll(itemSelector);
+    [...item].forEach((i) => i.style[propertyName] = propertyValue);
   }
 
   dispatchClickEvent(params, e) {
@@ -138,7 +129,7 @@ export default class ActionBinder {
           value.targets.forEach((t) => this.showElement(t, this.block));
           break;
         case value.actionType == 'toggle':
-          value.targets.forEach((t) => this.toggleElement(t, this.block));
+          value.targets.forEach((t) => this.toggleElement(t, value, this.block));
           break;
         case value.actionType == 'removebg':
           await this.removeBackground(value);
@@ -316,7 +307,6 @@ export default class ActionBinder {
   }
 
   async userImgUpload(params, e) {
-    this.canvasArea.querySelector('img').style.filter = '';
     this.operations = [];
     const file = e.target.files[0];
     if (!file) return;
@@ -334,6 +324,7 @@ export default class ActionBinder {
     };
     const objUrl = URL.createObjectURL(file);
     params.target.src = objUrl;
+    e.target.value = null;
     let loadSuccessful = false;
     await new Promise((res) => {
       params.target.onload = () => {

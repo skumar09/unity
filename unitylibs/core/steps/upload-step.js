@@ -42,7 +42,7 @@ export async function uploadAsset(cfg, imgUrl) {
   const { showErrorToast } = await import('../../scripts/utils.js');
   const genIdOptions = {
     method: 'POST',
-    headers: getHeaders(apiKey),
+    headers: await getHeaders(apiKey),
   };
   const response = await fetch(`${apiEndPoint}/asset`, genIdOptions);
   if (response.status !== 200) {
@@ -61,7 +61,7 @@ export async function scanImgForSafety(cfg, assetId) {
   const assetData = { assetId, targetProduct: 'Photoshop' };
   const imgScanOptions = {
     method: 'POST',
-    headers: getHeaders(apiKey),
+    headers: await getHeaders(apiKey),
     body: JSON.stringify(assetData),
   };
   return fetch(`${apiEndPoint}/asset/finalize`, imgScanOptions);

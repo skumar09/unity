@@ -123,6 +123,7 @@
 
   .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option {
     width: 100%;
+    max-width: 93px;
   }
 
   .unity-enabled .interactive-area .unity-option-area .changebg-options-tray .changebg-option img {
@@ -136,10 +137,12 @@
     object-fit: cover;
   }
 
+  .unity-enabled .interactive-area .unity-action-btn.focus .btn-text,
+  .unity-enabled .interactive-area .unity-action-btn.focus:not(.continue-in-app) .btn-icon svg path,
   .unity-enabled .interactive-area .unity-action-btn:active .btn-text,
-  .unity-enabled .interactive-area .unity-action-btn:active .btn-icon svg path {
+  .unity-enabled .interactive-area .unity-action-btn:active:not(.continue-in-app) .btn-icon svg path {
     color: var(--highlight-blue);
-    fill: var(--highlight-blue);
+    fill: var(--highlight-blue) !important;
   }
 }
 
@@ -174,9 +177,5 @@
 
   .unity-enabled .interactive-area .unity-option-area .adjustment-options-tray .adjustment-label {
     font-weight: bold;
-  }
-
-  [dir="rtl"] .removebg-button {
-    order: 1;
   }
 }
