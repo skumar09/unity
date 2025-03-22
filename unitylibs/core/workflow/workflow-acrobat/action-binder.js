@@ -78,28 +78,28 @@ class ServiceHandler {
     }
   }
 
-  async postCallToService(api, options) {
+  async postCallToService(api, options, additionalHeaders = {}) {
     const postOpts = {
       method: 'POST',
-      headers: await getHeaders(unityConfig.apiKey),
+      headers: await getHeaders(unityConfig.apiKey, additionalHeaders),
       ...options,
     };
     return this.fetchFromService(api, postOpts);
   }
 
-  async postCallToServiceWithRetry(api, options) {
+  async postCallToServiceWithRetry(api, options, additionalHeaders = {}) {
     const postOpts = {
       method: 'POST',
-      headers: await getHeaders(unityConfig.apiKey),
+      headers: await getHeaders(unityConfig.apiKey, additionalHeaders),
       ...options,
     };
     return this.fetchFromServiceWithRetry(api, postOpts);
   }
 
-  async getCallToService(api, params) {
+  async getCallToService(api, params, additionalHeaders = {}) {
     const getOpts = {
       method: 'GET',
-      headers: await getHeaders(unityConfig.apiKey),
+      headers: await getHeaders(unityConfig.apiKey, additionalHeaders),
     };
     const queryString = new URLSearchParams(params).toString();
     const url = `${api}?${queryString}`;
@@ -311,6 +311,7 @@ export default class ActionBinder {
       this.serviceHandler.postCallToService(
         this.acrobatApiConfig.connectorApiEndPoint,
         { body: JSON.stringify(cOpts) },
+        { 'x-unity-dc-verb': this.MULTI_FILE ? `${this.workflowCfg.enabledFeatures[0]}MFU` : this.workflowCfg.enabledFeatures[0] },
       ),
     );
     await Promise.all(this.promiseStack)

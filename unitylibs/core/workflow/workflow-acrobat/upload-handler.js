@@ -30,6 +30,7 @@ export default class UploadHandler {
     assetData = await this.serviceHandler.postCallToService(
       this.actionBinder.acrobatApiConfig.acrobatEndpoint.createAsset,
       { body: JSON.stringify(data) },
+      { 'x-unity-dc-verb': this.actionBinder.MULTI_FILE ? `${this.actionBinder.workflowCfg.enabledFeatures[0]}MFU` : this.actionBinder.workflowCfg.enabledFeatures[0] },
     );
     return assetData;
   }
@@ -133,6 +134,7 @@ export default class UploadHandler {
       const finalizeJson = await this.serviceHandler.postCallToServiceWithRetry(
         this.actionBinder.acrobatApiConfig.acrobatEndpoint.finalizeAsset,
         { body: JSON.stringify(finalAssetData), signal: AbortSignal.timeout?.(80000) },
+        { 'x-unity-dc-verb': this.actionBinder.MULTI_FILE ? `${this.actionBinder.workflowCfg.enabledFeatures[0]}MFU` : this.actionBinder.workflowCfg.enabledFeatures[0] },
       );
       if (!finalizeJson || Object.keys(finalizeJson).length !== 0) {
         if (this.actionBinder.MULTI_FILE) {
@@ -191,6 +193,7 @@ export default class UploadHandler {
           metadata = await this.serviceHandler.getCallToService(
             this.actionBinder.acrobatApiConfig.acrobatEndpoint.getMetadata,
             { id: assetData.id },
+            { 'x-unity-dc-verb': this.actionBinder.MULTI_FILE ? `${this.actionBinder.workflowCfg.enabledFeatures[0]}MFU` : this.actionBinder.workflowCfg.enabledFeatures[0] },
           );
           requestInProgress = false;
           if (metadata?.numPages !== undefined) {

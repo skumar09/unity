@@ -55,12 +55,15 @@ export async function getGuestAccessToken() {
   return `Bearer ${guestAccessToken?.token}`;
 }
 
-export async function getHeaders(apiKey) {
-  return {
+export async function getHeaders(apiKey, additionalHeaders = {}) {
+  const defaultHeaders = {
     'Content-Type': 'application/json',
     Authorization: await getGuestAccessToken(),
     'x-api-key': apiKey,
   };
+  return Object.keys(additionalHeaders).length > 0
+    ? { ...defaultHeaders, ...additionalHeaders }
+    : defaultHeaders;
 }
 
 export function defineDeviceByScreenSize() {
