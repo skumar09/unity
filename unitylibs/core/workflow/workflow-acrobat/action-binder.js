@@ -29,7 +29,7 @@ class ServiceHandler {
   async fetchFromService(url, options) {
     try {
       const response = await fetch(url, options);
-      const contentLength = response.headers.get('Content-Length') || '0';
+      const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
       if (response.status !== 200) {
         const error = new Error();
