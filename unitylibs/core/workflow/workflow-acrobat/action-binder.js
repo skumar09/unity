@@ -19,14 +19,19 @@ class ServiceHandler {
   async fetchFromService(url, options) {
     try {
       const response = await fetch(url, options);
-      const error = new Error();
-      const contentLength = response.headers.get('Content-Length');
+      const contentLength = response.headers.get('Content-Length') || '0';
+      if (response.status === 202) return { status: 202, headers: response.headers };
       if (response.status !== 200) {
+        const error = new Error();
         if (contentLength !== '0') {
-          const resJson = await response.json();
-          ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
-            if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
-          });
+          try {
+            error.responseJson = await response.json();
+            ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
+              if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
+            });
+          } catch {
+            error.message = `Failed to parse JSON response. URL: ${url}, Options: ${JSON.stringify(options)}`;
+          }
         }
         if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
         error.status = response.status;
@@ -46,36 +51,21 @@ class ServiceHandler {
     }
   }
 
-  async fetchFromServiceWithRetry(url, options, timeLapsed = 0, maxRetryDelay = 120) {
-    try {
-      const response = await fetch(url, options);
-      const error = new Error();
-      const contentLength = response.headers.get('Content-Length');
-      if (response.status !== 200 && response.status !== 202) {
-        if (contentLength !== '0') {
-          const resJson = await response.json();
-          return resJson;
-        }
-        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
-        error.status = response.status;
-        throw error;
-      } else if (response.status === 202) {
-        if (timeLapsed < maxRetryDelay && response.headers.get('retry-after')) {
-          const retryDelay = parseInt(response.headers.get('retry-after'));
-          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
-          timeLapsed += retryDelay;
-          return this.fetchFromServiceWithRetry(url, options, timeLapsed, maxRetryDelay);
-        }
+  async fetchFromServiceWithRetry(url, options, maxRetryDelay = 120) {
+    let timeLapsed = 0;
+    while (timeLapsed < maxRetryDelay) {
+      const response = await this.fetchFromService(url, options);
+      if (response.status === 202) {
+        const retryDelay = parseInt(response.headers.get('retry-after')) || 5;
+        await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
+        timeLapsed += retryDelay;
+      } else {
+        return response;
       }
-      if (contentLength === '0') return {};
-      return await response.json();
-    } catch (e) {
-      if (['TimeoutError', 'AbortError'].includes(e.name)) {
-        e.status = 504;
-        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
-      }
-      throw e;
     }
+    const timeoutError = new Error(`Max retry delay exceeded for URL: ${url}`);
+    timeoutError.status = 504;
+    throw timeoutError;
   }
 
   async postCallToService(api, options, additionalHeaders = {}) {
