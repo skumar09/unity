@@ -152,7 +152,7 @@ export default class ActionBinder {
   }
 
   acrobatSignedInSettings() {
-    if (this.limits.signedInallowedFileTypes) this.limits.allowedFileTypes.push(...this.limits.signedInallowedFileTypes);
+    if (this.limits.signedInallowedFileTypes && !this.signedOut) this.limits.allowedFileTypes.push(...this.limits.signedInallowedFileTypes);
   }
 
   async applySignedInSettings() {
