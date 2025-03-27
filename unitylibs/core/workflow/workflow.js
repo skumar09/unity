@@ -296,13 +296,18 @@ class WfInitiator {
 
   getEnabledFeatures() {
     const { supportedFeatures, supportedTexts } = this.workflowCfg;
+    const verbWidget = this.el.closest('.section')?.querySelector('.verb-widget');
+    if (verbWidget) {
+      const verb = [...verbWidget.classList].find(cn => supportedFeatures.has(cn));
+      if (verb) this.workflowCfg.enabledFeatures.push(verb)
+    }
     const configuredFeatures = this.el.querySelectorAll(':scope > div > div > ul > li > span.icon');
     configuredFeatures.forEach((cf) => {
       const cfName = [...cf.classList].find((cn) => cn.match('icon-'));
       if (!cfName) return;
       const fn = cfName.trim().replace('icon-', '');
       if (supportedFeatures.has(fn)) {
-        this.workflowCfg.enabledFeatures.push(fn);
+        if(!this.workflowCfg.enabledFeatures.includes(fn)) this.workflowCfg.enabledFeatures.push(fn);
         this.workflowCfg.featureCfg.push(cf.closest('li'));
       } else if (fn.includes('error')) {
         this.workflowCfg.errors[fn] = cf.closest('li').innerText;
