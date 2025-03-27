@@ -15,18 +15,33 @@ import {
   getHeaders,
 } from '../../../scripts/utils.js';
 
+const DOS_SPECIAL_NAMES = new Set([
+  'CON', 'PRN', 'AUX', 'NUL', 'COM0', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6',
+  'COM7', 'COM8', 'COM9', 'LPT0', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6',
+  'LPT7', 'LPT8', 'LPT9'
+]);
+
+const INVALID_CHARS_REGEX = /[\x00-\x1F\\/:"*?<>|]/g;
+const ENDING_SPACE_PERIOD_REGEX = /[ .]+$/;
+const STARTING_SPACE_PERIOD_REGEX = /^[ .]+/;
+
 class ServiceHandler {
   async fetchFromService(url, options) {
     try {
       const response = await fetch(url, options);
-      const error = new Error();
       const contentLength = response.headers.get('Content-Length');
+      if (response.status === 202) return { status: 202, headers: response.headers };
       if (response.status !== 200) {
+        const error = new Error();
         if (contentLength !== '0') {
-          const resJson = await response.json();
-          ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
-            if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
-          });
+          try {
+            error.responseJson = await response.json();
+            ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
+              if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
+            });
+          } catch {
+            error.message = `Failed to parse JSON response. URL: ${url}, Options: ${JSON.stringify(options)}`;
+          }
         }
         if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
         error.status = response.status;
@@ -46,60 +61,45 @@ class ServiceHandler {
     }
   }
 
-  async fetchFromServiceWithRetry(url, options, timeLapsed = 0, maxRetryDelay = 120) {
-    try {
-      const response = await fetch(url, options);
-      const error = new Error();
-      const contentLength = response.headers.get('Content-Length');
-      if (response.status !== 200 && response.status !== 202) {
-        if (contentLength !== '0') {
-          const resJson = await response.json();
-          return resJson;
-        }
-        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
-        error.status = response.status;
-        throw error;
-      } else if (response.status === 202) {
-        if (timeLapsed < maxRetryDelay && response.headers.get('retry-after')) {
-          const retryDelay = parseInt(response.headers.get('retry-after'));
-          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
-          timeLapsed += retryDelay;
-          return this.fetchFromServiceWithRetry(url, options, timeLapsed, maxRetryDelay);
-        }
+  async fetchFromServiceWithRetry(url, options, maxRetryDelay = 120) {
+    let timeLapsed = 0;
+    while (timeLapsed < maxRetryDelay) {
+      const response = await this.fetchFromService(url, options);
+      if (response.status === 202) {
+        const retryDelay = parseInt(response.headers.get('retry-after')) || 5;
+        await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
+        timeLapsed += retryDelay;
+      } else {
+        return response;
       }
-      if (contentLength === '0') return {};
-      return await response.json();
-    } catch (e) {
-      if (['TimeoutError', 'AbortError'].includes(e.name)) {
-        e.status = 504;
-        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
-      }
-      throw e;
     }
+    const timeoutError = new Error(`Max retry delay exceeded for URL: ${url}`);
+    timeoutError.status = 504;
+    throw timeoutError;
   }
 
-  async postCallToService(api, options) {
+  async postCallToService(api, options, additionalHeaders = {}) {
     const postOpts = {
       method: 'POST',
-      headers: await getHeaders(unityConfig.apiKey),
+      headers: await getHeaders(unityConfig.apiKey, additionalHeaders),
       ...options,
     };
     return this.fetchFromService(api, postOpts);
   }
 
-  async postCallToServiceWithRetry(api, options) {
+  async postCallToServiceWithRetry(api, options, additionalHeaders = {}) {
     const postOpts = {
       method: 'POST',
-      headers: await getHeaders(unityConfig.apiKey),
+      headers: await getHeaders(unityConfig.apiKey, additionalHeaders),
       ...options,
     };
     return this.fetchFromServiceWithRetry(api, postOpts);
   }
 
-  async getCallToService(api, params) {
+  async getCallToService(api, params, additionalHeaders = {}) {
     const getOpts = {
       method: 'GET',
-      headers: await getHeaders(unityConfig.apiKey),
+      headers: await getHeaders(unityConfig.apiKey, additionalHeaders),
     };
     const queryString = new URLSearchParams(params).toString();
     const url = `${api}?${queryString}`;
@@ -264,6 +264,39 @@ export default class ActionBinder {
     return fileTypes.size > 1 ? 'mixed' : files[0].type;
   }
 
+  async sanitizeFileName(rawFileName) {
+    try {
+      const MAX_FILE_NAME_LENGTH = 255;
+      let fileName = rawFileName;
+      if (!fileName || fileName === '.' || fileName === '..') {
+        return '---';
+      }
+      const { getExtension, removeExtension } = await import('../../../utils/FileUtils.js');
+      let ext = getExtension(fileName);
+      const nameWithoutExtension = removeExtension(fileName);
+      ext = ext.length > 0 ? `.${ext}` : '';
+      fileName = DOS_SPECIAL_NAMES.has(nameWithoutExtension.toUpperCase()) 
+        ? `---${ext}` 
+        : nameWithoutExtension + ext;
+      if (fileName.length > MAX_FILE_NAME_LENGTH) {
+        const trimToLen = MAX_FILE_NAME_LENGTH - ext.length;
+        fileName = trimToLen > 0 ? fileName.substring(0, trimToLen) + ext : fileName.substring(0, MAX_FILE_NAME_LENGTH);
+      }
+      fileName = fileName
+        .replace(ENDING_SPACE_PERIOD_REGEX, '-')
+        .replace(STARTING_SPACE_PERIOD_REGEX, '-')
+        .replace(INVALID_CHARS_REGEX, '-');
+      if (rawFileName !== fileName) {
+        await this.dispatchErrorToast('verb_warn_renamed_invalid_file_name', null, `Renamed ${rawFileName} to ${fileName}`, true)
+      }
+      return fileName;
+    } catch (error) {
+      console.error('Error sanitizing filename:', error);
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Error renaming file: ${rawFileName}`, false);
+      return '---';
+    }
+  }
+
   async validateFiles(files) {
     const errorMessages = files.length === 1
       ? ActionBinder.SINGLE_FILE_ERROR_MESSAGES
@@ -311,6 +344,7 @@ export default class ActionBinder {
       this.serviceHandler.postCallToService(
         this.acrobatApiConfig.connectorApiEndPoint,
         { body: JSON.stringify(cOpts) },
+        { 'x-unity-dc-verb': this.MULTI_FILE ? `${this.workflowCfg.enabledFeatures[0]}MFU` : this.workflowCfg.enabledFeatures[0] },
       ),
     );
     await Promise.all(this.promiseStack)
@@ -332,14 +366,16 @@ export default class ActionBinder {
     return true;
   }
 
-  async handleSingleFileUpload(file, eventName) {
-    const fileData = { type: file.type, size: file.size, count: 1 };
+  async handleSingleFileUpload(file, eventName) {  
+    const sanitizedFileName = await this.sanitizeFileName(file.name); 
+    const newFile = new File([file], sanitizedFileName, { type: file.type, lastModified: file.lastModified });
+    const fileData = { type: newFile.type, size: newFile.size, count: 1 };
     this.dispatchAnalyticsEvent(eventName, fileData);
-    if (!await this.validateFiles([file])) return;
+    if (!await this.validateFiles([newFile])) return;
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(file, fileData);
-    else await this.uploadHandler.singleFileUserUpload(file, fileData);
+    if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(newFile, fileData);
+    else await this.uploadHandler.singleFileUserUpload(newFile, fileData);
   }
 
   async handleMultiFileUpload(files, totalFileSize, eventName) {
@@ -349,11 +385,15 @@ export default class ActionBinder {
     const filesData = { type: isMixedFileTypes, size: totalFileSize, count: files.length };
     this.dispatchAnalyticsEvent(eventName, filesData);
     this.dispatchAnalyticsEvent('multifile', filesData);
+    const sanitizedFiles = await Promise.all(files.map(async (file) => {
+      const sanitizedFileName = await this.sanitizeFileName(file.name);
+      return new File([file], sanitizedFileName, { type: file.type, lastModified: file.lastModified });
+    }));
     if (!await this.validateFiles(files)) return;
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
     if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(filesData);
-    else await this.uploadHandler.multiFileUserUpload(files, filesData);
+    else await this.uploadHandler.multiFileUserUpload(sanitizedFiles, filesData);
   }
 
   async processSingleFile(files, eventName) {
