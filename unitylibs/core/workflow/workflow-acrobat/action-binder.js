@@ -7,8 +7,6 @@
 import {
   unityConfig,
   getUnityLibs,
-  createTag,
-  localizeLink,
   priorityLoad,
   loadArea,
   loadImg,
@@ -120,27 +118,41 @@ export default class ActionBinder {
     FILE_TOO_LARGE: 'verb_upload_error_file_too_large_multi',
   };
 
-  constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}, limits = {}) {
+  static LIMITS_MAP = {
+    fillsign: ['single', 'fillsign'],
+    'compress-pdf': ['hybrid'],
+    'add-comment': ['single'],
+    'number-pages': ['single'],
+    'split-pdf': ['single', 'split-pdf'],
+    'crop-pages': ['single'],
+    'delete-pages': ['single', 'page-limit-500'],
+    'insert-pdf': ['single', 'page-limit-500'],
+    'extract-pages': ['single', 'page-limit-500'],
+    'reorder-pages': ['single', 'page-limit-500'],
+    'sendforsignature': ['single', 'sendforsignature'],
+  };
+
+  constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
     this.unityEl = unityEl;
     this.workflowCfg = workflowCfg;
     this.block = wfblock;
-    this.actionMap = actionMap;
-    this.limits = limits;
     this.canvasArea = canvasArea;
+    this.actionMap = actionMap;
+    this.limits = {};
     this.operations = [];
     this.acrobatApiConfig = this.getAcrobatApiConfig();
     this.serviceHandler = new ServiceHandler();
     this.uploadHandler = null;
     this.splashScreenEl = null;
+    this.transitionScreen = null;
     this.promiseStack = [];
     this.signedOut = this.isSignedOut();
     this.redirectUrl = '';
     this.redirectWithoutUpload = false;
-    this.LOADER_DELAY = 800;
-    this.LOADER_INCREMENT = 30;
     this.LOADER_LIMIT = 95;
     this.MULTI_FILE = false;
     this.applySignedInSettings();
+    this.initActionListeners = this.initActionListeners.bind(this);
   }
 
   isSignedOut() {
@@ -181,19 +193,9 @@ export default class ActionBinder {
     if (this.workflowCfg.targetCfg.showSplashScreen) {
       parr.push(
         `${getUnityLibs()}/core/styles/splash-screen.css`,
-        `${this.splashFragmentLink}.plain.html`,
       );
     }
     await priorityLoad(parr);
-  }
-
-  async getAccountType() {
-    try {
-      return window.adobeIMS.getAccountType();
-    } catch (e) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception raised when getting account type: ${e.message}`, true);
-      return '';
-    }
   }
 
   async dispatchErrorToast(code, status, info = null, lanaOnly = false, showError = true) {
@@ -223,40 +225,6 @@ export default class ActionBinder {
   async dispatchAnalyticsEvent(eventName, data = null) {
     const detail = { event: eventName, ...(data && { data }) };
     this.block.dispatchEvent(new CustomEvent(unityConfig.trackAnalyticsEvent, { detail }));
-  }
-
-  updateProgressBar(layer, percentage) {
-    const p = Math.min(percentage, this.LOADER_LIMIT);
-    const spb = layer.querySelector('.spectrum-ProgressBar');
-    spb?.setAttribute('value', p);
-    spb?.setAttribute('aria-valuenow', p);
-    layer.querySelector('.spectrum-ProgressBar-percentage').innerHTML = `${p}%`;
-    layer.querySelector('.spectrum-ProgressBar-fill').style.width = `${p}%`;
-  }
-
-  createProgressBar() {
-    const pdom = `<div class="spectrum-ProgressBar spectrum-ProgressBar--sizeM spectrum-ProgressBar--sideLabel" value="0" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-    <div class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-ProgressBar-label"></div>
-    <div class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-ProgressBar-percentage">0%</div>
-    <div class="spectrum-ProgressBar-track">
-      <div class="spectrum-ProgressBar-fill" style="width: 0%;"></div>
-    </div>
-    </div>`;
-    return createTag('div', { class: 'progress-holder' }, pdom);
-  }
-
-  progressBarHandler(s, delay, i, initialize = false) {
-    if (!s) return;
-    delay = Math.min(delay + 100, 2000);
-    i = Math.max(i - 5, 5);
-    const progressBar = s.querySelector('.spectrum-ProgressBar');
-    if (!initialize && progressBar?.getAttribute('value') >= this.LOADER_LIMIT) return;
-    if (initialize) this.updateProgressBar(s, 0);
-    setTimeout(() => {
-      const v = initialize ? 0 : parseInt(progressBar.getAttribute('value'), 10);
-      this.updateProgressBar(s, v + i);
-      this.progressBarHandler(s, delay, i);
-    }, delay);
   }
 
   isMixedFileTypes(files) {
@@ -354,7 +322,9 @@ export default class ActionBinder {
         this.redirectUrl = response.url;
       })
       .catch(async (e) => {
-        await this.showSplashScreen();
+        const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
+        this.transitionScreen = new TransitionScreen(this.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+        await this.transitionScreen.showSplashScreen();
         await this.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError);
       });
   }
@@ -397,7 +367,26 @@ export default class ActionBinder {
     else await this.uploadHandler.multiFileUserUpload(sanitizedFiles, filesData);
   }
 
+  async loadVerbLimits(workflowName, keys) {
+    try {
+      const response = await fetch(`${getUnityLibs()}/core/workflow/${workflowName}/limits.json`);
+      if (!response.ok) throw new Error('Error loading verb limits');
+      const limits = await response.json();
+      const combinedLimits = keys.reduce((acc, key) => {
+        if (limits[key]) Object.entries(limits[key]).forEach(([k, v]) => { acc[k] = v; });
+        return acc;
+      }, {});
+      if (!combinedLimits || Object.keys(combinedLimits).length === 0) await this.dispatchErrorToast('verb_upload_error_generic', 500, 'No verb limits found', false);
+      return combinedLimits;
+    } catch (e) {
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception thrown when loading verb limits: ${e.message}`, false);
+      return {};
+    }
+  }
+
   async processSingleFile(files, eventName) {
+    this.limits = await this.loadVerbLimits(this.workflowCfg.name, ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]]);
+    if (!this.limits || Object.keys(this.limits).length === 0) return;
     if (!files || files.length > this.limits.maxNumFiles) {
       await this.dispatchErrorToast('verb_upload_error_only_accept_one_file');
       return;
@@ -407,31 +396,13 @@ export default class ActionBinder {
     await this.handleSingleFileUpload(file, eventName);
   }
 
-  async fillsign(files, eventName) {
-    await this.processSingleFile(files, eventName);
-  }
-
-  async addComment(files, eventName) {
-    await this.processSingleFile(files, eventName);
-  }
-
-  async numberPages(files, eventName) {
-    await this.processSingleFile(files, eventName);
-  }
-
-  async splitPdf(files, eventName) {
-    await this.processSingleFile(files, eventName);
-  }
-
-  async cropPages(files, eventName) {
-    await this.processSingleFile(files, eventName);
-  }
-
-  async compress(files, totalFileSize, eventName) {
+  async processHybrid(files, totalFileSize, eventName) {
     if (!files) {
       await this.dispatchErrorToast('verb_upload_error_only_accept_one_file');
       return;
     }
+    this.limits = await this.loadVerbLimits(this.workflowCfg.name, ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]]);
+    if (!this.limits || Object.keys(this.limits).length === 0) return;
     const isSingleFile = files.length === 1;
     if (isSingleFile) await this.handleSingleFileUpload(files[0], eventName);
     else await this.handleMultiFileUpload(files, totalFileSize, eventName);
@@ -462,7 +433,9 @@ export default class ActionBinder {
   async continueInApp() {
     if (!this.redirectUrl || !(this.operations.length || this.redirectWithoutUpload)) return;
     this.LOADER_LIMIT = 100;
-    this.updateProgressBar(this.splashScreenEl, 100);
+    const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
+    this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+    this.transitionScreen.updateProgressBar(this.transitionScreen.splashScreenEl, 100);
     try {
       await this.waitForCookie(2000);
       if (!this.checkCookie()) {
@@ -473,13 +446,15 @@ export default class ActionBinder {
         window.location.href = `${this.redirectUrl}&feedback=${this.multiFileFailure}`;
       } else window.location.href = this.redirectUrl;
     } catch (e) {
-      await this.showSplashScreen();
+      await this.transitionScreen.showSplashScreen();
       await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception thrown when redirecting to product; ${e.message}`, false, e.showError);
     }
   }
 
   async cancelAcrobatOperation() {
-    await this.showSplashScreen();
+    const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
+    this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+    await this.transitionScreen.showSplashScreen();
     this.redirectUrl = '';
     this.dispatchAnalyticsEvent('cancel');
     const e = new Error();
@@ -489,44 +464,22 @@ export default class ActionBinder {
     this.promiseStack.unshift(cancelPromise);
   }
 
-  async acrobatActionMaps(values, files, totalFileSize, eventName) {
+  async acrobatActionMaps(value, files, totalFileSize, eventName) {
     await this.handlePreloads();
-    for (const value of values) {
-      switch (true) {
-        case value.actionType === 'fillsign':
-          this.promiseStack = [];
-          await this.fillsign(files, eventName);
-          break;
-        case value.actionType === 'compress':
-          this.promiseStack = [];
-          await this.compress(files, totalFileSize, eventName);
-          break;
-        case value.actionType === 'addcomment':
-          this.promiseStack = [];
-          await this.addComment(files, eventName);
-          break;
-        case value.actionType === 'numberpages':
-          this.promiseStack = [];
-          await this.numberPages(files, eventName);
-          break;
-        case value.actionType === 'splitpdf':
-          this.promiseStack = [];
-          await this.splitPdf(files, eventName);
-          break;
-        case value.actionType === 'croppages':
-          this.promiseStack = [];
-          await this.cropPages(files, eventName);
-          break;
-        case value.actionType === 'continueInApp':
-          await this.continueInApp();
-          break;
-        case value.actionType === 'interrupt':
-          await this.cancelAcrobatOperation();
-          break;
-        default:
-          break;
-      }
+    const uploadType = ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]][0];
+    switch (value) {
+      case 'upload':
+        this.promiseStack = [];
+        if (uploadType === 'single') await this.processSingleFile(files, eventName);
+        else if (uploadType === 'hybrid') await this.processHybrid(files, totalFileSize, eventName);
+        break;
+      case 'interrupt':
+        await this.cancelAcrobatOperation();
+        break;
+      default:
+        break;
     }
+    await this.continueInApp();
   }
 
   extractFiles(e) {
@@ -549,80 +502,28 @@ export default class ActionBinder {
     return { files, totalFileSize };
   }
 
-  async loadSplashFragment() {
-    if (!this.workflowCfg.targetCfg.showSplashScreen) return;
-    this.splashFragmentLink = localizeLink(`${window.location.origin}${this.workflowCfg.targetCfg.splashScreenConfig.fragmentLink}`);
-    const resp = await fetch(`${this.splashFragmentLink}.plain.html`);
-    const html = await resp.text();
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const sections = doc.querySelectorAll('body > div');
-    const f = createTag('div', { class: 'fragment splash-loader decorate', style: 'display: none' });
-    f.append(...sections);
-    const splashDiv = document.querySelector(
-      this.workflowCfg.targetCfg.splashScreenConfig.splashScreenParent,
-    );
-    splashDiv.append(f);
-    const img = f.querySelector('img');
-    if (img) loadImg(img);
-    await loadArea(f);
-    this.splashScreenEl = f;
-    return f;
-  }
-
-  async delayedSplashLoader() {
-    let eventListeners = ['mousemove', 'keydown', 'click', 'touchstart'];
-    const interactionHandler = async () => {
-      await this.loadSplashFragment();
-      cleanup(interactionHandler);
-    };
-
-    const timeoutHandler = async () => {
-      await this.loadSplashFragment();
-      cleanup(interactionHandler);
-    };
-
-    // Timeout to load after 8 seconds
-    let timeoutId = setTimeout(timeoutHandler, 8000);
-
-    const cleanup = (handler) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      if (eventListeners) {
-        eventListeners.forEach((event) => document.removeEventListener(event, handler));
-        eventListeners = null;
-      }
-    };
-    eventListeners.forEach((event) => document.addEventListener(
-      event,
-      interactionHandler,
-      { once: true },
-    ));
-  }
-
   async initActionListeners(b = this.block, actMap = this.actionMap) {
-    for (const [key, values] of Object.entries(actMap)) {
+    for (const [key, value] of Object.entries(actMap)) {
       const el = b.querySelector(key);
       if (!el) return;
       switch (true) {
         case el.nodeName === 'A':
           el.addEventListener('click', async (e) => {
             e.preventDefault();
-            await this.acrobatActionMaps(values);
+            await this.acrobatActionMaps(value);
           });
           break;
         case el.nodeName === 'DIV':
           el.addEventListener('drop', async (e) => {
             e.preventDefault();
             const { files, totalFileSize } = this.extractFiles(e);
-            await this.acrobatActionMaps(values, files, totalFileSize, 'drop');
+            await this.acrobatActionMaps(value, files, totalFileSize, 'drop');
           });
           break;
         case el.nodeName === 'INPUT':
           el.addEventListener('change', async (e) => {
             const { files, totalFileSize } = this.extractFiles(e);
-            await this.acrobatActionMaps(values, files, totalFileSize, 'change');
+            await this.acrobatActionMaps(value, files, totalFileSize, 'change');
             e.target.value = '';
           });
           break;
@@ -630,39 +531,10 @@ export default class ActionBinder {
           break;
       }
     }
-    if (b === this.block) await this.delayedSplashLoader();
-  }
-
-  async handleSplashProgressBar() {
-    const pb = this.createProgressBar();
-    this.splashScreenEl.querySelector('.icon-progress-bar').replaceWith(pb);
-    this.progressBarHandler(this.splashScreenEl, this.LOADER_DELAY, this.LOADER_INCREMENT, true);
-  }
-
-  handleOperationCancel() {
-    const actMap = { 'a.con-button[href*="#_cancel"]': [{ actionType: 'interrupt' }] };
-    this.initActionListeners(this.splashScreenEl, actMap);
-  }
-
-  splashVisibilityController(displayOn) {
-    if (!displayOn) {
-      this.LOADER_LIMIT = 95;
-      this.splashScreenEl.parentElement?.classList.remove('hide-splash-overflow');
-      this.splashScreenEl.classList.remove('show');
-      return;
+    if (b === this.block) {
+      const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
+      this.transitionScreen = new TransitionScreen(this.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+      await this.transitionScreen.delayedSplashLoader();
     }
-    this.progressBarHandler(this.splashScreenEl, this.LOADER_DELAY, this.LOADER_INCREMENT, true);
-    this.splashScreenEl.classList.add('show');
-    this.splashScreenEl.parentElement?.classList.add('hide-splash-overflow');
-  }
-
-  async showSplashScreen(displayOn = false) {
-    if (!this.splashScreenEl && !this.workflowCfg.targetCfg.showSplashScreen) return;
-    if (this.splashScreenEl.classList.contains('decorate')) {
-      if (this.splashScreenEl.querySelector('.icon-progress-bar')) await this.handleSplashProgressBar();
-      if (this.splashScreenEl.querySelector('a.con-button[href*="#_cancel"]')) this.handleOperationCancel();
-      this.splashScreenEl.classList.remove('decorate');
-    }
-    this.splashVisibilityController(displayOn);
   }
 }
