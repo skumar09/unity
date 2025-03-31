@@ -160,7 +160,8 @@
   font-weight: bold;
 }
 
-.unity-enabled .interactive-area .alert-holder {
+.unity-enabled .interactive-area .alert-holder,
+.upload.unity-enabled .alert-holder {
   display: none;
   justify-content: center;
   align-items: center;
@@ -173,11 +174,13 @@
   z-index: 2;
 }
 
-.unity-enabled .interactive-area .alert-holder.show {
+.unity-enabled .interactive-area .alert-holder.show,
+.upload.unity-enabled .alert-holder.show {
   display: flex;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast {
+.unity-enabled .interactive-area .alert-holder .alert-toast,
+.upload.unity-enabled .alert-holder .alert-toast {
   background: var(--alert-red);
   border-radius: 10px;
   width: 339px;
@@ -189,20 +192,23 @@
   right: 0;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content {
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon {
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-icon {
   display: flex;
   width: auto;
   align-items: center;
   align-self: stretch;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon svg {
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon svg,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-icon svg{
   display: flex;
   align-items: center;
   height: 20px;
@@ -215,11 +221,13 @@
   bottom: 18px;
 }
 
-[dir="rtl"] .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon svg {
+[dir="rtl"] .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-icon svg,
+[dir="rtl"] .upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-icon svg {
   padding: 18px 16px 18px 0;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-text {
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-text,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-text {
   width: 239px;
   min-height: 18px;
   padding-left: 12px;
@@ -236,7 +244,16 @@
   margin: 12px 0;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close {
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-text p {
+  color: var(--color-white);
+  font-weight: 400;
+  font-size: var(--type-body-xs-size);
+  line-height: var(--type-body-xs-lh);
+  margin: 12px 0;
+}
+
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-close{
   display: flex;
   justify-content: center;
   align-items: center;
@@ -247,11 +264,13 @@
   cursor: pointer;
 }
 
-[dir="rtl"] .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close {
+[dir="rtl"] .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-close{
   padding: 12px 0 12px 8px;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close svg {
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close svg,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-close svg {
   display: flex;
   height: 12px;
   min-height: 12px;
@@ -261,7 +280,8 @@
   max-width: 12px;
 }
 
-.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close .alert-close-text {
+.unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-close .alert-close-text,
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-close .alert-close-text{
   display: none;
 }
 
@@ -297,6 +317,14 @@
 }
 
 @media screen and (max-width: 600px) {
+  .upload.unity-enabled .alert-holder .alert-toast {
+    width: 276px;
+  }
+
+  .upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-text {
+    width: 179px;
+  }
+
   .marquee.split.unity-enabled.mobile-image-bottom,
   .aside.split.unity-enabled.mobile-image-bottom {
     display: flex;

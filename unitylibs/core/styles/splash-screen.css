@@ -88,6 +88,10 @@ body > .splash-loader {
 		background: #FA0F00;
 }
 
+:root:has(.workflow-upload.product-photoshop) .progress-holder .spectrum-ProgressBar .spectrum-ProgressBar-fill {
+  background: #1273E6;
+}
+
 .progress-holder .spectrum-ProgressBar--sideLabel {
 	flex-flow: column;
 }
