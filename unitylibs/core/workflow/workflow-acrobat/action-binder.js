@@ -351,7 +351,10 @@ export default class ActionBinder {
       .then(async (resArr) => {
         const response = resArr[resArr.length - 1];
         if (!response?.url) throw new Error('Error connecting to App');
-        this.redirectUrl = response.url;
+        const userType = localStorage.getItem('unity.user') === 'true' ? 'frictionless_return_user' : 'frictionless_new_user';
+        const url = new URL(response.url);
+        url.searchParams.append('user', userType);
+        this.redirectUrl = url.href;
       })
       .catch(async (e) => {
         await this.showSplashScreen();
