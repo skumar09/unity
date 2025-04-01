@@ -13,7 +13,7 @@
     },
     "showSplashScreen": true,
     "splashScreenConfig": {
-      "fragmentLink": "/drafts/ruchika/unity/splash-page/splashscreen",
+      "fragmentLink": "/cc-shared/fragments/products/photoshop/unity/splash-page/splashscreen",
       "splashScreenParent": "body"
     },
     "actionMap": {

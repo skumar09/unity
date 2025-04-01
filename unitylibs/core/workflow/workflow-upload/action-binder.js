@@ -241,7 +241,7 @@ export default class ActionBinder {
         const { naturalWidth: width, naturalHeight: height } = img;
         URL.revokeObjectURL(objectUrl);
         if (width > this.limits.maxWidth || height > this.limits.maxHeight) {
-          this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filetype' });
+          this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filedimension' });
           reject(new Error('Unable to process the file type!'));
         } else {
           resolve({ width, height });
