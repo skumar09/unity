@@ -351,10 +351,7 @@ export default class ActionBinder {
       .then(async (resArr) => {
         const response = resArr[resArr.length - 1];
         if (!response?.url) throw new Error('Error connecting to App');
-        const userType = localStorage.getItem('unity.user') === 'true' ? 'frictionless_return_user' : 'frictionless_new_user';
-        const url = new URL(response.url);
-        url.searchParams.append('user', userType);
-        this.redirectUrl = url.href;
+        this.redirectUrl = response.url;
       })
       .catch(async (e) => {
         await this.showSplashScreen();
@@ -363,6 +360,7 @@ export default class ActionBinder {
   }
 
   async handleRedirect(cOpts) {
+    cOpts.payload.newUser = localStorage.getItem('unity.user') ? false : true;
     await this.getRedirectUrl(cOpts);
     if (!this.redirectUrl) return false;
     this.dispatchAnalyticsEvent('redirectUrl', this.redirectUrl);
