@@ -360,6 +360,7 @@ export default class ActionBinder {
   }
 
   async handleRedirect(cOpts) {
+    cOpts.payload.newUser = localStorage.getItem('unity.user') ? false : true;
     await this.getRedirectUrl(cOpts);
     if (!this.redirectUrl) return false;
     this.dispatchAnalyticsEvent('redirectUrl', this.redirectUrl);
