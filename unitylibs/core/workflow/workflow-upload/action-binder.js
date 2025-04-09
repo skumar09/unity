@@ -12,6 +12,7 @@ import {
   getLocale,
   getLibs,
   getHeaders,
+  sendAnalyticsEvent,
 } from '../../../scripts/utils.js';
 
 class ServiceHandler {
@@ -312,6 +313,7 @@ export default class ActionBinder {
         el.addEventListener('dragover', this.preventDefault);
         el.addEventListener('dragenter', this.preventDefault);
         el.addEventListener('drop', async (e) => {
+          sendAnalyticsEvent(new CustomEvent('Drag and drop|UnityWidget'));
           e.preventDefault();
           e.stopPropagation();
           const files = this.extractFiles(e);
@@ -351,6 +353,16 @@ export default class ActionBinder {
       this.transitionScreen = new TransitionScreen(this.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
       await this.transitionScreen.delayedSplashLoader();
     }
+    window.addEventListener('pageshow', (event) => {
+      const navigationEntries = window.performance.getEntriesByType('navigation');
+      const historyTraversal = event.persisted
+        || (typeof window.performance !== 'undefined'
+          && navigationEntries.length > 0
+          && navigationEntries[0].type === 'back_forward');
+      if (historyTraversal) {
+        window.location.reload();
+      }
+    });
   }
 
   preventDefault(e) {
