@@ -502,6 +502,9 @@ export default class ActionBinder {
 
   async acrobatActionMaps(values, files, totalFileSize, eventName) {
     await this.handlePreloads();
+    window.addEventListener('DCUnity:RedirectReady', async (e) => {
+      await this.continueInApp();
+    });
     for (const value of values) {
       switch (true) {
         case value.actionType === 'fillsign':
@@ -527,9 +530,6 @@ export default class ActionBinder {
         case value.actionType === 'croppages':
           this.promiseStack = [];
           await this.cropPages(files, eventName);
-          break;
-        case value.actionType === 'continueInApp':
-          await this.continueInApp();
           break;
         case value.actionType === 'interrupt':
           await this.cancelAcrobatOperation();
