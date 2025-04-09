@@ -360,7 +360,18 @@ export default class ActionBinder {
   }
 
   async handleRedirect(cOpts) {
-    cOpts.payload.newUser = localStorage.getItem('unity.user') ? false : true;
+    try {
+      cOpts.payload.newUser = !localStorage.getItem('unity.user');
+      const numAttempts = parseInt(localStorage.getItem(`${this.workflowCfg.enabledFeatures[0]}_attempts`), 10) || 0;
+      const trialMapping = {
+        0: '1st',
+        1: '2nd',
+      };
+      cOpts.payload.attempts = trialMapping[numAttempts] || '2+';
+    } catch (e) {
+      cOpts.payload.newUser = true;
+      cOpts.payload.attempts = '1st';
+    }
     await this.getRedirectUrl(cOpts);
     if (!this.redirectUrl) return false;
     this.dispatchAnalyticsEvent('redirectUrl', this.redirectUrl);
