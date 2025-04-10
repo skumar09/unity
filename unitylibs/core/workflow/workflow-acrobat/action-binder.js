@@ -40,10 +40,10 @@ class ServiceHandler {
               if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
             });
           } catch {
-            error.message = `Failed to parse JSON response. URL: ${url}, Options: ${JSON.stringify(options)}`;
+            error.message = `Failed to parse JSON response. URL: ${url}}`;
           }
         }
-        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        if (!error.message) error.message = `Error fetching from service. URL: ${url}`;
         error.status = response.status;
         throw error;
       }
@@ -52,10 +52,10 @@ class ServiceHandler {
     } catch (e) {
       if (e instanceof TypeError) {
         e.status = 0;
-        e.message = `Network error. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        e.message = `Network error. URL: ${url}`;
       } else if (e.name === 'TimeoutError' || e.name === 'AbortError') {
         e.status = 504;
-        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        e.message = `Request timed out. URL: ${url}`;
       }
       throw e;
     }
@@ -360,7 +360,18 @@ export default class ActionBinder {
   }
 
   async handleRedirect(cOpts) {
-    cOpts.payload.newUser = localStorage.getItem('unity.user') ? false : true;
+    try {
+      cOpts.payload.newUser = !localStorage.getItem('unity.user');
+      const numAttempts = parseInt(localStorage.getItem(`${this.workflowCfg.enabledFeatures[0]}_attempts`), 10) || 0;
+      const trialMapping = {
+        0: '1st',
+        1: '2nd',
+      };
+      cOpts.payload.attempts = trialMapping[numAttempts] || '2+';
+    } catch (e) {
+      cOpts.payload.newUser = true;
+      cOpts.payload.attempts = '1st';
+    }
     await this.getRedirectUrl(cOpts);
     if (!this.redirectUrl) return false;
     this.dispatchAnalyticsEvent('redirectUrl', this.redirectUrl);
@@ -491,6 +502,9 @@ export default class ActionBinder {
 
   async acrobatActionMaps(values, files, totalFileSize, eventName) {
     await this.handlePreloads();
+    window.addEventListener('DCUnity:RedirectReady', async (e) => {
+      await this.continueInApp();
+    });
     for (const value of values) {
       switch (true) {
         case value.actionType === 'fillsign':
@@ -517,11 +531,11 @@ export default class ActionBinder {
           this.promiseStack = [];
           await this.cropPages(files, eventName);
           break;
-        case value.actionType === 'continueInApp':
-          await this.continueInApp();
-          break;
         case value.actionType === 'interrupt':
           await this.cancelAcrobatOperation();
+          break;
+        case value.actionType === 'continueInApp':
+          if(this.redirectWithoutUpload) await this.continueInApp();
           break;
         default:
           break;
