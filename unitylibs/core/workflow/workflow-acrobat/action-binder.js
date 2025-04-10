@@ -40,10 +40,10 @@ class ServiceHandler {
               if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
             });
           } catch {
-            error.message = `Failed to parse JSON response. URL: ${url}, Options: ${JSON.stringify(options)}`;
+            error.message = `Failed to parse JSON response. URL: ${url}}`;
           }
         }
-        if (!error.message) error.message = `Error fetching from service. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        if (!error.message) error.message = `Error fetching from service. URL: ${url}`;
         error.status = response.status;
         throw error;
       }
@@ -52,10 +52,10 @@ class ServiceHandler {
     } catch (e) {
       if (e instanceof TypeError) {
         e.status = 0;
-        e.message = `Network error. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        e.message = `Network error. URL: ${url}`;
       } else if (e.name === 'TimeoutError' || e.name === 'AbortError') {
         e.status = 504;
-        e.message = `Request timed out. URL: ${url}, Options: ${JSON.stringify(options)}`;
+        e.message = `Request timed out. URL: ${url}`;
       }
       throw e;
     }
