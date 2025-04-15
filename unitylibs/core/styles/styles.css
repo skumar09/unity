@@ -236,6 +236,10 @@
   align-self: stretch;
 }
 
+.upload.unity-enabled .alert-holder .alert-toast .alert-content .alert-text {
+  align-content: center;
+}
+
 .unity-enabled .interactive-area .alert-holder .alert-toast .alert-content .alert-text p {
   color: var(--color-white);
   font-weight: 400;
