@@ -1,0 +1,80 @@
+{
+  "single": {
+    "maxNumFiles": 1,
+    "maxFileSize": 104857600,
+    "allowedFileTypes": ["application/pdf"]
+  },
+  "hybrid": {
+    "maxFileSize": 2147483648,
+    "allowedFileTypes": [
+      "application/pdf",
+      "application/msword",
+      "application/xml",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/x-tika-ooxml",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/x-tika-msworks-spreadsheet",
+      "application/vnd.adobe.form.fillsign",
+      "application/illustrator",
+      "application/rtf",
+      "application/x-indesign",
+      "image/jpeg",
+      "image/png",
+      "image/bmp",
+      "image/gif",
+      "image/vnd.adobe.photoshop",
+      "image/tiff",
+      "message/rfc822",
+      "text/plain"
+    ]
+  },
+  "fillsign": {
+    "pageLimit": {
+      "maxNumPages": 100
+    }
+  },
+  "split-pdf": {
+    "maxFileSize": 1073741824,
+    "pageLimit": {
+      "minNumPages": 2,
+      "maxNumPages": 1500
+    },
+    "signedInallowedFileTypes": [
+      "application/msword",
+      "application/xml",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/x-tika-ooxml",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/x-tika-msworks-spreadsheet",
+      "application/vnd.adobe.form.fillsign",
+      "application/illustrator",
+      "application/rtf",
+      "application/x-indesign",
+      "image/jpeg",
+      "image/png",
+      "image/bmp",
+      "image/gif",
+      "image/vnd.adobe.photoshop",
+      "image/tiff",
+      "message/rfc822",
+      "text/plain"
+    ]
+  },
+  "page-limit-500": {
+    "pageLimit": {
+      "maxNumPages": 500
+    }
+  },
+  "sendforsignature": {
+    "maxFileSize": 5242880,
+    "pageLimit": {
+      "maxNumPages": 25
+    }
+  }
+}

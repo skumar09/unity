@@ -1,0 +1,24 @@
+{
+  "upload": {
+    "selector": ".drop-zone",
+    "renderWidget": false,
+    "source": ".drop-zone",
+    "target": ".drop-zone",
+    "limits": {
+      "maxNumFiles": 1,
+      "maxFileSize": 40000000,
+      "maxHeignt": 8000,
+      "maxWidth": 8000,
+      "allowedFileTypes": ["image/jpeg", "image/png", "image/jpg"]
+    },
+    "showSplashScreen": true,
+    "splashScreenConfig": {
+      "fragmentLink": "/cc-shared/fragments/products/photoshop/unity/splash-page/splashscreen",
+      "splashScreenParent": "body"
+    },
+    "actionMap": {
+      ".drop-zone": "upload",
+      "#file-upload": "upload"
+    }
+  }
+}
