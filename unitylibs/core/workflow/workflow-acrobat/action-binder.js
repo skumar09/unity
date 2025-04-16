@@ -30,18 +30,18 @@ class ServiceHandler {
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
       if (response.status !== 200) {
-        const error = new Error();
+        let errorMessage = `Error fetching from service. URL: ${url}`;
         if (contentLength !== '0') {
           try {
-            error.responseJson = await response.json();
-            ['quotaexceeded', 'notentitled'].forEach((errorMessage) => {
-              if (resJson.reason?.includes(errorMessage)) error.message = errorMessage;
+            const responseJson = await response.json();
+            ['quotaexceeded', 'notentitled'].forEach((errorType) => {
+              if (responseJson.reason?.includes(errorType)) errorMessage = errorType;
             });
           } catch {
-            error.message = `Failed to parse JSON response. URL: ${url}}`;
+            errorMessage = `Failed to parse JSON response. URL: ${url}`;
           }
         }
-        if (!error.message) error.message = `Error fetching from service. URL: ${url}`;
+        const error = new Error(errorMessage);
         error.status = response.status;
         throw error;
       }
