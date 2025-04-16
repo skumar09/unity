@@ -12,6 +12,7 @@
     "actionMap": {
       ".verb-wrapper": "upload",
       "#file-upload": "upload"
-    }
+    },
+    "sendSplunkAnalytics": true
   }
 }
