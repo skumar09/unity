@@ -3,16 +3,17 @@ import {
   localizeLink,
   loadImg,
   loadArea,
-} from '../scripts/utils.js';
+} from './utils.js';
 
 export default class TransitionScreen {
-  constructor(splashScreenEl, initActionListeners, loaderLimit, workflowCfg) {
+  constructor(splashScreenEl, initActionListeners, loaderLimit, workflowCfg, isDesktop = false) {
     this.splashScreenEl = splashScreenEl;
     this.initActionListeners = initActionListeners;
     this.LOADER_LIMIT = loaderLimit;
     this.workflowCfg = workflowCfg;
     this.LOADER_DELAY = 800;
     this.LOADER_INCREMENT = 30;
+    this.isDesktop = isDesktop;
   }
 
   updateProgressBar(layer, percentage) {
@@ -126,11 +127,24 @@ export default class TransitionScreen {
     this.splashScreenEl.parentElement?.classList.add('hide-splash-overflow');
   }
 
+  updateCopyForDevice() {
+    const headingElements = this.splashScreenEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const mobileHeading = headingElements[1];
+    const desktopHeading = headingElements[2];
+    if (mobileHeading) {
+      mobileHeading.style.display = (this.isDesktop && desktopHeading) ? 'none' : 'block';
+    }
+    if (desktopHeading) {
+      desktopHeading.style.display = (this.isDesktop && desktopHeading) ? 'block' : 'none';
+    }
+  }
+
   async showSplashScreen(displayOn = false) {
     if (!this.splashScreenEl && !this.workflowCfg.targetCfg.showSplashScreen) return;
     if (this.splashScreenEl.classList.contains('decorate')) {
       if (this.splashScreenEl.querySelector('.icon-progress-bar')) await this.handleSplashProgressBar();
       if (this.splashScreenEl.querySelector('a.con-button[href*="#_cancel"]')) this.handleOperationCancel();
+      if (this.workflowCfg.productName.toLowerCase() === 'photoshop') this.updateCopyForDevice();
       this.splashScreenEl.classList.remove('decorate');
     }
     this.splashVisibilityController(displayOn);
