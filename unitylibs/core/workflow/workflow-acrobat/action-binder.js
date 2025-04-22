@@ -24,11 +24,15 @@ const ENDING_SPACE_PERIOD_REGEX = /[ .]+$/;
 const STARTING_SPACE_PERIOD_REGEX = /^[ .]+/;
 
 class ServiceHandler {
-  async fetchFromService(url, options) {
+  async fetchFromService(url, options, canRetry = true) {
     try {
       const response = await fetch(url, options);
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
+      if(canRetry && response.status >= 500 && response.status < 600) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return this.fetchFromService(url, options, false);
+     }
       if (response.status !== 200) {
         let errorMessage = `Error fetching from service. URL: ${url}`;
         if (contentLength !== '0') {
@@ -49,11 +53,13 @@ class ServiceHandler {
       return response.json();
     } catch (e) {
       if (e instanceof TypeError) {
-        e.status = 0;
-        e.message = `Network error. URL: ${url}`;
+        const error = new Error(`Network error. URL: ${url}; Error message: ${e.message}`);
+        error.status = 0;
+        throw error;
       } else if (e.name === 'TimeoutError' || e.name === 'AbortError') {
-        e.status = 504;
-        e.message = `Request timed out. URL: ${url}`;
+        const error = new Error(`Request timed out. URL: ${url}; Error message: ${e.message}`);
+        error.status = 504;
+        throw error;
       }
       throw e;
     }
@@ -62,7 +68,7 @@ class ServiceHandler {
   async fetchFromServiceWithRetry(url, options, maxRetryDelay = 120) {
     let timeLapsed = 0;
     while (timeLapsed < maxRetryDelay) {
-      const response = await this.fetchFromService(url, options);
+      const response = await this.fetchFromService(url, options, false);
       if (response.status === 202) {
         const retryDelay = parseInt(response.headers.get('retry-after')) || 5;
         await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
@@ -536,8 +542,7 @@ static ERROR_MAP = {
     await this.transitionScreen.showSplashScreen();
     this.redirectUrl = '';
     this.dispatchAnalyticsEvent('cancel', this.filesData);
-    const e = new Error();
-    e.message = 'Operation termination requested.';
+    const e = new Error('Operation termination requested.');
     e.showError = false;
     const cancelPromise = Promise.reject(e);
     this.promiseStack.unshift(cancelPromise);
