@@ -80,8 +80,8 @@ export default class UploadHandler {
         error.status = response.status;
         await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', response.status, `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`, true, true, {
           code: 'verb_upload_error_chunk_upload',
-          status: response.status,
-          message: `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`,
+          subCode: response.status,
+          desc: `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`,
         });
         throw error;
       }
@@ -91,10 +91,14 @@ export default class UploadHandler {
         const errorMessage = `Network error. Asset ID: ${assetId}, ${blobData.size} bytes;  Error message: ${e.message}`;
         await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', 0, `Exception raised when uploading chunk to storage; ${errorMessage}`, true, true, {
           code: 'verb_upload_error_chunk_upload',
-          status: e.status || 0,
-          message: `Exception raised when uploading chunk to storage; ${errorMessage}`,
+          subCode: e.status || 0,
+          desc: `Exception raised when uploading chunk to storage; ${errorMessage}`,
         });
-      } else if (['Timeout', 'AbortError'].includes(e.name)) await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', 504, `Timeout when uploading chunk to storage; ${assetId}, ${blobData.size} bytes`, true);
+      } else if (['Timeout', 'AbortError'].includes(e.name)) await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', 504, `Timeout when uploading chunk to storage; ${assetId}, ${blobData.size} bytes`, true, true, {
+        code: 'verb_upload_error_chunk_upload',
+        subCode: 504,
+        desc: `Timeout when uploading chunk to storage; ${assetId}, ${blobData.size} bytes`,
+      });
       throw e;
     }
   }
@@ -167,7 +171,7 @@ export default class UploadHandler {
         if (this.actionBinder.MULTI_FILE) {
           await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`, false, true, {
             code: 'verb_upload_error_finalize_asset',
-            message: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`,
+            desc: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`,
           });
           return false;
         }
@@ -176,7 +180,7 @@ export default class UploadHandler {
         await this.transitionScreen.showSplashScreen();
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`, false, true, {
           code: 'verb_upload_error_finalize_asset',
-          message: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`,
+          desc: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`,
         });
         this.actionBinder.operations = [];
         return false;
@@ -186,7 +190,7 @@ export default class UploadHandler {
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception thrown when verifying content: ${e.message}, ${assetData.id}`, false, e.showError, {
           code: 'verb_upload_error_finalize_asset',
           subCode: e.status,
-          message: `Exception thrown when verifying content: ${e.message}, ${assetData.id}`,
+          desc: `Exception thrown when verifying content: ${e.message}, ${assetData.id}`,
         });
         return false;
       }
@@ -325,39 +329,39 @@ export default class UploadHandler {
       case 409:
         await this.actionBinder.dispatchErrorToast('verb_upload_error_duplicate_asset', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_duplicate_asset',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       case 401:
         if (e.message === 'notentitled') await this.actionBinder.dispatchErrorToast('verb_upload_error_no_storage_provision', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_no_storage_provision',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         else await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_generic',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       case 403:
         if (e.message === 'quotaexceeded') await this.actionBinder.dispatchErrorToast('verb_upload_error_max_quota_exceeded', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_max_quota_exceeded',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         else await this.actionBinder.dispatchErrorToast('verb_upload_error_no_storage_provision', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_no_storage_provision',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       default:
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception raised when uploading file(s): ${e.message}`, false, e.showError, {
           code: 'verb_upload_error_generic',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
     }

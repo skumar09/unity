@@ -145,12 +145,13 @@ static ERROR_MAP = {
   'verb_upload_error_duplicate_asset': -52,
   'verb_upload_error_validate_files': -100,
   'verb_upload_error_renaming_file' : -101,
-  'verb_upload_error_max_page_count_single': -150,
-  'verb_upload_error_min_page_count_single': -151,
+  'verb_upload_error_max_page_count': -150,
+  'verb_upload_error_min_page_count': -151,
   'verb_upload_error_verify_page_count': -152,
   'verb_upload_error_unsupported_type': -170,
   'verb_upload_error_empty_file': -171,
   'verb_upload_error_file_too_large': -172,
+  'verb_upload_error_only_accept_one_file': -173,
   'verb_upload_error_unsupported_type_multi': -200,
   'verb_upload_error_empty_file_multi': -201,
   'verb_upload_error_file_too_large_multi': -202,
@@ -161,10 +162,9 @@ static ERROR_MAP = {
   'verb_upload_exception_finalize': -300,
   'verb_upload_exception_validate_page_count': -301,
   'verb_upload_error_fetch_redirect_url': -350,
-  'verb_upload_error_redirect': -351,
-  'verb_upload_error_finalize': -352,
-  'verb_upload_error_chunk_upload': -353,
-  'verb_cookie_not_set': -354,
+  'verb_upload_error_finalize': -351,
+  'verb_upload_error_chunk_upload': -352,
+  'verb_cookie_not_set': -353,
   'verb_upload_error_redirect_to_app': -900,
   'verb_upload_error_finalize_asset': -901
 };
@@ -308,6 +308,7 @@ static ERROR_MAP = {
     } catch (error) {
       console.error('Error sanitizing filename:', error);
       await this.dispatchErrorToast('verb_upload_error_renaming_file', 500, `Error renaming file: ${rawFileName}`, false, true, {
+        code: 'verb_upload_error_renaming_file',
         subCode: error.name,
         desc: error.message,
       });
@@ -325,7 +326,7 @@ static ERROR_MAP = {
       let fail = false;
       if (!this.limits.allowedFileTypes.includes(file.type)) {
         if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessages.UNSUPPORTED_TYPE, null, `File type: ${file.type}`, true, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.UNSUPPORTED_TYPE });
-        else await this.dispatchErrorToast(errorMessages.UNSUPPORTED_TYPE, null, null, false, { code: 'verb_upload_error_validate_files', subCode: errorMessages.UNSUPPORTED_TYPE });
+        else await this.dispatchErrorToast(errorMessages.UNSUPPORTED_TYPE, null, null, false, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.UNSUPPORTED_TYPE });
         fail = true;
         errorTypes.add('UNSUPPORTED_TYPE');
       }
