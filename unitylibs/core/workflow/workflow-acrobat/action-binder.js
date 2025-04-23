@@ -165,6 +165,7 @@ static ERROR_MAP = {
   'verb_upload_error_finalize': -351,
   'verb_upload_error_chunk_upload': -352,
   'verb_cookie_not_set': -353,
+  'verb_upload_warn_chunk_upload': -354,
   'verb_upload_error_redirect_to_app': -900,
   'verb_upload_error_finalize_asset': -901
 };
@@ -312,7 +313,7 @@ static ERROR_MAP = {
       return fileName;
     } catch (error) {
       console.error('Error sanitizing filename:', error);
-      await this.dispatchErrorToast('verb_upload_error_renaming_file', 500, `Error renaming file: ${rawFileName}`, false, true, {
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Error renaming file: ${rawFileName}`, false, true, {
         code: 'verb_upload_error_renaming_file',
         subCode: error.name,
         desc: error.message,
