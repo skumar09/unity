@@ -24,11 +24,15 @@ const ENDING_SPACE_PERIOD_REGEX = /[ .]+$/;
 const STARTING_SPACE_PERIOD_REGEX = /^[ .]+/;
 
 class ServiceHandler {
-  async fetchFromService(url, options) {
+  async fetchFromService(url, options, canRetry = true) {
     try {
       const response = await fetch(url, options);
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
+      if(canRetry && response.status >= 500 && response.status < 600) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return this.fetchFromService(url, options, false);
+     }
       if (response.status !== 200) {
         let errorMessage = `Error fetching from service. URL: ${url}`;
         if (contentLength !== '0') {
@@ -49,11 +53,13 @@ class ServiceHandler {
       return response.json();
     } catch (e) {
       if (e instanceof TypeError) {
-        e.status = 0;
-        e.message = `Network error. URL: ${url}`;
+        const error = new Error(`Network error. URL: ${url}; Error message: ${e.message}`);
+        error.status = 0;
+        throw error;
       } else if (e.name === 'TimeoutError' || e.name === 'AbortError') {
-        e.status = 504;
-        e.message = `Request timed out. URL: ${url}`;
+        const error = new Error(`Request timed out. URL: ${url}; Error message: ${e.message}`);
+        error.status = 504;
+        throw error;
       }
       throw e;
     }
@@ -62,7 +68,7 @@ class ServiceHandler {
   async fetchFromServiceWithRetry(url, options, maxRetryDelay = 120) {
     let timeLapsed = 0;
     while (timeLapsed < maxRetryDelay) {
-      const response = await this.fetchFromService(url, options);
+      const response = await this.fetchFromService(url, options, false);
       if (response.status === 202) {
         const retryDelay = parseInt(response.headers.get('retry-after')) || 5;
         await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
@@ -139,12 +145,13 @@ static ERROR_MAP = {
   'verb_upload_error_duplicate_asset': -52,
   'verb_upload_error_validate_files': -100,
   'verb_upload_error_renaming_file' : -101,
-  'verb_upload_error_max_page_count_single': -150,
-  'verb_upload_error_min_page_count_single': -151,
+  'verb_upload_error_max_page_count': -150,
+  'verb_upload_error_min_page_count': -151,
   'verb_upload_error_verify_page_count': -152,
   'verb_upload_error_unsupported_type': -170,
   'verb_upload_error_empty_file': -171,
   'verb_upload_error_file_too_large': -172,
+  'verb_upload_error_only_accept_one_file': -173,
   'verb_upload_error_unsupported_type_multi': -200,
   'verb_upload_error_empty_file_multi': -201,
   'verb_upload_error_file_too_large_multi': -202,
@@ -155,10 +162,10 @@ static ERROR_MAP = {
   'verb_upload_exception_finalize': -300,
   'verb_upload_exception_validate_page_count': -301,
   'verb_upload_error_fetch_redirect_url': -350,
-  'verb_upload_error_redirect': -351,
-  'verb_upload_error_finalize': -352,
-  'verb_upload_error_chunk_upload': -353,
-  'verb_cookie_not_set': -354,
+  'verb_upload_error_finalize': -351,
+  'verb_upload_error_chunk_upload': -352,
+  'verb_cookie_not_set': -353,
+  'verb_upload_warn_chunk_upload': -354,
   'verb_upload_error_redirect_to_app': -900,
   'verb_upload_error_finalize_asset': -901
 };
@@ -166,6 +173,7 @@ static ERROR_MAP = {
   constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
     this.unityEl = unityEl;
     this.workflowCfg = workflowCfg;
+    this.isUploading = false;
     this.block = wfblock;
     this.canvasArea = canvasArea;
     this.actionMap = actionMap;
@@ -194,6 +202,10 @@ static ERROR_MAP = {
       {},
     );
     return !Object.keys(serverTiming || {}).length || serverTiming?.sis === '0';
+  }
+
+  setIsUploading(isUploading) {
+    this.isUploading = isUploading;
   }
 
   acrobatSignedInSettings() {
@@ -301,7 +313,8 @@ static ERROR_MAP = {
       return fileName;
     } catch (error) {
       console.error('Error sanitizing filename:', error);
-      await this.dispatchErrorToast('verb_upload_error_renaming_file', 500, `Error renaming file: ${rawFileName}`, false, true, {
+      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Error renaming file: ${rawFileName}`, false, true, {
+        code: 'verb_upload_error_renaming_file',
         subCode: error.name,
         desc: error.message,
       });
@@ -319,7 +332,7 @@ static ERROR_MAP = {
       let fail = false;
       if (!this.limits.allowedFileTypes.includes(file.type)) {
         if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessages.UNSUPPORTED_TYPE, null, `File type: ${file.type}`, true, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.UNSUPPORTED_TYPE });
-        else await this.dispatchErrorToast(errorMessages.UNSUPPORTED_TYPE, null, null, false, { code: 'verb_upload_error_validate_files', subCode: errorMessages.UNSUPPORTED_TYPE });
+        else await this.dispatchErrorToast(errorMessages.UNSUPPORTED_TYPE, null, null, false, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.UNSUPPORTED_TYPE });
         fail = true;
         errorTypes.add('UNSUPPORTED_TYPE');
       }
@@ -535,9 +548,11 @@ static ERROR_MAP = {
     this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
     await this.transitionScreen.showSplashScreen();
     this.redirectUrl = '';
+    this.filesData = this.filesData || {};
+    this.filesData.count = this.isUploading ? -3 : -2;
     this.dispatchAnalyticsEvent('cancel', this.filesData);
-    const e = new Error();
-    e.message = 'Operation termination requested.';
+    this.setIsUploading(false);
+    const e = new Error('Operation termination requested.');
     e.showError = false;
     const cancelPromise = Promise.reject(e);
     this.promiseStack.unshift(cancelPromise);

@@ -48,6 +48,25 @@ export default class UploadHandler {
     return blob;
   }
 
+  async uploadFileToUnityWithRetry(url, blobData, fileType, assetId) {
+    let retryDelay = 1000;
+    const maxRetries = 3;
+    let error = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await this.uploadFileToUnity(url, blobData, fileType, assetId);
+            if (response.ok) return response;
+        } catch (err) { error = err;}
+        if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            retryDelay *= 2;
+        }
+    }
+    if (error) error.message = error.message + ', Max retry delay exceeded during upload';
+    else error = new Error('Max retry delay exceeded during upload');
+    throw error 
+  }
+
   async uploadFileToUnity(storageUrl, blobData, fileType, assetId) {
     const uploadOptions = {
       method: 'PUT',
@@ -59,23 +78,27 @@ export default class UploadHandler {
       if (!response.ok) {
         const error = new Error(response.statusText || 'Upload request failed');
         error.status = response.status;
-        await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', response.status, `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`, true, true, {
-          code: 'verb_upload_error_chunk_upload',
-          status: response.status,
-          message: `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`,
+        await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', response.status, `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`, true, true, {
+          code: 'verb_upload_warn_chunk_upload',
+          subCode: response.status,
+          desc: `Failed when uploading chunk to storage; ${response.statusText}, ${assetId}, ${blobData.size} bytes`,
         });
         throw error;
       }
       return response;
     } catch (e) {
       if (e instanceof TypeError) {
-        e.message = `Network error. Asset ID: ${assetId}, ${blobData.size} bytes`;
-        await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', 0, `Exception raised when uploading chunk to storage; ${e.message}`, true, true, {
-          code: 'verb_upload_error_chunk_upload',
-          status: e.status || 0,
-          message: `Exception raised when uploading chunk to storage; ${e.message}`,
+        const errorMessage = `Network error. Asset ID: ${assetId}, ${blobData.size} bytes;  Error message: ${e.message}`;
+        await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 0, `Exception raised when uploading chunk to storage; ${errorMessage}`, true, true, {
+          code: 'verb_upload_warn_chunk_upload',
+          subCode: e.status || 0,
+          desc: `Exception raised when uploading chunk to storage; ${errorMessage}`,
         });
-      } else if (['Timeout', 'AbortError'].includes(e.name)) await this.actionBinder.dispatchErrorToast('verb_upload_error_chunk_upload', 504, `Timeout when uploading chunk to storage; ${assetId}, ${blobData.size} bytes`, true);
+      } else if (['Timeout', 'AbortError'].includes(e.name)) await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 504, `Timeout when uploading chunk to storage; ${assetId}, ${blobData.size} bytes`, true, true, {
+        code: 'verb_upload_warn_chunk_upload',
+        subCode: e.status || 0,
+        desc: `Timeout when uploading chunk to storage; ${assetId}, ${blobData.size} bytes`,
+      });
       throw e;
     }
   }
@@ -120,7 +143,7 @@ export default class UploadHandler {
         const url = assetData.uploadUrls[i];
         return () => {
           if (fileUploadFailed) return Promise.resolve();
-          return this.uploadFileToUnity(url.href, chunk, fileType, assetData.id).catch(async () => {
+          return this.uploadFileToUnityWithRetry(url.href, chunk, fileType, assetData.id).catch(async () => {
             failedFiles.add(fileIndex);
             fileUploadFailed = true;
           });
@@ -148,7 +171,7 @@ export default class UploadHandler {
         if (this.actionBinder.MULTI_FILE) {
           await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`, false, true, {
             code: 'verb_upload_error_finalize_asset',
-            message: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`,
+            desc: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`,
           });
           return false;
         }
@@ -157,7 +180,7 @@ export default class UploadHandler {
         await this.transitionScreen.showSplashScreen();
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`, false, true, {
           code: 'verb_upload_error_finalize_asset',
-          message: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`,
+          desc: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`,
         });
         this.actionBinder.operations = [];
         return false;
@@ -167,7 +190,7 @@ export default class UploadHandler {
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception thrown when verifying content: ${e.message}, ${assetData.id}`, false, e.showError, {
           code: 'verb_upload_error_finalize_asset',
           subCode: e.status,
-          message: `Exception thrown when verifying content: ${e.message}, ${assetData.id}`,
+          desc: `Exception thrown when verifying content: ${e.message}, ${assetData.id}`,
         });
         return false;
       }
@@ -306,39 +329,39 @@ export default class UploadHandler {
       case 409:
         await this.actionBinder.dispatchErrorToast('verb_upload_error_duplicate_asset', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_duplicate_asset',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       case 401:
         if (e.message === 'notentitled') await this.actionBinder.dispatchErrorToast('verb_upload_error_no_storage_provision', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_no_storage_provision',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         else await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_generic',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       case 403:
         if (e.message === 'quotaexceeded') await this.actionBinder.dispatchErrorToast('verb_upload_error_max_quota_exceeded', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_max_quota_exceeded',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         else await this.actionBinder.dispatchErrorToast('verb_upload_error_no_storage_provision', e.status, e.message, false, e.showError, {
           code: 'verb_upload_error_no_storage_provision',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       default:
         await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception raised when uploading file(s): ${e.message}`, false, e.showError, {
           code: 'verb_upload_error_generic',
-          status: e.status,
-          message: `Exception raised when uploading file(s): ${e.message}`,
+          subCode: e.status,
+          desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
     }
@@ -375,6 +398,7 @@ export default class UploadHandler {
     const redirectSuccess = await this.actionBinder.handleRedirect(cOpts, fileData);
     if (!redirectSuccess) return;
     this.actionBinder.dispatchAnalyticsEvent('uploading', fileData);
+    this.actionBinder.setIsUploading(true);
     const uploadResult = await this.chunkPdf(
       [assetData],
       [blobData],
@@ -382,7 +406,10 @@ export default class UploadHandler {
       maxConcurrentChunks,
     );
     if (uploadResult.size === 1) {
-      await this.dispatchGenericError(`One or more chunks failed to upload for the single file: ${assetData.id}, ${file.size} bytes, ${file.type}`);
+      const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
+      this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
+      await this.transitionScreen.showSplashScreen();
+      await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 504, `One or more chunks failed to upload for the single file: ${assetData.id}, ${file.size} bytes, ${file.type}`, false, true, {code: 'verb_upload_error_chunk_upload'});
       return;
     }
     this.actionBinder.operations.push(assetData.id);
@@ -471,6 +498,7 @@ export default class UploadHandler {
     const redirectSuccess = await this.actionBinder.handleRedirect(cOpts, filesData);
     if (!redirectSuccess) return;
     this.actionBinder.dispatchAnalyticsEvent('uploading', filesData);
+    this.actionBinder.setIsUploading(true);
     const uploadResult = await this.chunkPdf(
       assetDataArray,
       blobDataArray,
