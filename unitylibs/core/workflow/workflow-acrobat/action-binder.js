@@ -172,6 +172,7 @@ static ERROR_MAP = {
   constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
     this.unityEl = unityEl;
     this.workflowCfg = workflowCfg;
+    this.isUploading = false;
     this.block = wfblock;
     this.canvasArea = canvasArea;
     this.actionMap = actionMap;
@@ -200,6 +201,10 @@ static ERROR_MAP = {
       {},
     );
     return !Object.keys(serverTiming || {}).length || serverTiming?.sis === '0';
+  }
+
+  setIsUploading(isUploading) {
+    this.isUploading = isUploading;
   }
 
   acrobatSignedInSettings() {
@@ -542,7 +547,10 @@ static ERROR_MAP = {
     this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
     await this.transitionScreen.showSplashScreen();
     this.redirectUrl = '';
+    this.filesData = this.filesData || {};
+    this.filesData.count = this.isUploading ? -3 : -2;
     this.dispatchAnalyticsEvent('cancel', this.filesData);
+    this.setIsUploading(false);
     const e = new Error('Operation termination requested.');
     e.showError = false;
     const cancelPromise = Promise.reject(e);

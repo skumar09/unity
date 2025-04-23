@@ -398,6 +398,7 @@ export default class UploadHandler {
     const redirectSuccess = await this.actionBinder.handleRedirect(cOpts, fileData);
     if (!redirectSuccess) return;
     this.actionBinder.dispatchAnalyticsEvent('uploading', fileData);
+    this.actionBinder.setIsUploading(true);
     const uploadResult = await this.chunkPdf(
       [assetData],
       [blobData],
@@ -494,6 +495,7 @@ export default class UploadHandler {
     const redirectSuccess = await this.actionBinder.handleRedirect(cOpts, filesData);
     if (!redirectSuccess) return;
     this.actionBinder.dispatchAnalyticsEvent('uploading', filesData);
+    this.actionBinder.setIsUploading(true);
     const uploadResult = await this.chunkPdf(
       assetDataArray,
       blobDataArray,
