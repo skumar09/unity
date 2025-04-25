@@ -289,7 +289,7 @@ class WfInitiator {
           'pdf-to-word',
           'pdf-to-excel',
           'pdf-to-ppt',
-          'pdf-to-jpg',
+          'pdf-to-image',
           'createpdf',
           'word-to-pdf',
           'excel-to-pdf',
