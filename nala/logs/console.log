@@ -1,0 +1,9 @@
+Starting iteration 1 at 2025-04-15T22:32:44.980Z
+[Iteration 1] %c swipe enabled color: red
+[Iteration 1] Post message received: {"v":"https://stage--dc--adobecom.aem.live/acrobat/online/compress-pdf?unitylibs=wait-redirect","n":"stage--dc--adobecom.aem.live:acrobat:online:compress-pdf"}
+Iteration 1 ended at: 2025-04-15T22:32:54.299Z
+Iteration 1 duration: 9 seconds
+
+Test started at: 2025-04-15T22:32:44.868Z
+Test ended at: 2025-04-15T22:32:54.337Z
+Total test duration: 9 seconds
