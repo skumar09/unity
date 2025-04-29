@@ -24,8 +24,16 @@ const ENDING_SPACE_PERIOD_REGEX = /[ .]+$/;
 const STARTING_SPACE_PERIOD_REGEX = /^[ .]+/;
 
 class ServiceHandler {
+  handleAbortedRequest(url, options) {
+    if (!(options?.signal?.aborted)) return;
+    const error = new Error(`Request to ${url} aborted by user.`);
+    error.name = 'AbortError';
+    error.status = 0;
+    throw error;
+  }
   async fetchFromService(url, options, canRetry = true) {
     try {
+      if (!options?.signal?.aborted)  this.handleAbortedRequest(url, options);
       const response = await fetch(url, options);
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
@@ -52,6 +60,7 @@ class ServiceHandler {
       if (contentLength === '0') return {};
       return response.json();
     } catch (e) {
+      this.handleAbortedRequest(url, options);
       if (e instanceof TypeError) {
         const error = new Error(`Network error. URL: ${url}; Error message: ${e.message}`);
         error.status = 0;
@@ -68,6 +77,7 @@ class ServiceHandler {
   async fetchFromServiceWithRetry(url, options, maxRetryDelay = 120) {
     let timeLapsed = 0;
     while (timeLapsed < maxRetryDelay) {
+      this.handleAbortedRequest(url, options);
       const response = await this.fetchFromService(url, options, false);
       if (response.status === 202) {
         const retryDelay = parseInt(response.headers.get('retry-after')) || 5;
@@ -194,6 +204,7 @@ static ERROR_MAP = {
     this.MULTI_FILE = false;
     this.applySignedInSettings();
     this.initActionListeners = this.initActionListeners.bind(this);
+    this.abortController = new AbortController();
   }
 
   isSignedOut() {
@@ -206,6 +217,10 @@ static ERROR_MAP = {
 
   setIsUploading(isUploading) {
     this.isUploading = isUploading;
+  }
+
+  getAbortSignal() {
+    return this.abortController.signal;
   }
 
   acrobatSignedInSettings() {
@@ -265,7 +280,7 @@ static ERROR_MAP = {
           metaData: this.filesData,
           errorData: {
             code: ActionBinder.ERROR_MAP[errorMetaData.code || errorType] || -1,
-            subCode: ActionBinder.ERROR_MAP[errorMetaData.subCode] || undefined,
+            subCode: ActionBinder.ERROR_MAP[errorMetaData.subCode] || errorMetaData.subCode,
             desc: errorMetaData.desc || message || undefined
           },
           sendToSplunk,
@@ -385,7 +400,7 @@ static ERROR_MAP = {
       })
       .catch(async (e) => {
         const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
-        this.transitionScreen = new TransitionScreen(this.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+        this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
         await this.transitionScreen.showSplashScreen();
         await this.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError, {
           code: 'verb_upload_error_fetch_redirect_url',
@@ -549,9 +564,11 @@ static ERROR_MAP = {
     await this.transitionScreen.showSplashScreen();
     this.redirectUrl = '';
     this.filesData = this.filesData || {};
-    this.filesData.count = this.isUploading ? -3 : -2;
+    this.filesData.workflowStep = this.isUploading ? 'uploading' : 'preuploading';
     this.dispatchAnalyticsEvent('cancel', this.filesData);
     this.setIsUploading(false);
+    this.abortController.abort();
+    this.abortController = new AbortController();
     const e = new Error('Operation termination requested.');
     e.showError = false;
     const cancelPromise = Promise.reject(e);
