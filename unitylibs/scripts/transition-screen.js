@@ -140,7 +140,7 @@ export default class TransitionScreen {
   }
 
   async showSplashScreen(displayOn = false) {
-    if (!this.splashScreenEl && !this.workflowCfg.targetCfg.showSplashScreen) return;
+    if (!this.splashScreenEl || !this.workflowCfg.targetCfg.showSplashScreen) return;
     if (this.splashScreenEl.classList.contains('decorate')) {
       if (this.splashScreenEl.querySelector('.icon-progress-bar')) await this.handleSplashProgressBar();
       if (this.splashScreenEl.querySelector('a.con-button[href*="#_cancel"]')) this.handleOperationCancel();
