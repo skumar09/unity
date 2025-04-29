@@ -265,7 +265,7 @@ static ERROR_MAP = {
           metaData: this.filesData,
           errorData: {
             code: ActionBinder.ERROR_MAP[errorMetaData.code || errorType] || -1,
-            subCode: ActionBinder.ERROR_MAP[errorMetaData.subCode] || undefined,
+            subCode: ActionBinder.ERROR_MAP[errorMetaData.subCode] || errorMetaData.subCode,
             desc: errorMetaData.desc || message || undefined
           },
           sendToSplunk,
@@ -549,7 +549,7 @@ static ERROR_MAP = {
     await this.transitionScreen.showSplashScreen();
     this.redirectUrl = '';
     this.filesData = this.filesData || {};
-    this.filesData.count = this.isUploading ? -3 : -2;
+    this.filesData.workflowStep = this.isUploading ? 'uploading' : 'preuploading';
     this.dispatchAnalyticsEvent('cancel', this.filesData);
     this.setIsUploading(false);
     const e = new Error('Operation termination requested.');
