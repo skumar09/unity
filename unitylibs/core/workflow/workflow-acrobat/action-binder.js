@@ -37,7 +37,7 @@ class ServiceHandler {
       const response = await fetch(url, options);
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
-      if(canRetry && response.status >= 500 && response.status < 600) {
+      if(canRetry && ((response.status >= 500 && response.status < 600) || response.status === 429)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         return this.fetchFromService(url, options, false);
      }
@@ -205,6 +205,7 @@ static ERROR_MAP = {
     this.applySignedInSettings();
     this.initActionListeners = this.initActionListeners.bind(this);
     this.abortController = new AbortController();
+    this.uploadTimestamp = null;
   }
 
   isSignedOut() {
@@ -432,7 +433,7 @@ static ERROR_MAP = {
   async handleSingleFileUpload(file, eventName) {  
     const sanitizedFileName = await this.sanitizeFileName(file.name); 
     const newFile = new File([file], sanitizedFileName, { type: file.type, lastModified: file.lastModified });
-    this.filesData = { name: newFile.name, type: newFile.type, size: newFile.size, count: 1, uploadType: 'sfu'};
+    this.filesData = { type: newFile.type, size: newFile.size, count: 1, uploadType: 'sfu'};
     this.dispatchAnalyticsEvent(eventName, this.filesData);
     if (!await this.validateFiles([newFile])) return;
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
@@ -445,7 +446,7 @@ static ERROR_MAP = {
     this.MULTI_FILE = true;
     this.LOADER_LIMIT = 65;
     const isMixedFileTypes = this.isMixedFileTypes(files);
-    this.filesData = { name: '', type: isMixedFileTypes, size: totalFileSize, count: files.length , uploadType: 'mfu'};
+    this.filesData = { type: isMixedFileTypes, size: totalFileSize, count: files.length , uploadType: 'mfu'};
     this.dispatchAnalyticsEvent(eventName, this.filesData);
     this.dispatchAnalyticsEvent('multifile', this.filesData);
     const sanitizedFiles = await Promise.all(files.map(async (file) => {
@@ -545,9 +546,11 @@ static ERROR_MAP = {
         });
       }
       await this.delay(500);
+      const [baseUrl, queryString] = this.redirectUrl.split('?');
+      const additionalParams = unityConfig.env === 'stage' ? `${window.location.search.slice(1)}&` : '';
       if (this.multiFileFailure && this.redirectUrl.includes('#folder')) {
-        window.location.href = `${this.redirectUrl}&feedback=${this.multiFileFailure}`;
-      } else window.location.href = this.redirectUrl;
+        window.location.href = `${baseUrl}?${additionalParams}feedback=${this.multiFileFailure}&${queryString}`;
+      } else window.location.href = `${baseUrl}?${this.redirectWithoutUpload === false ? `UTS_Uploaded=${this.uploadTimestamp}&` : ''}${additionalParams}${queryString}`;
     } catch (e) {
       await this.transitionScreen.showSplashScreen();
       await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception thrown when redirecting to product; ${e.message}`, false, e.showError, {
@@ -614,6 +617,10 @@ static ERROR_MAP = {
       });
     }
     return { files, totalFileSize };
+  }
+
+  setAssetId(assetId) {
+    this.filesData.assetId = assetId;
   }
 
   async initActionListeners(b = this.block, actMap = this.actionMap) {
