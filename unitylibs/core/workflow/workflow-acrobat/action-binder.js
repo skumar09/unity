@@ -458,23 +458,18 @@ static ERROR_MAP = {
     return true;
   }
 
-  async handleSingleFileUpload(file, eventName) {  
-    const sanitizedFileName = await this.sanitizeFileName(file.name); 
-    const newFile = new File([file], sanitizedFileName, { type: file.type, lastModified: file.lastModified });
-    this.filesData = { type: newFile.type, size: newFile.size, count: 1, uploadType: 'sfu'};
+  async handleSingleFileUpload(files, eventName) {
+    this.filesData = { type: files[0].type, size: files[0].size, count: 1, uploadType: 'sfu' };
     this.dispatchAnalyticsEvent(eventName, this.filesData);
-    if (!await this.validateFiles([newFile])) return;
-    const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
-    this.uploadHandler = new UploadHandler(this, this.serviceHandler);
-    if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(newFile, this.filesData);
-    else await this.uploadHandler.singleFileUserUpload(newFile, this.filesData);
+    if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(files[0], this.filesData);
+    else await this.uploadHandler.singleFileUserUpload(files[0], this.filesData);
   }
 
   async handleMultiFileUpload(files, eventName, totalFileSize) {
     this.MULTI_FILE = true;
     this.LOADER_LIMIT = 65;
     const isMixedFileTypes = this.isMixedFileTypes(files);
-    this.filesData = { type: isMixedFileTypes, size: totalFileSize, count: files.length , uploadType: 'mfu'};
+    this.filesData = { type: isMixedFileTypes, size: totalFileSize, count: files.length, uploadType: 'mfu' };
     this.dispatchAnalyticsEvent(eventName, this.filesData);
     this.dispatchAnalyticsEvent('multifile', this.filesData);
     if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(this.filesData);
