@@ -8,12 +8,13 @@ function getSessionID() {
 }
 
 function createPayloadForSplunk(metaData) {
-  const { eventName, errorData, redirectUrl } = metaData;
+  const { eventName, errorData, redirectUrl, assetId } = metaData;
   return {
     event: {
       name: eventName,
       category: 'photoshop',
     },
+    content: { ...(assetId && { assetId }) },
     source: {
       user_agent: navigator.userAgent,
       lang: document.documentElement.lang,
