@@ -30,12 +30,16 @@ class ServiceHandler {
     };
     try {
       const response = await fetch(api, postOpts);
-      if (failOnError && response.status !== 200) throw new Error('Operation failed');
+      if (failOnError && response.status !== 200) {
+        const error = new Error('Operation failed');
+        error.status = response.status;
+        throw error;
+      }
       if (!failOnError) return response;
       return await response.json();
     } catch (err) {
       this.showErrorToast(errorCallbackOptions, err, this.lanaOptions);
-      throw new Error('Operation failed');
+      throw err;
     }
   }
 
@@ -136,7 +140,9 @@ export default class ActionBinder {
     const response = await fetch(storageUrl, uploadOptions);
     if (response.status !== 200) {
       window.lana?.log(`Message: Failed to upload image to Unity, Error: ${response.status}`, this.lanaOptions);
-      throw new Error('Failed to upload image to Unity');
+      const error = new Error('Failed to upload image to Unity');
+      error.status = response.status;
+      throw error;
     }
     this.logAnalyticsinSplunk('Upload Completed|UnityWidget', { assetId: this.assetId });
   }
@@ -253,7 +259,11 @@ export default class ActionBinder {
       );
       this.promiseStack.push(servicePromise);
       const response = await servicePromise;
-      if (!response?.url) throw new Error('Error connecting to App');
+      if (!response?.url) {
+        const error = new Error('Error connecting to App');
+        error.status = response.status;
+        throw error;
+      }
       const finalResults = await Promise.allSettled(this.promiseStack);
       if (finalResults.some((result) => result.status === 'rejected')) return;
       window.location.href = response.url;
