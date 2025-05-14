@@ -343,8 +343,10 @@ export default class ActionBinder {
     await this.checkImageDimensions(objectUrl);
     sendAnalyticsEvent(new CustomEvent('Uploading Started|UnityWidget'));
     this.logAnalyticsinSplunk('Uploading Started|UnityWidget');
-    const { default: isDesktop } = await import(`${getUnityLibs()}/utils/device-detection.js`);
-    this.desktop = isDesktop();
+    if (this.workflowCfg.pswFeature) {
+      const { default: isDesktop } = await import(`${getUnityLibs()}/utils/device-detection.js`);
+      this.desktop = isDesktop();
+    }
     const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
     this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg, this.desktop);
     await this.transitionScreen.showSplashScreen(true);
