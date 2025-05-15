@@ -19,6 +19,7 @@
     "actionMap": {
       ".drop-zone": "upload",
       "#file-upload": "upload"
-    }
+    },
+    "sendSplunkAnalytics": true
   }
 }

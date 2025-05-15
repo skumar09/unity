@@ -166,7 +166,7 @@ export default class UploadHandler {
         const chunk = blobData.slice(start, end);
         const url = assetData.uploadUrls[i];
         return async () => {
-          if (fileUploadFailed  || signal?.aborted) return Promise.resolve();
+          if (fileUploadFailed || signal?.aborted) return Promise.resolve();
           const urlObj = new URL(url.href);
           const chunkNumber = urlObj.searchParams.get('partNumber') || 0;
           try {
@@ -174,10 +174,6 @@ export default class UploadHandler {
             if (attempt > maxAttempts) maxAttempts = attempt;
             attemptMap.set(fileIndex, maxAttempts);
           } catch (err) {
-            if (err.name !== 'AbortError') {
-              failedFiles.add({ fileIndex, chunkNumber });
-              fileUploadFailed = true;
-            }
             failedFiles.add({ fileIndex, chunkNumber });
             fileUploadFailed = true;
           }
@@ -185,7 +181,7 @@ export default class UploadHandler {
       });
       uploadTasks.push(...chunkTasks);
     });
-    if (signal?.aborted) return;
+    if (signal?.aborted) return { failedFiles, attemptMap };
     await this.batchUpload(uploadTasks, batchSize);
     return { failedFiles, attemptMap };
   }
@@ -446,7 +442,7 @@ export default class UploadHandler {
       abortSignal
     );
     if (abortSignal.aborted) return;
-    if (failedFiles.size === 1) {
+    if (failedFiles?.size === 1) {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
       this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
       await this.transitionScreen.showSplashScreen();
@@ -461,7 +457,7 @@ export default class UploadHandler {
       if (!validated) return;
     }
     this.actionBinder.uploadTimestamp = Date.now();
-    this.actionBinder.dispatchAnalyticsEvent('uploaded', { ...fileData, assetId: assetData.id, maxRetryCount: attemptMap.get(0) });
+    this.actionBinder.dispatchAnalyticsEvent('uploaded', { ...fileData, assetId: assetData.id, maxRetryCount: attemptMap?.get(0) || 0 });
   }
 
   async singleFileGuestUpload(file, fileData) {
@@ -469,7 +465,10 @@ export default class UploadHandler {
     this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
     try {
       await this.transitionScreen.showSplashScreen(true);
-      if (this.isNonPdf([file])) {
+      const autoRedirect = this.actionBinder.workflowCfg.targetCfg.autoRedirectVerbs.includes(this.actionBinder.workflowCfg.enabledFeatures[0]);
+      if (!this.actionBinder.workflowCfg.targetCfg.verbsWithoutMfuFallback.includes(this.actionBinder.workflowCfg.enabledFeatures[0]) 
+          && this.isNonPdf([file])
+          && !autoRedirect) {
         await this.actionBinder.delay(3000);
         const redirectSuccess = await this.actionBinder.handleRedirect(this.getGuestConnPayload('nonpdf'), fileData);
         if (!redirectSuccess) return;
@@ -547,12 +546,12 @@ export default class UploadHandler {
       fileTypeArray,
       maxConcurrentChunks,
     );
-    if (failedFiles.size === files.length) {
+    if (failedFiles?.size === files.length) {
       await this.dispatchGenericError(`One or more chunks failed to upload for all ${files.length} files; Workflow: ${workflowId}, Assets: ${assetDataArray.map((a) => a.id).join(', ')}; File types: ${fileTypeArray.join(', ')}`);
       return;
     }
     const uploadedAssets = assetDataArray.filter((_, index) => 
-      ![...failedFiles].some(failed => failed.fileIndex === index)
+      !(failedFiles && [...failedFiles].some(failed => failed.fileIndex === index))
     );
     this.actionBinder.operations.push(workflowId);
     let allVerified = 0;

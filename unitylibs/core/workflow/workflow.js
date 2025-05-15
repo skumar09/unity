@@ -262,10 +262,12 @@ class WfInitiator {
     let wfName = '';
     let product = '';
     let feature = '';
+    let psw = '';
     [...this.el.classList].forEach((cn) => {
       if (cn.match('workflow-')) wfName = cn;
       if (cn.match('product-')) product = cn.replace('product-', '');
       if (cn.match('feature-')) feature = cn.replace('feature-', '');
+      if (cn.match('psw-enabled')) psw = cn;
     });
     const workflowCfg = {
       'workflow-photoshop': {
@@ -285,7 +287,17 @@ class WfInitiator {
           'insert-pdf',
           'extract-pages',
           'reorder-pages',
-          'sendforsignature'
+          'sendforsignature',
+          'pdf-to-word',
+          'pdf-to-excel',
+          'pdf-to-ppt',
+          'pdf-to-image',
+          'createpdf',
+          'word-to-pdf',
+          'excel-to-pdf',
+          'ppt-to-pdf',
+          'jpg-to-pdf',
+          'png-to-pdf',
         ]),
       },
       'workflow-ai': {
@@ -296,6 +308,7 @@ class WfInitiator {
       'workflow-upload': {
         productName: product,
         sfList: new Set([feature]),
+        psw,
       },
     };
     if (!wfName || !workflowCfg[wfName]) return [];
@@ -307,6 +320,7 @@ class WfInitiator {
       featureCfg: [],
       errors: {},
       supportedTexts: workflowCfg[wfName]?.stList ?? null,
+      pswFeature: !!psw,
     };
   }
 

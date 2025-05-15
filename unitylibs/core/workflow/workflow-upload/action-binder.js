@@ -30,16 +30,21 @@ class ServiceHandler {
     };
     try {
       const response = await fetch(api, postOpts);
-      if (failOnError && response.status !== 200) throw new Error('Operation failed');
+      if (failOnError && response.status !== 200) {
+        const error = new Error('Operation failed');
+        error.status = response.status;
+        throw error;
+      }
       if (!failOnError) return response;
       return await response.json();
     } catch (err) {
-      this.showErrorToast(errorCallbackOptions);
-      throw new Error('Operation failed');
+      this.showErrorToast(errorCallbackOptions, err, this.lanaOptions);
+      throw err;
     }
   }
 
-  showErrorToast(errorCallbackOptions) {
+  showErrorToast(errorCallbackOptions, error, lanaOptions, errorType = 'server') {
+    sendAnalyticsEvent(new CustomEvent(`Upload ${errorType} error|UnityWidget`));
     if (!errorCallbackOptions.errorToastEl) return;
     const msg = this.unityEl.querySelector(errorCallbackOptions.errorType)?.nextSibling.textContent;
     this.canvasArea.forEach((element) => {
@@ -53,6 +58,7 @@ class ServiceHandler {
       alertText.innerText = msg;
       errorToast.classList.add('show');
     });
+    window.lana?.log(`Message: ${msg}, Error: ${error || ''}`, lanaOptions);
   }
 }
 
@@ -72,6 +78,10 @@ export default class ActionBinder {
     this.limits = workflowCfg.targetCfg.limits;
     this.promiseStack = [];
     this.initActionListeners = this.initActionListeners.bind(this);
+    this.lanaOptions = { sampleRate: 100, tags: 'Unity-PS-Upload' };
+    this.desktop = false;
+    this.sendAnalyticsToSplunk = null;
+    this.assetId = null;
   }
 
   getPsApiConfig() {
@@ -95,14 +105,16 @@ export default class ActionBinder {
   async cancelUploadOperation() {
     try {
       sendAnalyticsEvent(new CustomEvent('Cancel|UnityWidget'));
+      this.logAnalyticsinSplunk('Cancel|UnityWidget', { assetId: this.assetId });
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
-      this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+      this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg, this.desktop);
       await this.transitionScreen.showSplashScreen();
       const e = new Error('Operation termination requested.');
       const cancelPromise = Promise.reject(e);
       this.promiseStack.unshift(cancelPromise);
     } catch (error) {
       await this.transitionScreen?.showSplashScreen();
+      window.lana?.log(`Message: Error cancelling upload operation, Error: ${error}`, this.lanaOptions);
       throw error;
     }
   }
@@ -127,9 +139,12 @@ export default class ActionBinder {
     };
     const response = await fetch(storageUrl, uploadOptions);
     if (response.status !== 200) {
-      throw new Error('Failed to upload image to Unity');
+      window.lana?.log(`Message: Failed to upload image to Unity, Error: ${response.status}`, this.lanaOptions);
+      const error = new Error('Failed to upload image to Unity');
+      error.status = response.status;
+      throw error;
     }
-    return id;
+    this.logAnalyticsinSplunk('Upload Completed|UnityWidget', { assetId: this.assetId });
   }
 
   async scanImgForSafety(assetId) {
@@ -154,14 +169,23 @@ export default class ActionBinder {
         { errorToastEl: this.errorToastEl, errorType: '.icon-error-request' },
       );
       const { id, href } = resJson;
-      const assetId = await this.uploadImgToUnity(href, id, file, file.type);
-      this.scanImgForSafety(assetId);
-      return assetId;
+      this.assetId = id;
+      this.logAnalyticsinSplunk('Asset Created|UnityWidget', { assetId: this.assetId });
+      await this.uploadImgToUnity(href, id, file, file.type);
+      this.scanImgForSafety(this.assetId);
     } catch (e) {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
-      this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+      this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg, this.desktop);
       await this.transitionScreen.showSplashScreen();
-      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-request' });
+      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-request' }, e, this.lanaOptions);
+      this.logAnalyticsinSplunk('Upload server error|UnityWidget', {
+        errorData: {
+          code: 'error-request',
+          subCode: `uploadAsset ${e.status}`,
+          desc: e.message || undefined,
+        },
+        assetId: this.assetId,
+      });
       throw e;
     }
   }
@@ -171,7 +195,7 @@ export default class ActionBinder {
       const [alertImg, closeImg] = await Promise.all([
         fetch(`${getUnityLibs()}/img/icons/alert.svg`).then((res) => res.text()),
         fetch(`${getUnityLibs()}/img/icons/close.svg`).then((res) => res.text()),
-      ]);   
+      ]);
       const { decorateDefaultLinkAnalytics } = await import(`${getLibs()}/martech/attributes.js`);
       this.canvasArea.forEach((element) => {
         const alertText = createTag('div', { class: 'alert-text' }, createTag('p', {}, 'Alert Text'));
@@ -196,12 +220,22 @@ export default class ActionBinder {
       });
       return this.canvasArea[0]?.querySelector('.alert-holder');
     } catch (e) {
-      console.error('Error creating error toast', e);
+      window.lana?.log(`Message: Error creating error toast, Error: ${e}`, this.lanaOptions);
       return null;
     }
   }
 
   async continueInApp(assetId) {
+    const cgen = this.unityEl.querySelector('.icon-cgen')?.nextSibling?.textContent?.trim();
+    const queryParams = {};
+    if (cgen) {
+      cgen.split('&').forEach((param) => {
+        const [key, value] = param.split('=');
+        if (key && value) {
+          queryParams[key] = value;
+        }
+      });
+    }
     const cOpts = {
       assetId,
       targetProduct: this.workflowCfg.productName,
@@ -209,12 +243,14 @@ export default class ActionBinder {
         locale: getLocale(),
         workflow: this.workflowCfg.supportedFeatures.values().next().value,
         referer: window.location.href,
+        desktopDevice: this.desktop,
+        additionalQueryParams: queryParams,
       },
     };
     try {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
       this.LOADER_LIMIT = 100;
-      this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+      this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg, this.desktop);
       this.transitionScreen.updateProgressBar(this.transitionScreen.splashScreenEl, 100);
       const servicePromise = this.serviceHandler.postCallToService(
         this.psApiConfig.connectorApiEndPoint,
@@ -223,14 +259,26 @@ export default class ActionBinder {
       );
       this.promiseStack.push(servicePromise);
       const response = await servicePromise;
-      if (!response?.url) throw new Error('Error connecting to App');
+      if (!response?.url) {
+        const error = new Error('Error connecting to App');
+        error.status = response.status;
+        throw error;
+      }
       const finalResults = await Promise.allSettled(this.promiseStack);
       if (finalResults.some((result) => result.status === 'rejected')) return;
       window.location.href = response.url;
     } catch (e) {
       if (e.message === 'Operation termination requested.') return;
       await this.transitionScreen.showSplashScreen();
-      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-request' });
+      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-request' }, e, this.lanaOptions);
+      this.logAnalyticsinSplunk('Upload server error|UnityWidget', {
+        errorData: {
+          code: 'error-request',
+          subCode: `continueInApp ${e.status}`,
+          desc: e.message || undefined,
+        },
+        assetId: this.assetId,
+      });
       throw e;
     }
   }
@@ -242,7 +290,8 @@ export default class ActionBinder {
         const { naturalWidth: width, naturalHeight: height } = img;
         URL.revokeObjectURL(objectUrl);
         if (width > this.limits.maxWidth || height > this.limits.maxHeight) {
-          this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filedimension' });
+          this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filedimension' }, 'Unable to process the file type!', this.lanaOptions, 'client');
+          this.logAnalyticsinSplunk('Upload client error|UnityWidget', { errorData: { code: 'error-filedimension' } });
           reject(new Error('Unable to process the file type!'));
         } else {
           resolve({ width, height });
@@ -256,29 +305,53 @@ export default class ActionBinder {
     });
   }
 
+  async initAnalytics() {
+    if (this.workflowCfg.targetCfg.sendSplunkAnalytics) {
+      this.sendAnalyticsToSplunk = (await import(`${getUnityLibs()}/scripts/splunk-analytics.js`)).default;
+    }
+  }
+
+  logAnalyticsinSplunk(eventName, data) {
+    if (this.sendAnalyticsToSplunk) {
+      this.sendAnalyticsToSplunk(eventName, {
+        eventName,
+        ...data,
+      }, `${unityConfig.apiEndPoint}/log`);
+    }
+  }
+
   async uploadImage(files) {
     if (!files) return;
+    await this.initAnalytics();
     const file = files[0];
     if (this.limits.maxNumFiles !== files.length) {
-      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filecount' });
+      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filecount' }, '', this.lanaOptions, 'client');
+      this.logAnalyticsinSplunk('Upload client error|UnityWidget', { errorData: { code: 'error-filecount' } });
       return;
     }
     if (!this.limits.allowedFileTypes.includes(file.type)) {
-      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filetype' });
+      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filetype' }, '', this.lanaOptions, 'client');
+      this.logAnalyticsinSplunk('Upload client error|UnityWidget', { errorData: { code: 'error-filetype' } });
       return;
     }
     if (this.limits.maxFileSize < file.size) {
-      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filesize' });
+      this.serviceHandler.showErrorToast({ errorToastEl: this.errorToastEl, errorType: '.icon-error-filesize' }, '', this.lanaOptions, 'client');
+      this.logAnalyticsinSplunk('Upload client error|UnityWidget', { errorData: { code: 'error-filesize' } });
       return;
     }
     const objectUrl = URL.createObjectURL(file);
     await this.checkImageDimensions(objectUrl);
     sendAnalyticsEvent(new CustomEvent('Uploading Started|UnityWidget'));
+    this.logAnalyticsinSplunk('Uploading Started|UnityWidget');
+    if (this.workflowCfg.pswFeature) {
+      const { default: isDesktop } = await import(`${getUnityLibs()}/utils/device-detection.js`);
+      this.desktop = isDesktop();
+    }
     const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
-    this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+    this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg, this.desktop);
     await this.transitionScreen.showSplashScreen(true);
-    const assetId = await this.uploadAsset(file);
-    await this.continueInApp(assetId);
+    await this.uploadAsset(file);
+    await this.continueInApp(this.assetId);
   }
 
   async photoshopActionMaps(value, files) {
@@ -318,7 +391,7 @@ export default class ActionBinder {
           const files = this.extractFiles(e);
           await this.photoshopActionMaps(actMap[key], files);
         });
-        el.addEventListener('click', async (e) => {
+        el.addEventListener('click', () => {
           sendAnalyticsEvent(new CustomEvent('Click Drag and drop|UnityWidget'));
         });
       },
@@ -352,7 +425,7 @@ export default class ActionBinder {
     }
     if (b === this.block) {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
-      this.transitionScreen = new TransitionScreen(this.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
+      this.transitionScreen = new TransitionScreen(this.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg, this.desktop);
       await this.transitionScreen.delayedSplashLoader();
     }
     window.addEventListener('pageshow', (event) => {
