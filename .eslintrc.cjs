@@ -24,8 +24,16 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['test/**/*.js'],
-      rules: { 'no-console': 'off' },
+      files: ['test/**/*.js', 'nala/**/*.js', 'nala/**/*.cjs'],
+      rules: {
+        'no-console': 'off',
+        'import/no-extraneous-dependencies': [
+          'off',
+          { devDependencies: true },
+        ],
+        'import/prefer-default-export': 'off',
+        'max-len': 'off',
+      },
     },
   ],
   plugins: [
