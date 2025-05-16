@@ -3,6 +3,7 @@
 /* eslint-disable no-restricted-syntax */
 
 import { unityConfig, getUnityLibs, getGuestAccessToken } from '../../../scripts/utils.js';
+import { unityConfig, getUnityLibs, getGuestAccessToken } from '../../../scripts/utils.js';
 
 export default class UploadHandler {
   constructor(actionBinder, serviceHandler) {
@@ -257,7 +258,7 @@ export default class UploadHandler {
               const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
               this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
               await this.transitionScreen.showSplashScreen();
-              await this.actionBinder.dispatchErrorToast('upload_validation_error_max_page_count');
+              await this.actionBinder.dispatchErrorToast('verb_upload_error_max_page_count');
             }
             resolve(true);
             return;
@@ -548,7 +549,7 @@ export default class UploadHandler {
       await this.deleteFailedAssets(assetsToDelete);
       if (verifiedAssets.length === 0) {
         await this.transitionScreen.showSplashScreen();
-        await this.actionBinder.dispatchErrorToast('upload_validation_error_max_page_count_multi');
+        await this.actionBinder.dispatchErrorToast('verb_upload_error_max_page_count_multi');
         return;
       }
       if (files.length !== verifiedAssets.length) this.actionBinder.multiFileFailure = 'uploaderror';
@@ -557,7 +558,7 @@ export default class UploadHandler {
       this.actionBinder.dispatchAnalyticsEvent('uploaded', filesData);
     } catch (error) {
       await this.transitionScreen.showSplashScreen();
-      await this.actionBinder.dispatchErrorToast('error_generic', error.code, `Exception in uploading one or more files`, true, true);
+      await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', error.code, `Exception in uploading one or more files`, true, true);
     } 
   }
   
@@ -575,7 +576,7 @@ export default class UploadHandler {
         assetDataArray.push(assetData);
         fileTypeArray.push(file.type);
       } catch (e) {
-        this.handleUploadError(e, 'pre_upload_error_create_asset');
+        await this.handleUploadError(e);
       }
     });
     return { blobDataArray, assetDataArray, fileTypeArray };
@@ -632,8 +633,8 @@ export default class UploadHandler {
         return this.actionBinder.serviceHandler.deleteCallToService(url, accessToken);
       }));
     } catch (error) {
-      await this.actionBinder.dispatchErrorToast('upload_warn_delete_asset', 0, 'Failed to delete one or all assets', true, true, {
-        code: 'upload_warn_delete_asset',
+      await this.actionBinder.dispatchErrorToast('verb_upload_warn_delete_asset', 0, 'Failed to delete one or all assets', true, true, {
+        code: 'verb_upload_warn_delete_asset',
         subCode: error.code
       });
     }

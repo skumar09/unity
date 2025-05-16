@@ -132,6 +132,17 @@ class ServiceHandler {
     };
     return this.fetchFromService(url, options);
   }
+
+  async deleteCallToService(url, accessToken) {
+    const options = {
+      method: 'DELETE',
+      headers: {
+        'Authorization': accessToken,
+        'x-api-key': 'unity', 
+      },
+    };
+    return this.fetchFromService(url, options);
+  }
 }
 
 export default class ActionBinder {
@@ -176,73 +187,42 @@ export default class ActionBinder {
     'chat-pdf': ['hybrid', 'allowed-filetypes-pdf-word-ppt-txt', 'page-limit-600', 'max-numfiles-10', 'max-filesize-100-mb'],
     'chat-pdf-student': ['hybrid', 'allowed-filetypes-pdf-word-ppt-txt', 'page-limit-600', 'max-numfiles-10', 'max-filesize-100-mb']
   };
-
-  static ERROR_MAP = {
-    error_generic: -1,
-    pre_upload_error_loading_verb_limits: -50,
-    pre_upload_error_empty_verb_limits: -51,
-    pre_upload_error_renaming_file: -52,
-    pre_upload_error_fetch_redirect_url: -53,
-    pre_upload_error_fetching_access_token: -54,
-    pre_upload_error_create_asset: -54,
-    validation_error_validate_files: -100,
-    validation_error_unsupported_type: -101,
-    validation_error_empty_file: -102,
-    validation_error_file_too_large: -103,
-    validation_error_only_accept_one_file: -104,
-    validation_error_file_same_type: -105,
-    validation_error_unsupported_type_multi: -200,
-    validation_error_empty_file_multi: -201,
-    validation_error_file_too_large_multi: -202,
-    validation_error_multiple_invalid_files: -203,
-    validation_error_max_num_files: -204,
-    upload_validation_error_max_page_count: -300,
-    upload_validation_error_min_page_count: -301,
-    upload_validation_error_verify_page_count: -302,
-    upload_validation_error_max_page_count_multi: -303,
-    upload_validation_error_duplicate_asset: -304,
-    upload_error_max_quota_exceeded: -400,
-    upload_error_no_storage_provision: -401,
-    upload_error_chunk_upload: -402,
-    upload_error_finalize_asset: -403,
-    upload_error_redirect_to_app: -500,
-    upload_warn_chunk_upload: -600,
-    upload_warn_chunk_upload_exception: -601,
-    pre_upload_warn_renamed_invalid_file_name: -602,
-    warn_delete_asset: -603,
-  };
-
-  static NEW_TO_OLD_ERROR_KEY_MAP = {
-    'error_generic': 'verb_upload_error_generic',
-    'pre_upload_error_loading_verb_limits': 'verb_upload_error_loading_verb_limits',
-    'pre_upload_error_empty_verb_limits': 'verb_upload_error_empty_verb_limits',
-    'pre_upload_error_renaming_file': 'verb_upload_error_renaming_file',
-    'pre_upload_error_fetch_redirect_url': 'verb_upload_error_fetch_redirect_url',
-    'validation_error_validate_files': 'verb_upload_error_validate_files',
-    'validation_error_unsupported_type': 'verb_upload_error_unsupported_type',
-    'validation_error_empty_file': 'verb_upload_error_empty_file',
-    'validation_error_file_too_large': 'verb_upload_error_file_too_large',
-    'validation_error_only_accept_one_file': 'verb_upload_error_only_accept_one_file',
-    'validation_error_file_same_type': 'verb_upload_error_file_same_type',
-    'validation_error_unsupported_type_multi': 'verb_upload_error_unsupported_type_multi',
-    'validation_error_empty_file_multi': 'verb_upload_error_empty_file_multi',
-    'validation_error_file_too_large_multi': 'verb_upload_error_file_too_large_multi',
-    'validation_error_multiple_invalid_files': 'verb_upload_error_multiple_invalid_files',
-    'validation_error_max_num_files': 'verb_upload_error_max_num_files',
-    'upload_validation_error_max_page_count': 'verb_upload_error_max_page_count',
-    'upload_validation_error_min_page_count': 'verb_upload_error_min_page_count',
-    'upload_validation_error_verify_page_count': 'verb_upload_error_verify_page_count',
-    'upload_validation_error_max_page_count_multi': 'verb_upload_error_max_page_count_multi',
-    'upload_validation_error_duplicate_asset': 'verb_upload_error_duplicate_asset',
-    'upload_error_max_quota_exceeded': 'verb_upload_error_max_quota_exceeded',
-    'upload_error_no_storage_provision': 'verb_upload_error_no_storage_provision',
-    'upload_error_chunk_upload': 'verb_upload_error_chunk_upload',
-    'upload_error_finalize_asset': 'verb_upload_error_finalize_asset',
-    'upload_error_redirect_to_app': 'verb_upload_error_redirect_to_app',
-    'upload_warn_chunk_upload': 'verb_upload_warn_chunk_upload',
-    'pre_upload_warn_renamed_invalid_file_name': 'verb_warn_renamed_invalid_file_name',
-    'warn_delete_asset': 'verb_upload_warn_delete_asset',
-  };
+   
+static ERROR_MAP = {
+  'verb_upload_error_generic': -1,
+  'verb_upload_error_loading_verb_limits': -50,
+  'verb_upload_error_empty_verb_limits': -51,
+  'verb_upload_error_duplicate_asset': -52,
+  'verb_upload_error_validate_files': -100,
+  'verb_upload_error_renaming_file' : -101,
+  'verb_upload_error_max_page_count': -150,
+  'verb_upload_error_min_page_count': -151,
+  'verb_upload_error_verify_page_count': -152,
+  'verb_upload_error_max_page_count_multi': -153,
+  'verb_upload_error_unsupported_type': -170,
+  'verb_upload_error_empty_file': -171,
+  'verb_upload_error_file_too_large': -172,
+  'verb_upload_error_only_accept_one_file': -173,
+  'verb_upload_error_file_same_type': -174,
+  'verb_upload_error_unsupported_type_multi': -200,
+  'verb_upload_error_empty_file_multi': -201,
+  'verb_upload_error_file_too_large_multi': -202,
+  'verb_upload_error_multiple_invalid_files': -203,
+  'verb_upload_error_max_num_files': -204,
+  'verb_upload_error_max_quota_exceeded': -250,
+  'verb_upload_error_no_storage_provision': -251,
+  'verb_upload_error_duplicate_operation': -252,
+  'verb_upload_exception_finalize': -300,
+  'verb_upload_exception_validate_page_count': -301,
+  'verb_upload_error_fetch_redirect_url': -350,
+  'verb_upload_error_finalize': -351,
+  'verb_upload_error_chunk_upload': -352,
+  'verb_cookie_not_set': -353,
+  'verb_upload_warn_chunk_upload': -600,
+  'verb_upload_warn_delete_asset': -601,
+  'verb_upload_error_redirect_to_app': -900,
+  'verb_upload_error_finalize_asset': -901
+};
 
   constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
     this.unityEl = unityEl;
@@ -431,9 +411,9 @@ export default class ActionBinder {
     const validFiles = [];
 
     if (this.limits.maxNumFiles && files.length > this.limits.maxNumFiles) {
-      await this.dispatchErrorToast('validation_error_max_num_files', null, `Maximum ${this.limits.maxNumFiles} files allowed`, false, true, { 
-        code: 'validation_error_validate_files', 
-        subCode: 'validation_error_max_num_files'
+      await this.dispatchErrorToast('verb_upload_error_max_num_files', null, `Maximum ${this.limits.maxNumFiles} files allowed`, false, true, { 
+        code: 'verb_upload_error_validate_files', 
+        subCode: 'verb_upload_error_max_num_files'
       });
       return { isValid: false, validFiles };
     }
@@ -544,7 +524,7 @@ export default class ActionBinder {
     else await this.uploadHandler.multiFileUserUpload(files, this.filesData);
   }
 
-  async handleFileUpload(files) {
+  async handleFileUpload(files, eventName, totalFileSize) {
     const verbsWithoutFallback = this.workflowCfg.targetCfg.verbsWithoutMfuToSfuFallback;
     const sanitizedFiles = await Promise.all(files.map(async (file) => {
       const sanitizedFileName = await this.sanitizeFileName(file.name);
