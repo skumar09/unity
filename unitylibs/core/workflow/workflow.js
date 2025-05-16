@@ -298,6 +298,12 @@ class WfInitiator {
           'ppt-to-pdf',
           'jpg-to-pdf',
           'png-to-pdf',
+          'combine-pdf',
+          'rotate-pages',
+          'protect-pdf',
+          'ocr-pdf',
+          'chat-pdf',
+          'chat-pdf-student'
         ]),
       },
       'workflow-ai': {

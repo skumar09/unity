@@ -121,6 +121,17 @@ class ServiceHandler {
     const url = `${api}?${queryString}`;
     return this.fetchFromService(url, getOpts);
   }
+
+  async deleteCallToService(url, accessToken) {
+    const options = {
+      method: 'DELETE',
+      headers: {
+        'Authorization': accessToken,
+        'x-api-key': 'unity', 
+      },
+    };
+    return this.fetchFromService(url, options);
+  }
 }
 
 export default class ActionBinder {
@@ -157,7 +168,13 @@ export default class ActionBinder {
     'excel-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'ppt-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'jpg-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
-    'png-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb']
+    'png-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
+    'combine-pdf': ['hybrid', 'page-limit-500', 'allowed-filetypes-all', 'max-filesize-100-mb', 'max-numfiles-100'],
+    'rotate-pages': ['hybrid', 'page-limit-500', 'allowed-filetypes-pdf-only', 'max-filesize-100-mb', 'max-numfiles-100'],
+    'protect-pdf': ['single'],
+    'ocr-pdf': ['hybrid', 'allowed-filetypes-all', 'page-limit-100', 'max-filesize-100-mb'],
+    'chat-pdf': ['hybrid', 'allowed-filetypes-pdf-word-ppt-txt', 'page-limit-600', 'max-numfiles-10', 'max-filesize-100-mb'],
+    'chat-pdf-student': ['hybrid', 'allowed-filetypes-pdf-word-ppt-txt', 'page-limit-600', 'max-numfiles-10', 'max-filesize-100-mb']
   };
 
   static ERROR_MAP = {
@@ -299,7 +316,7 @@ export default class ActionBinder {
     unityConfig.acrobatEndpoint = {
       createAsset: `${unityConfig.apiEndPoint}/asset`,
       finalizeAsset: `${unityConfig.apiEndPoint}/asset/finalize`,
-      getMetadata: `${unityConfig.apiEndPoint}/asset/metadata`,
+      getMetadata: `${unityConfig.apiEndPoint}/asset/metadata`
     };
     return unityConfig;
   }
@@ -412,6 +429,15 @@ export default class ActionBinder {
     let allFilesFailed = true;
     const errorTypes = new Set();
     const validFiles = [];
+
+    if (this.limits.maxNumFiles && files.length > this.limits.maxNumFiles) {
+      await this.dispatchErrorToast('validation_error_max_num_files', null, `Maximum ${this.limits.maxNumFiles} files allowed`, false, true, { 
+        code: 'validation_error_validate_files', 
+        subCode: 'validation_error_max_num_files'
+      });
+      return { isValid: false, validFiles };
+    }
+
     for (const file of files) {
       let fail = false;
       if (!this.limits.allowedFileTypes.includes(file.type)) {
@@ -514,7 +540,7 @@ export default class ActionBinder {
     this.LOADER_LIMIT = 65;
     this.filesData = {...this.filesData,uploadType: 'mfu'};
     this.dispatchAnalyticsEvent('multifile', this.filesData);
-    if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(this.filesData);
+    if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(files, this.filesData);
     else await this.uploadHandler.multiFileUserUpload(files, this.filesData);
   }
 

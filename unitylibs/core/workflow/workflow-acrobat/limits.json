@@ -54,6 +54,11 @@
       "maxNumPages": 25
     }
   },
+  "page-limit-600": {
+    "pageLimit": {
+      "maxNumPages": 600
+    }
+  },
   "max-filesize-5-mb": {
     "maxFileSize": 5242880
   },
@@ -68,6 +73,12 @@
   },
   "max-filesize-2-gb": {
     "maxFileSize": 2147483648
+  },
+  "max-numfiles-10": {
+    "maxNumFiles": 10
+  },
+  "max-numfiles-100": {
+    "maxNumFiles": 100
   },
   "allowed-filetypes-pdf-only": {
     "allowedFileTypes": ["application/pdf"]
@@ -96,6 +107,17 @@
       "image/tiff",
       "message/rfc822",
       "text/plain"
+    ]
+  },
+  "allowed-filetypes-pdf-word-ppt-txt": {
+    "allowedFileTypes": [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "text/plain",
+      "application/rtf"
     ]
   }
 }
