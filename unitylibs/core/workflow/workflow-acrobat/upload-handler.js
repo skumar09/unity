@@ -446,7 +446,7 @@ export default class UploadHandler {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
       this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
       await this.transitionScreen.showSplashScreen();
-      await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 504, `One or more chunks failed to upload for the single file: ${assetData.id}, ${file.size} bytes, ${file.type}`, false, true, { code: 'verb_upload_error_chunk_upload', desc: `${failedFiles[0].chunkNumber}` });
+      await this.actionBinder.dispatchErrorToast('verb_upload_error_generic', 504, `One or more chunks failed to upload for the single file: ${assetData.id}, ${file.size} bytes, ${file.type}`, false, true, { code: 'verb_upload_error_chunk_upload', desc: `${Array.from(failedFiles)[0]?.chunkNumber} || 'unknown'` });
       return;
     }
     this.actionBinder.operations.push(assetData.id);
