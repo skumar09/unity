@@ -1,5 +1,4 @@
 /* eslint-disable import/no-extraneous-dependencies */
-
 const { devices } = require('@playwright/test');
 
 const USER_AGENT_DESKTOP = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.86 Safari/537.36 NALA-Acom';
@@ -49,7 +48,7 @@ const config = {
     baseURL:
       process.env.PR_BRANCH_LIVE_URL
       || process.env.LOCAL_TEST_LIVE_URL
-      || 'https://stage--dc--adobecom.aem.page',
+      || 'https://stage--dc--adobecom.aem.live',
   },
 
   /* Configure projects for major browsers */

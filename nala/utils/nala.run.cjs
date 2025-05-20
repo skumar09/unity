@@ -95,7 +95,7 @@ function parseArgs(args) {
   return parsedParams;
 }
 
-function getLocalTestLiveUrl(env, unitylibs, repo = 'milo', owner = 'adobecom') {
+function getLocalTestLiveUrl(env, unitylibs, repo = 'dc', owner = 'adobecom') {
   if (unitylibs) {
     process.env.UNITY_LIBS = `?unitylibs=${unitylibs}`;
     if (env === 'local') {

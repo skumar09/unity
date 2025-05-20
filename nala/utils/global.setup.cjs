@@ -1,13 +1,14 @@
 const { execSync } = require('child_process');
 const { isBranchURLValid } = require('../libs/baseurl.cjs');
 
-const MAIN_BRANCH_LIVE_URL = 'https://main--milo--adobecom.aem.live';
-const STAGE_BRANCH_URL = 'https://stage--dc--adobecom.aem.page';
+const MAIN_BRANCH_LIVE_URL = 'https://main--dc--adobecom.aem.live';
+const STAGE_BRANCH_URL = 'https://stage--dc--adobecom.aem.live';
 
 async function getGitHubPRBranchLiveUrl() {
   // get the pr number and branch name
   const prReference = process.env.GITHUB_REF;
   const prHeadReference = process.env.GITHUB_HEAD_REF;
+  const prBaseBranch = process.env.GITHUB_BASE_REF || 'stage';
 
   const prNumber = prReference.startsWith('refs/pull/')
     ? prReference.split('/')[2]
@@ -16,6 +17,8 @@ async function getGitHubPRBranchLiveUrl() {
   const prBranch = prHeadReference
     ? prHeadReference.replace(/\//g, '-')
     : prReference.split('/')[2].replace(/\//g, '-');
+
+  process.env.UNITY_LIBS = `?unitylibs=${prBranch}`;
 
   // get the org and repo
   const repository = process.env.GITHUB_REPOSITORY;
@@ -27,7 +30,7 @@ async function getGitHubPRBranchLiveUrl() {
   const prFromOrg = process.env.prOrg || toRepoOrg;
   const prFromRepoName = process.env.prRepo || toRepoName;
 
-  const prBranchLiveUrl = `https://${prBranch}--${prFromRepoName}--${prFromOrg}.aem.page`;
+  const prBranchLiveUrl = `https://${prBaseBranch}--dc--${prFromOrg}.aem.live`;
 
   try {
     if (await isBranchURLValid(prBranchLiveUrl)) {

@@ -1,40 +1,40 @@
 import path from 'path';
 import { expect, test } from '@playwright/test';
-import { features } from './compress-pdf.spec.cjs';
-import CompressPdf from './compress-pdf.page.cjs';
+import { features } from './pdf-editor.spec.cjs';
+import PdfEditor from './pdf-editor.page.cjs';
 
 const pdfFilePath = path.resolve(__dirname, '../../assets/1-PDF-compressed.pdf');
 
-let compressPdf;
+let pdfEditor;
 
 const unityLibs = process.env.UNITY_LIBS || '';
 console.info(`unityLibs: ${unityLibs}`);
 
 test.describe('Unity Compress PDF test suite', () => {
   test.beforeEach(async ({ page }) => {
-    compressPdf = new CompressPdf(page);
+    pdfEditor = new PdfEditor(page);
   });
 
-  // Test 0 : Compress PDF
+  // Test 0 : PDF Editor or Add-Comment
   test(`${features[0].name},${features[0].tags}`, async ({ page, baseURL }) => {
     console.info(`[Test Page]: ${baseURL}${features[0].path}${unityLibs}`);
     const { data } = features[0];
 
-    await test.step('step-1: Go to Compress PDF test page', async () => {
+    await test.step('step-1: Go to PDF Editor test page', async () => {
       await page.goto(`${baseURL}${features[0].path}${unityLibs}`);
       await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(`${baseURL}${features[0].path}${unityLibs}`);
     });
 
-    await test.step('step-2: Verify Compress PDF content/specs', async () => {
-      await expect(await compressPdf.compressPdf).toBeVisible();
-      await expect(await compressPdf.dropZone).toBeVisible();
-      await expect(await compressPdf.verbImage).toBeVisible();
-      await expect(await compressPdf.acrobatIcon).toBeVisible();
-      const actualText = await compressPdf.verbHeader.textContent();
+    await test.step('step-2: Verify PDF Editor or Add Comment content/specs', async () => {
+      await expect(await pdfEditor.PdfEditor).toBeVisible();
+      await expect(await pdfEditor.dropZone).toBeVisible();
+      await expect(await pdfEditor.verbImage).toBeVisible();
+      await expect(await pdfEditor.acrobatIcon).toBeVisible();
+      const actualText = await pdfEditor.verbHeader.textContent();
       expect(actualText.trim()).toBe(data.verbHeading);
-      await expect(await compressPdf.verbTitle).toContainText(data.verbTitle);
-      await expect(await compressPdf.verbCopy).toContainText(data.verbCopy);
+      await expect(await pdfEditor.verbTitle).toContainText(data.verbTitle);
+      await expect(await pdfEditor.verbCopy).toContainText(data.verbCopy);
     });
 
     await test.step('step-3: Upload a sample PDF file', async () => {
@@ -49,7 +49,7 @@ test.describe('Unity Compress PDF test suite', () => {
       console.log(`[Post-upload URL]: ${currentUrl}`);
       const urlObj = new URL(currentUrl);
       expect(urlObj.searchParams.get('x_api_client_id')).toBe('unity');
-      expect(urlObj.searchParams.get('x_api_client_location')).toBe('compress-pdf');
+      expect(urlObj.searchParams.get('x_api_client_location')).toBe('add-comment');
       expect(urlObj.searchParams.get('user')).toBe('frictionless_new_user');
       expect(urlObj.searchParams.get('attempts')).toBe('1st');
       console.log({

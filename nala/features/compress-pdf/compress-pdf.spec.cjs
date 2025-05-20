@@ -6,7 +6,6 @@ module.exports = {
       name: '@compress-pdf',
       path: '/drafts/nala/acrobat/online/test/compress-pdf',
       data: {
-        headers: 3,
         verbTitle: 'Adobe Acrobat',
         verbHeading: 'Compress PDF',
         verbCopy: 'Drag and drop a PDF to reduce file size with our PDF compressor.',
