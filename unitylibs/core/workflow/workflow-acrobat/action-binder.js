@@ -10,6 +10,7 @@ import {
   priorityLoad,
   loadArea,
   loadImg,
+  isGuestUser,
   getHeaders,
 } from '../../../scripts/utils.js';
 
@@ -31,16 +32,17 @@ class ServiceHandler {
     error.status = 0;
     throw error;
   }
+
   async fetchFromService(url, options, canRetry = true) {
     try {
       if (!options?.signal?.aborted)  this.handleAbortedRequest(url, options);
       const response = await fetch(url, options);
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
-      if(canRetry && ((response.status >= 500 && response.status < 600) || response.status === 429)) {
+      if (canRetry && ((response.status >= 500 && response.status < 600) || response.status === 429)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         return this.fetchFromService(url, options, false);
-     }
+      }
       if (response.status !== 200) {
         let errorMessage = `Error fetching from service. URL: ${url}`;
         if (contentLength !== '0') {
@@ -145,12 +147,12 @@ export default class ActionBinder {
     'insert-pdf': ['single', 'page-limit-500'],
     'extract-pages': ['single', 'page-limit-500'],
     'reorder-pages': ['single', 'page-limit-500'],
-    'sendforsignature': ['single', 'max-filesize-5-mb', 'page-limit-25'],
+    sendforsignature: ['single', 'max-filesize-5-mb', 'page-limit-25'],
     'pdf-to-word': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-250-mb'],
     'pdf-to-excel': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-100-mb'],
     'pdf-to-ppt': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-250-mb'],
     'pdf-to-image': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-100-mb'],
-    'createpdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
+    createpdf: ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'word-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'excel-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'ppt-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
@@ -158,37 +160,38 @@ export default class ActionBinder {
     'png-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb']
   };
 
-static ERROR_MAP = {
-  'error_generic': -1,
-  'pre_upload_error_loading_verb_limits': -50,
-  'pre_upload_error_empty_verb_limits': -51,
-  'pre_upload_error_renaming_file' : -52,
-  'pre_upload_error_fetch_redirect_url': -53,
-  'validation_error_validate_files': -100,
-  'validation_error_unsupported_type': -101,
-  'validation_error_empty_file': -102,
-  'validation_error_file_too_large': -103,
-  'validation_error_only_accept_one_file': -104,
-  'validation_error_file_same_type': -105,
-  'validation_error_unsupported_type_multi': -200,
-  'validation_error_empty_file_multi': -201,
-  'validation_error_file_too_large_multi': -202,
-  'validation_error_multiple_invalid_files': -203,
-  'validation_error_max_num_files': -204,
-  'upload_validation_error_max_page_count': -300,
-  'upload_validation_error_min_page_count': -301,
-  'upload_validation_error_verify_page_count': -302,
-  'upload_validation_error_max_page_count_multi': -303,
-  'upload_validation_error_duplicate_asset': -304,
-  'upload_error_max_quota_exceeded': -400,
-  'upload_error_no_storage_provision': -401,
-  'upload_error_chunk_upload': -402,
-  'upload_error_finalize_asset': -403,
-  'upload_error_redirect_to_app': -500,
-  'upload_warn_chunk_upload': -600,
-  'pre_upload_warn_renamed_invalid_file_name' : -601,
-  'warn_delete_asset': -602,
-};
+  static ERROR_MAP = {
+    error_generic: -1,
+    pre_upload_error_loading_verb_limits: -50,
+    pre_upload_error_empty_verb_limits: -51,
+    pre_upload_error_renaming_file: -52,
+    pre_upload_error_fetch_redirect_url: -53,
+    pre_upload_error_fetching_access_token: -54,
+    validation_error_validate_files: -100,
+    validation_error_unsupported_type: -101,
+    validation_error_empty_file: -102,
+    validation_error_file_too_large: -103,
+    validation_error_only_accept_one_file: -104,
+    validation_error_file_same_type: -105,
+    validation_error_unsupported_type_multi: -200,
+    validation_error_empty_file_multi: -201,
+    validation_error_file_too_large_multi: -202,
+    validation_error_multiple_invalid_files: -203,
+    validation_error_max_num_files: -204,
+    upload_validation_error_max_page_count: -300,
+    upload_validation_error_min_page_count: -301,
+    upload_validation_error_verify_page_count: -302,
+    upload_validation_error_max_page_count_multi: -303,
+    upload_validation_error_duplicate_asset: -304,
+    upload_error_max_quota_exceeded: -400,
+    upload_error_no_storage_provision: -401,
+    upload_error_chunk_upload: -402,
+    upload_error_finalize_asset: -403,
+    upload_error_redirect_to_app: -500,
+    upload_warn_chunk_upload: -600,
+    pre_upload_warn_renamed_invalid_file_name: -601,
+    warn_delete_asset: -602,
+  };
 
   constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
     this.unityEl = unityEl;
@@ -205,25 +208,27 @@ static ERROR_MAP = {
     this.splashScreenEl = null;
     this.transitionScreen = null;
     this.promiseStack = [];
-    this.signedOut = this.isSignedOut();
+    this.signedOut = undefined;
     this.redirectUrl = '';
     this.filesData = {};
     this.errorData = {};
     this.redirectWithoutUpload = false;
     this.LOADER_LIMIT = 95;
     this.MULTI_FILE = false;
-    this.applySignedInSettings();
     this.initActionListeners = this.initActionListeners.bind(this);
     this.abortController = new AbortController();
     this.uploadTimestamp = null;
+    this.initialize();
   }
 
-  isSignedOut() {
-    const serverTiming = window.performance.getEntriesByType('navigation')[0].serverTiming?.reduce(
-      (acc, { name, description }) => ({ ...acc, [name]: description }),
-      {},
-    );
-    return !Object.keys(serverTiming || {}).length || serverTiming?.sis === '0';
+  async initialize() {
+    await this.isSignedOut();
+    await this.applySignedInSettings();
+  }
+
+  async isSignedOut() {
+    const isGuest = await isGuestUser();
+    this.signedOut = isGuest ?? undefined;
   }
 
   setIsUploading(isUploading) {
@@ -239,6 +244,7 @@ static ERROR_MAP = {
   }
 
   async applySignedInSettings() {
+    if (this.signedOut === undefined) return;
     if (this.block.classList.contains('signed-in')) {
       if (!this.signedOut) {
         this.acrobatSignedInSettings();
@@ -584,7 +590,15 @@ static ERROR_MAP = {
 
   async acrobatActionMaps(value, files, totalFileSize, eventName) {
     await this.handlePreloads();
-    window.addEventListener('DCUnity:RedirectReady', async (e) => {
+    if (this.signedOut === undefined) {
+      await this.dispatchErrorToast('pre_upload_error_fetching_access_token', 401, 'IMS access token could not be fetched', false, true, {
+        code: 'pre_upload_error_fetching_access_token',
+        subCode: 401,
+        desc: 'IMS access token could not be fetched',
+      });
+      return;
+    }
+    window.addEventListener('DCUnity:RedirectReady', async () => {
       await this.continueInApp();
     });
     const uploadType = ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]][0];
@@ -600,7 +614,7 @@ static ERROR_MAP = {
       default:
         break;
     }
-    if(this.redirectWithoutUpload) await this.continueInApp();
+    if (this.redirectWithoutUpload) await this.continueInApp();
   }
 
   extractFiles(e) {
