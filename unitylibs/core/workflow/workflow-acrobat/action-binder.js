@@ -167,6 +167,7 @@ export default class ActionBinder {
     pre_upload_error_renaming_file: -52,
     pre_upload_error_fetch_redirect_url: -53,
     pre_upload_error_fetching_access_token: -54,
+    pre_upload_error_create_asset: -54,
     validation_error_validate_files: -100,
     validation_error_unsupported_type: -101,
     validation_error_empty_file: -102,
@@ -189,8 +190,9 @@ export default class ActionBinder {
     upload_error_finalize_asset: -403,
     upload_error_redirect_to_app: -500,
     upload_warn_chunk_upload: -600,
-    pre_upload_warn_renamed_invalid_file_name: -601,
-    warn_delete_asset: -602,
+    upload_warn_chunk_upload_exception: -601,
+    pre_upload_warn_renamed_invalid_file_name: -602,
+    warn_delete_asset: -603,
   };
 
   constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
@@ -436,7 +438,7 @@ export default class ActionBinder {
         const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
         this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
         await this.transitionScreen.showSplashScreen();
-        await this.dispatchErrorToast('error_generic', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError, {
+        await this.dispatchErrorToast('pre_upload_error_fetch_redirect_url', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError, {
           code: 'pre_upload_error_fetch_redirect_url',
           subCode: e.status,
           desc: e.message,

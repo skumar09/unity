@@ -200,7 +200,7 @@ export default class UploadHandler {
       );
       if (!finalizeJson || Object.keys(finalizeJson).length !== 0) {
         if (this.actionBinder.MULTI_FILE) {
-          await this.actionBinder.dispatchErrorToast('error_generic', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`, false, true, {
+          await this.actionBinder.dispatchErrorToast('upload_error_finalize_asset', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`, false, true, {
             code: 'upload_error_finalize_asset',
             desc: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson || {})}`,
           });
@@ -209,7 +209,7 @@ export default class UploadHandler {
         const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
         this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
         await this.transitionScreen.showSplashScreen();
-        await this.actionBinder.dispatchErrorToast('error_generic', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`, false, true, {
+        await this.actionBinder.dispatchErrorToast('upload_error_finalize_asset', 500, `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`, false, true, {
           code: 'upload_error_finalize_asset',
           desc: `Unexpected response from finalize call: ${assetData.id}, ${JSON.stringify(finalizeJson)}`,
         });
@@ -219,7 +219,7 @@ export default class UploadHandler {
     } catch (e) {
       if (e.name === 'AbortError') return false;
       if (this.actionBinder.MULTI_FILE) {
-        await this.actionBinder.dispatchErrorToast('error_generic', e.status || 500, `Exception thrown when verifying content: ${e.message}, ${assetData.id}`, false, e.showError, {
+        await this.actionBinder.dispatchErrorToast('upload_error_finalize_asset', e.status || 500, `Exception thrown when verifying content: ${e.message}, ${assetData.id}`, false, e.showError, {
           code: 'upload_error_finalize_asset',
           subCode: e.status,
           desc: `Exception thrown when verifying content: ${e.message}, ${assetData.id}`,
@@ -229,7 +229,7 @@ export default class UploadHandler {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
       this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
       await this.transitionScreen.showSplashScreen();
-      await this.actionBinder.dispatchErrorToast('error_generic', e.status || 500, `Exception thrown when verifying content: ${e.message}, ${assetData.id}`, false, e.showError, {
+      await this.actionBinder.dispatchErrorToast('upload_error_finalize_asset', e.status || 500, `Exception thrown when verifying content: ${e.message}, ${assetData.id}`, false, e.showError, {
         code: 'upload_error_finalize_asset',
         subCode: e.status,
         desc: `Exception thrown when verifying content: ${e.message}, ${assetData.id}`,
@@ -298,7 +298,7 @@ export default class UploadHandler {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
       this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
       await this.transitionScreen.showSplashScreen();
-      await this.actionBinder.dispatchErrorToast('error_generic', e.status || 500, `Exception thrown when verifying PDF page count; ${e.message}`, false, e.showError, {
+      await this.actionBinder.dispatchErrorToast('upload_validation_error_verify_page_count', e.status || 500, `Exception thrown when verifying PDF page count; ${e.message}`, false, e.showError, {
         code: 'upload_validation_error_verify_page_count',
         subCode: e.status,
         message: `Exception thrown when verifying PDF page count; ${e.message}`,
@@ -356,42 +356,42 @@ export default class UploadHandler {
     };
   }
 
-  async handleUploadError(e) {
+  async handleUploadError(e, errorCode='error_generic') {
     switch (e.status) {
       case 409:
         await this.actionBinder.dispatchErrorToast('upload_validation_error_duplicate_asset', e.status, e.message, false, e.showError, {
-          code: 'upload_validation_error_duplicate_asset',
-          subCode: e.status,
+          code: errorCode,
+          subCode: upload_validation_error_duplicate_asset,
           desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       case 401:
         if (e.message === 'notentitled') await this.actionBinder.dispatchErrorToast('upload_error_no_storage_provision', e.status, e.message, false, e.showError, {
-          code: 'upload_error_no_storage_provision',
-          subCode: e.status,
+          code: errorCode,
+          subCode: upload_error_no_storage_provision,
           desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         else await this.actionBinder.dispatchErrorToast('error_generic', e.status, e.message, false, e.showError, {
-          code: 'error_generic',
+          code: errorCode,
           subCode: e.status,
           desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       case 403:
         if (e.message === 'quotaexceeded') await this.actionBinder.dispatchErrorToast('upload_error_max_quota_exceeded', e.status, e.message, false, e.showError, {
-          code: 'upload_error_max_quota_exceeded',
-          subCode: e.status,
+          code: errorCode,
+          subCode: 'upload_error_max_quota_exceeded',
           desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         else await this.actionBinder.dispatchErrorToast('upload_error_no_storage_provision', e.status, e.message, false, e.showError, {
-          code: 'upload_error_no_storage_provision',
-          subCode: e.status,
+          code: errorCode,
+          subCode: 'upload_error_no_storage_provision',
           desc: `Exception raised when uploading file(s): ${e.message}`,
         });
         break;
       default:
         await this.actionBinder.dispatchErrorToast('error_generic', e.status || 500, `Exception raised when uploading file(s): ${e.message}`, false, e.showError, {
-          code: 'error_generic',
+          code: errorCode,
           subCode: e.status,
           desc: `Exception raised when uploading file(s): ${e.message}`,
         });
@@ -407,10 +407,16 @@ export default class UploadHandler {
     const { maxConcurrentChunks } = this.getConcurrentLimits();
     const abortSignal = this.actionBinder.getAbortSignal();
     let cOpts = {};
-    const [blobData, assetData] = await Promise.all([
-      this.getBlobData(file),
-      this.createAsset(file),
-    ]);
+    let blobData, assetData;
+    try {
+      [blobData, assetData] = await Promise.all([
+        this.getBlobData(file),
+        this.createAsset(file),
+      ]);
+    } catch (error) {
+      this.handleUploadError(error, 'pre_upload_error_create_asset');
+      return;
+    }
     fileData.assetId = assetData.id;
     this.actionBinder.setAssetId(assetData.id);
     cOpts = {
@@ -434,19 +440,32 @@ export default class UploadHandler {
     if (!redirectSuccess) return;
     this.actionBinder.dispatchAnalyticsEvent('uploading', fileData);
     this.actionBinder.setIsUploading(true);
-    const { failedFiles, attemptMap } = await this.chunkPdf(
-      [assetData],
-      [blobData],
-      [file.type],
-      maxConcurrentChunks,
-      abortSignal
-    );
+    let failedFiles, attemptMap;
+    try {
+      ({ failedFiles, attemptMap } = await this.chunkPdf(
+        [assetData],
+        [blobData],
+        [file.type],
+        maxConcurrentChunks,
+        abortSignal
+      ));
+    } catch (error) {
+      await this.actionBinder.dispatchErrorToast('upload_error_chunk_upload', error.status || 500, `Error during chunk upload: ${error.message}`, false, true, {
+        code: 'upload_error_chunk_upload',
+        subCode: error.status,
+        desc: 'Error during chunk upload: ' + error.message,
+      });
+      return;
+    }
     if (abortSignal.aborted) return;
     if (failedFiles?.size === 1) {
       const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
       this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
       await this.transitionScreen.showSplashScreen();
-      await this.actionBinder.dispatchErrorToast('error_generic', 504, `One or more chunks failed to upload for the single file: ${assetData.id}, ${file.size} bytes, ${file.type}`, false, true, { code: 'upload_error_chunk_upload', desc: `${Array.from(failedFiles)[0]?.chunkNumber} || 'unknown'` });
+      await this.actionBinder.dispatchErrorToast('upload_error_chunk_upload', 504, `One or more chunks failed to upload for the single file: ${assetData.id}, ${file.size} bytes, ${file.type}`, false, true, {
+        code: 'upload_error_chunk_upload',
+        desc: `${Array.from(failedFiles)[0]?.chunkNumber || 'unknown'}`,
+      });
       return;
     }
     this.actionBinder.operations.push(assetData.id);
@@ -513,15 +532,18 @@ export default class UploadHandler {
         assetDataArray.push(assetData);
         fileTypeArray.push(file.type);
       } catch (e) {
-        await this.handleUploadError(e);
+        this.handleUploadError(e, 'pre_upload_error_create_asset');
+        return;
       }
     });
     if (assetDataArray.length === 0) {
-      await this.dispatchGenericError(`No assets created for the files: ${JSON.stringify(filesData)}`);
+      await this.actionBinder.dispatchErrorToast('pre_upload_error_create_asset', error.status || 500, `Error during asset creation or blob retrieval: ${error.message}`, false, true, {
+        code: 'pre_upload_error_create_asset',
+        desc: 'No assets created for the files, error is: ' + error.message,
+      });
       return;
     }
     this.actionBinder.LOADER_LIMIT = 75;
-
     const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
     this.transitionScreen = new TransitionScreen(this.actionBinder.transitionScreen.splashScreenEl, this.actionBinder.initActionListeners, this.actionBinder.LOADER_LIMIT, this.actionBinder.workflowCfg);
     this.transitionScreen.updateProgressBar(this.actionBinder.transitionScreen.splashScreenEl, 75);
@@ -540,14 +562,23 @@ export default class UploadHandler {
     if (!redirectSuccess) return;
     this.actionBinder.dispatchAnalyticsEvent('uploading', filesData);
     this.actionBinder.setIsUploading(true);
-    const {failedFiles, attemptMap} = await this.chunkPdf(
-      assetDataArray,
-      blobDataArray,
-      fileTypeArray,
-      maxConcurrentChunks,
-    );
+    let failedFiles, attemptMap;
+    try {
+      ({ failedFiles, attemptMap } = await this.chunkPdf(
+        assetDataArray,
+        blobDataArray,
+        fileTypeArray,
+        maxConcurrentChunks,
+      ));
+    } catch (error) {
+      await this.actionBinder.dispatchErrorToast('upload_warn_chunk_upload_exception', error.status || 500, `Error during chunk upload: ${error.message}`, false, true, {
+        code: 'upload_warn_chunk_upload_exception',
+        subCode: error.status,
+        desc: 'Exception during chunk upload: ' + error.message,
+      });
+    }
     if (failedFiles?.size === files.length) {
-      await this.dispatchGenericError(`One or more chunks failed to upload for all ${files.length} files; Workflow: ${workflowId}, Assets: ${assetDataArray.map((a) => a.id).join(', ')}; File types: ${fileTypeArray.join(', ')}`);
+      await this.actionBinder.dispatchErrorToast('upload_error_chunk_upload', 504, `One or more chunks failed to upload for all ${files.length} files; Workflow: ${workflowId}, Assets: ${assetDataArray.map((a) => a.id).join(', ')}; File types: ${fileTypeArray.join(', ')}`, false, true, { code: 'upload_error_chunk_upload', desc: `${failedFiles}` });
       return;
     }
     const uploadedAssets = assetDataArray.filter((_, index) => 
