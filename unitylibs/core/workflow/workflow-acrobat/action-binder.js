@@ -211,6 +211,7 @@ export default class ActionBinder {
     this.transitionScreen = null;
     this.promiseStack = [];
     this.signedOut = undefined;
+    this.tokenError = null;
     this.redirectUrl = '';
     this.filesData = {};
     this.errorData = {};
@@ -229,8 +230,12 @@ export default class ActionBinder {
   }
 
   async isSignedOut() {
-    const isGuest = await isGuestUser();
-    this.signedOut = isGuest ?? undefined;
+    const result = await isGuestUser();
+    if (result.error) {
+      this.tokenError = result.error;
+      return;
+    }
+    this.signedOut = result.isGuest ?? undefined;
   }
 
   setIsUploading(isUploading) {
@@ -590,12 +595,14 @@ export default class ActionBinder {
   async acrobatActionMaps(value, files, totalFileSize, eventName) {
     await this.handlePreloads();
     if (this.signedOut === undefined) {
-      await this.dispatchErrorToast('pre_upload_error_fetching_access_token', 401, 'IMS access token could not be fetched', false, true, {
-        code: 'pre_upload_error_fetching_access_token',
-        subCode: 401,
-        desc: 'IMS access token could not be fetched',
-      });
-      return;
+      if (this.tokenError) {
+        const errorDetails = JSON.stringify(this.tokenError, null, 2);
+        await this.dispatchErrorToast('pre_upload_error_fetching_access_token', null, `Could not fetch access token; Error: ${errorDetails}`, false, true, {
+          code: 'pre_upload_error_fetching_access_token',
+          desc: `Could not fetch access token; Error: ${errorDetails}`,
+        });
+        return;
+      }
     }
     window.addEventListener('DCUnity:RedirectReady', async () => {
       await this.continueInApp();
@@ -604,7 +611,7 @@ export default class ActionBinder {
     switch (value) {
       case 'upload':
         this.promiseStack = [];
-        this.filesData = { type: this.isMixedFileTypes(files), size: totalFileSize, count: files.length, uploadType: files.length>1 ? 'mfu' : 'sfu' };
+        this.filesData = { type: this.isMixedFileTypes(files), size: totalFileSize, count: files.length, uploadType: files.length > 1 ? 'mfu' : 'sfu' };
         this.dispatchAnalyticsEvent(eventName, this.filesData);
         if (uploadType === 'single') await this.processSingleFile(files);
         else if (uploadType === 'hybrid') await this.processHybrid(files);
