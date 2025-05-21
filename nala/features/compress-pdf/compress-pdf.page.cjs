@@ -11,10 +11,10 @@ export default class CompressPdf {
     this.acrobatIcon = this.verbRow.locator('.acrobat-icon svg');
     this.verbTitle = this.verbRow.locator('.verb-title');
     this.verbImage = this.compressPdf.locator('.verb-image');
-
+    // file upload locators
     this.uploadButton = this.page.locator('button.verb-cta', { hasText: 'Select a file' }).nth(nth);
     this.fileInput = this.page.locator('input[type="file"]#file-upload');
-
+    // file upload error locators
     this.verbError = this.page.locator('.verb-error');
     this.verbErrorIcon = this.verbError.locator('.verb-errorIcon');
     this.verbErrorText = this.verbError.locator('.verb-errorText');
