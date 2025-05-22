@@ -10,6 +10,7 @@ import {
   priorityLoad,
   loadArea,
   loadImg,
+  isGuestUser,
   getHeaders,
 } from '../../../scripts/utils.js';
 
@@ -31,16 +32,17 @@ class ServiceHandler {
     error.status = 0;
     throw error;
   }
+
   async fetchFromService(url, options, canRetry = true) {
     try {
       if (!options?.signal?.aborted)  this.handleAbortedRequest(url, options);
       const response = await fetch(url, options);
       const contentLength = response.headers.get('Content-Length');
       if (response.status === 202) return { status: 202, headers: response.headers };
-      if(canRetry && ((response.status >= 500 && response.status < 600) || response.status === 429)) {
+      if (canRetry && ((response.status >= 500 && response.status < 600) || response.status === 429)) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         return this.fetchFromService(url, options, false);
-     }
+      }
       if (response.status !== 200) {
         let errorMessage = `Error fetching from service. URL: ${url}`;
         if (contentLength !== '0') {
@@ -123,15 +125,15 @@ class ServiceHandler {
 
 export default class ActionBinder {
   static SINGLE_FILE_ERROR_MESSAGES = {
-    UNSUPPORTED_TYPE: 'verb_upload_error_unsupported_type',
-    EMPTY_FILE: 'verb_upload_error_empty_file',
-    FILE_TOO_LARGE: 'verb_upload_error_file_too_large',
+    UNSUPPORTED_TYPE: 'validation_error_unsupported_type',
+    EMPTY_FILE: 'validation_error_empty_file',
+    FILE_TOO_LARGE: 'validation_error_file_too_large',
   };
 
   static MULTI_FILE_ERROR_MESSAGES = {
-    UNSUPPORTED_TYPE: 'verb_upload_error_unsupported_type_multi',
-    EMPTY_FILE: 'verb_upload_error_empty_file_multi',
-    FILE_TOO_LARGE: 'verb_upload_error_file_too_large_multi',
+    UNSUPPORTED_TYPE: 'validation_error_unsupported_type_multi',
+    EMPTY_FILE: 'validation_error_empty_file_multi',
+    FILE_TOO_LARGE: 'validation_error_file_too_large_multi',
   };
 
   static LIMITS_MAP = {
@@ -145,12 +147,12 @@ export default class ActionBinder {
     'insert-pdf': ['single', 'page-limit-500'],
     'extract-pages': ['single', 'page-limit-500'],
     'reorder-pages': ['single', 'page-limit-500'],
-    'sendforsignature': ['single', 'max-filesize-5-mb', 'page-limit-25'],
+    sendforsignature: ['single', 'max-filesize-5-mb', 'page-limit-25'],
     'pdf-to-word': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-250-mb'],
     'pdf-to-excel': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-100-mb'],
     'pdf-to-ppt': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-250-mb'],
     'pdf-to-image': ['hybrid', 'allowed-filetypes-pdf-only', 'max-filesize-100-mb'],
-    'createpdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
+    createpdf: ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'word-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'excel-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
     'ppt-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb'],
@@ -158,38 +160,72 @@ export default class ActionBinder {
     'png-to-pdf': ['hybrid', 'allowed-filetypes-all', 'max-filesize-100-mb']
   };
 
-static ERROR_MAP = {
-  'verb_upload_error_generic': -1,
-  'verb_upload_error_loading_verb_limits': -50,
-  'verb_upload_error_empty_verb_limits': -51,
-  'verb_upload_error_duplicate_asset': -52,
-  'verb_upload_error_validate_files': -100,
-  'verb_upload_error_renaming_file' : -101,
-  'verb_upload_error_max_page_count': -150,
-  'verb_upload_error_min_page_count': -151,
-  'verb_upload_error_verify_page_count': -152,
-  'verb_upload_error_unsupported_type': -170,
-  'verb_upload_error_empty_file': -171,
-  'verb_upload_error_file_too_large': -172,
-  'verb_upload_error_only_accept_one_file': -173,
-  'verb_upload_error_file_same_type': -174,
-  'verb_upload_error_unsupported_type_multi': -200,
-  'verb_upload_error_empty_file_multi': -201,
-  'verb_upload_error_file_too_large_multi': -202,
-  'verb_upload_error_multiple_invalid_files': -203,
-  'verb_upload_error_max_quota_exceeded': -250,
-  'verb_upload_error_no_storage_provision': -251,
-  'verb_upload_error_duplicate_operation': -252,
-  'verb_upload_exception_finalize': -300,
-  'verb_upload_exception_validate_page_count': -301,
-  'verb_upload_error_fetch_redirect_url': -350,
-  'verb_upload_error_finalize': -351,
-  'verb_upload_error_chunk_upload': -352,
-  'verb_cookie_not_set': -353,
-  'verb_upload_warn_chunk_upload': -354,
-  'verb_upload_error_redirect_to_app': -900,
-  'verb_upload_error_finalize_asset': -901
-};
+  static ERROR_MAP = {
+    error_generic: -1,
+    pre_upload_error_loading_verb_limits: -50,
+    pre_upload_error_empty_verb_limits: -51,
+    pre_upload_error_renaming_file: -52,
+    pre_upload_error_fetch_redirect_url: -53,
+    pre_upload_error_fetching_access_token: -54,
+    pre_upload_error_create_asset: -54,
+    validation_error_validate_files: -100,
+    validation_error_unsupported_type: -101,
+    validation_error_empty_file: -102,
+    validation_error_file_too_large: -103,
+    validation_error_only_accept_one_file: -104,
+    validation_error_file_same_type: -105,
+    validation_error_unsupported_type_multi: -200,
+    validation_error_empty_file_multi: -201,
+    validation_error_file_too_large_multi: -202,
+    validation_error_multiple_invalid_files: -203,
+    validation_error_max_num_files: -204,
+    upload_validation_error_max_page_count: -300,
+    upload_validation_error_min_page_count: -301,
+    upload_validation_error_verify_page_count: -302,
+    upload_validation_error_max_page_count_multi: -303,
+    upload_validation_error_duplicate_asset: -304,
+    upload_error_max_quota_exceeded: -400,
+    upload_error_no_storage_provision: -401,
+    upload_error_chunk_upload: -402,
+    upload_error_finalize_asset: -403,
+    upload_error_redirect_to_app: -500,
+    upload_warn_chunk_upload: -600,
+    upload_warn_chunk_upload_exception: -601,
+    pre_upload_warn_renamed_invalid_file_name: -602,
+    warn_delete_asset: -603,
+  };
+
+  static NEW_TO_OLD_ERROR_KEY_MAP = {
+    'error_generic': 'verb_upload_error_generic',
+    'pre_upload_error_loading_verb_limits': 'verb_upload_error_loading_verb_limits',
+    'pre_upload_error_empty_verb_limits': 'verb_upload_error_empty_verb_limits',
+    'pre_upload_error_renaming_file': 'verb_upload_error_renaming_file',
+    'pre_upload_error_fetch_redirect_url': 'verb_upload_error_fetch_redirect_url',
+    'validation_error_validate_files': 'verb_upload_error_validate_files',
+    'validation_error_unsupported_type': 'verb_upload_error_unsupported_type',
+    'validation_error_empty_file': 'verb_upload_error_empty_file',
+    'validation_error_file_too_large': 'verb_upload_error_file_too_large',
+    'validation_error_only_accept_one_file': 'verb_upload_error_only_accept_one_file',
+    'validation_error_file_same_type': 'verb_upload_error_file_same_type',
+    'validation_error_unsupported_type_multi': 'verb_upload_error_unsupported_type_multi',
+    'validation_error_empty_file_multi': 'verb_upload_error_empty_file_multi',
+    'validation_error_file_too_large_multi': 'verb_upload_error_file_too_large_multi',
+    'validation_error_multiple_invalid_files': 'verb_upload_error_multiple_invalid_files',
+    'validation_error_max_num_files': 'verb_upload_error_max_num_files',
+    'upload_validation_error_max_page_count': 'verb_upload_error_max_page_count',
+    'upload_validation_error_min_page_count': 'verb_upload_error_min_page_count',
+    'upload_validation_error_verify_page_count': 'verb_upload_error_verify_page_count',
+    'upload_validation_error_max_page_count_multi': 'verb_upload_error_max_page_count_multi',
+    'upload_validation_error_duplicate_asset': 'verb_upload_error_duplicate_asset',
+    'upload_error_max_quota_exceeded': 'verb_upload_error_max_quota_exceeded',
+    'upload_error_no_storage_provision': 'verb_upload_error_no_storage_provision',
+    'upload_error_chunk_upload': 'verb_upload_error_chunk_upload',
+    'upload_error_finalize_asset': 'verb_upload_error_finalize_asset',
+    'upload_error_redirect_to_app': 'verb_upload_error_redirect_to_app',
+    'upload_warn_chunk_upload': 'verb_upload_warn_chunk_upload',
+    'pre_upload_warn_renamed_invalid_file_name': 'verb_warn_renamed_invalid_file_name',
+    'warn_delete_asset': 'verb_upload_warn_delete_asset',
+  };
 
   constructor(unityEl, workflowCfg, wfblock, canvasArea, actionMap = {}) {
     this.unityEl = unityEl;
@@ -206,25 +242,32 @@ static ERROR_MAP = {
     this.splashScreenEl = null;
     this.transitionScreen = null;
     this.promiseStack = [];
-    this.signedOut = this.isSignedOut();
+    this.signedOut = undefined;
+    this.tokenError = null;
     this.redirectUrl = '';
     this.filesData = {};
     this.errorData = {};
     this.redirectWithoutUpload = false;
     this.LOADER_LIMIT = 95;
     this.MULTI_FILE = false;
-    this.applySignedInSettings();
     this.initActionListeners = this.initActionListeners.bind(this);
     this.abortController = new AbortController();
     this.uploadTimestamp = null;
+    this.initialize();
   }
 
-  isSignedOut() {
-    const serverTiming = window.performance.getEntriesByType('navigation')[0].serverTiming?.reduce(
-      (acc, { name, description }) => ({ ...acc, [name]: description }),
-      {},
-    );
-    return !Object.keys(serverTiming || {}).length || serverTiming?.sis === '0';
+  async initialize() {
+    await this.isSignedOut();
+    await this.applySignedInSettings();
+  }
+
+  async isSignedOut() {
+    const result = await isGuestUser();
+    if (result.error) {
+      this.tokenError = result.error;
+      return;
+    }
+    this.signedOut = result.isGuest ?? undefined;
   }
 
   setIsUploading(isUploading) {
@@ -240,6 +283,7 @@ static ERROR_MAP = {
   }
 
   async applySignedInSettings() {
+    if (this.signedOut === undefined) return;
     if (this.block.classList.contains('signed-in')) {
       if (!this.signedOut) {
         this.acrobatSignedInSettings();
@@ -276,7 +320,8 @@ static ERROR_MAP = {
       ? this.workflowCfg.errors[errorType]
       : await (async () => {
         const getError = (await import('../../../scripts/errors.js')).default;
-        return getError(this.workflowCfg.enabledFeatures[0], errorType);
+        const oldKey = ActionBinder.NEW_TO_OLD_ERROR_KEY_MAP[errorType] || errorType;
+        return getError(this.workflowCfg.enabledFeatures[0], oldKey);
       })();
     const message = lanaOnly ? '' : errorMessage || 'Unable to process the request';
     const sendToSplunk = this.workflowCfg.targetCfg.sendSplunkAnalytics;
@@ -335,13 +380,13 @@ static ERROR_MAP = {
         .replace(STARTING_SPACE_PERIOD_REGEX, '-')
         .replace(INVALID_CHARS_REGEX, '-');
       if (rawFileName !== fileName) {
-        await this.dispatchErrorToast('verb_warn_renamed_invalid_file_name', null, `Renamed ${rawFileName} to ${fileName}`, true)
+        await this.dispatchErrorToast('pre_upload_warn_renamed_invalid_file_name', null, `Renamed ${rawFileName} to ${fileName}`, true)
       }
       return fileName;
     } catch (error) {
       console.error('Error sanitizing filename:', error);
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Error renaming file: ${rawFileName}`, false, true, {
-        code: 'verb_upload_error_renaming_file',
+      await this.dispatchErrorToast('error_generic', 500, `Error renaming file: ${rawFileName}`, false, true, {
+        code: 'pre_upload_error_renaming_file',
         subCode: error.name,
         desc: error.message,
       });
@@ -371,21 +416,21 @@ static ERROR_MAP = {
       let fail = false;
       if (!this.limits.allowedFileTypes.includes(file.type)) {
         let errorMessage = errorMessages.UNSUPPORTED_TYPE;
-        if (this.isSameFileType(this.workflowCfg.enabledFeatures[0], file.type)) errorMessage = 'verb_upload_error_file_same_type';
-        if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessage, null, `File type: ${file.type}`, true, true, { code: 'verb_upload_error_validate_files', subCode: errorMessage });
-        else await this.dispatchErrorToast(errorMessage, null, null, false, true, { code: 'verb_upload_error_validate_files', subCode: errorMessage });
+        if (this.isSameFileType(this.workflowCfg.enabledFeatures[0], file.type)) errorMessage = 'validation_error_file_same_type';
+        if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessage, null, `File type: ${file.type}`, true, true, { code: 'validation_error_validate_files', subCode: errorMessage });
+        else await this.dispatchErrorToast(errorMessage, null, null, false, true, { code: 'validation_error_validate_files', subCode: errorMessage });
         fail = true;
         errorTypes.add('UNSUPPORTED_TYPE');
       }
       if (!file.size) {
-        if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessages.EMPTY_FILE, null, 'Empty file', true, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.EMPTY_FILE });
-        else await this.dispatchErrorToast(errorMessages.EMPTY_FILE, null, null, false, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.EMPTY_FILE });
+        if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessages.EMPTY_FILE, null, 'Empty file', true, true, { code: 'validation_error_validate_files', subCode: errorMessages.EMPTY_FILE });
+        else await this.dispatchErrorToast(errorMessages.EMPTY_FILE, null, null, false, true, { code: 'validation_error_validate_files', subCode: errorMessages.EMPTY_FILE });
         fail = true;
         errorTypes.add('EMPTY_FILE');
       }
       if (file.size > this.limits.maxFileSize) {
-        if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessages.FILE_TOO_LARGE, null, `File too large: ${file.size}`, true, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.FILE_TOO_LARGE });
-        else await this.dispatchErrorToast(errorMessages.FILE_TOO_LARGE, null, null, false, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages.FILE_TOO_LARGE });
+        if (this.MULTI_FILE) await this.dispatchErrorToast(errorMessages.FILE_TOO_LARGE, null, `File too large: ${file.size}`, true, true, { code: 'validation_error_validate_files', subCode: errorMessages.FILE_TOO_LARGE });
+        else await this.dispatchErrorToast(errorMessages.FILE_TOO_LARGE, null, null, false, true, { code: 'validation_error_validate_files', subCode: errorMessages.FILE_TOO_LARGE });
         fail = true;
         errorTypes.add('FILE_TOO_LARGE');
       }
@@ -398,14 +443,14 @@ static ERROR_MAP = {
       if (this.MULTI_FILE) {
         if (errorTypes.size === 1) {
           const errorType = Array.from(errorTypes)[0];
-          await this.dispatchErrorToast(errorMessages[errorType], null, null, false, true, { code: 'verb_upload_error_validate_files', subCode: errorMessages[errorType] });
+          await this.dispatchErrorToast(errorMessages[errorType], null, null, false, true, { code: 'validation_error_validate_files', subCode: errorMessages[errorType] });
         } else {
           let errorDesc = '';
           for (const errorType of errorTypes) {
             errorDesc += `${errorMessages[errorType]}, `;
           }
           errorDesc = errorDesc.slice(0, -2);
-          await this.dispatchErrorToast('verb_upload_error_generic', null, `All ${files.length} files failed validation. Error Types: ${Array.from(errorTypes).join(', ')}`, false, true, { code: 'verb_upload_error_validate_files', subCode: 'verb_upload_error_multiple_invalid_files', desc: errorDesc });
+          await this.dispatchErrorToast('error_generic', null, `All ${files.length} files failed validation. Error Types: ${Array.from(errorTypes).join(', ')}`, false, true, { code: 'validation_error_validate_files', subCode: 'validation_error_multiple_invalid_files', desc: errorDesc });
         }
       }
       return { isValid: false, validFiles};
@@ -431,8 +476,8 @@ static ERROR_MAP = {
         const { default: TransitionScreen } = await import(`${getUnityLibs()}/scripts/transition-screen.js`);
         this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
         await this.transitionScreen.showSplashScreen();
-        await this.dispatchErrorToast('verb_upload_error_generic', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError, {
-          code: 'verb_upload_error_fetch_redirect_url',
+        await this.dispatchErrorToast('pre_upload_error_fetch_redirect_url', e.status || 500, `Exception thrown when retrieving redirect URL. Message: ${e.message}, Options: ${JSON.stringify(cOpts)}`, false, e.showError, {
+          code: 'pre_upload_error_fetch_redirect_url',
           subCode: e.status,
           desc: e.message,
         });
@@ -458,26 +503,23 @@ static ERROR_MAP = {
     return true;
   }
 
-  async handleSingleFileUpload(files, eventName) {
-    this.filesData = { type: files[0].type, size: files[0].size, count: 1, uploadType: 'sfu' };
-    this.dispatchAnalyticsEvent(eventName, this.filesData);
+  async handleSingleFileUpload(files) {
+    this.filesData = {...this.filesData,uploadType: 'sfu'};
     if (this.signedOut) await this.uploadHandler.singleFileGuestUpload(files[0], this.filesData);
     else await this.uploadHandler.singleFileUserUpload(files[0], this.filesData);
   }
 
-  async handleMultiFileUpload(files, eventName, totalFileSize) {
+  async handleMultiFileUpload(files) {
     this.MULTI_FILE = true;
     this.LOADER_LIMIT = 65;
-    const isMixedFileTypes = this.isMixedFileTypes(files);
-    this.filesData = { type: isMixedFileTypes, size: totalFileSize, count: files.length, uploadType: 'mfu' };
-    this.dispatchAnalyticsEvent(eventName, this.filesData);
+    this.filesData = {...this.filesData,uploadType: 'mfu'};
     this.dispatchAnalyticsEvent('multifile', this.filesData);
     if (this.signedOut) await this.uploadHandler.multiFileGuestUpload(this.filesData);
     else await this.uploadHandler.multiFileUserUpload(files, this.filesData);
   }
 
-  async handleFileUpload(files, eventName, totalFileSize) {
-    const verbsWithoutFallback = this.workflowCfg.targetCfg.verbsWithoutMfuFallback;
+  async handleFileUpload(files) {
+    const verbsWithoutFallback = this.workflowCfg.targetCfg.verbsWithoutMfuToSfuFallback;
     const sanitizedFiles = await Promise.all(files.map(async (file) => {
       const sanitizedFileName = await this.sanitizeFileName(file.name);
       return new File([file], sanitizedFileName, { type: file.type, lastModified: file.lastModified });
@@ -487,9 +529,9 @@ static ERROR_MAP = {
     const { default: UploadHandler } = await import(`${getUnityLibs()}/core/workflow/${this.workflowCfg.name}/upload-handler.js`);
     this.uploadHandler = new UploadHandler(this, this.serviceHandler);
     if (files.length === 1 || (validFiles.length === 1 && !verbsWithoutFallback.includes(this.workflowCfg.enabledFeatures[0]))) {
-      await this.handleSingleFileUpload(validFiles, eventName);
+      await this.handleSingleFileUpload(validFiles);
     } else {
-      await this.handleMultiFileUpload(validFiles, eventName, totalFileSize);
+      await this.handleMultiFileUpload(validFiles);
     }
   }
 
@@ -502,14 +544,14 @@ static ERROR_MAP = {
         if (limits[key]) Object.entries(limits[key]).forEach(([k, v]) => { acc[k] = v; });
         return acc;
       }, {});
-      if (!combinedLimits || Object.keys(combinedLimits).length === 0) await this.dispatchErrorToast('verb_upload_error_generic', 500, 'No verb limits found', false, true, {
-        code: 'verb_upload_error_empty_verb_limits',
+      if (!combinedLimits || Object.keys(combinedLimits).length === 0) await this.dispatchErrorToast('error_generic', 500, 'No verb limits found', false, true, {
+        code: 'pre_upload_error_empty_verb_limits',
         desc: 'No verb limits found',
       });
       return combinedLimits;
     } catch (e) {
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception thrown when loading verb limits: ${e.message}`, false, true, {
-        code: 'verb_upload_error_loading_verb_limits',
+      await this.dispatchErrorToast('error_generic', 500, `Exception thrown when loading verb limits: ${e.message}`, false, true, {
+        code: 'pre_upload_error_loading_verb_limits',
         subCode: e.status,
         desc: e.message,
       });
@@ -517,49 +559,31 @@ static ERROR_MAP = {
     }
   }
 
-  async processSingleFile(files, eventName) {
+  async processSingleFile(files) {
     this.limits = await this.loadVerbLimits(this.workflowCfg.name, ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]]);
     if (!this.limits || Object.keys(this.limits).length === 0) return;
     if (!files || files.length > this.limits.maxNumFiles) {
-      await this.dispatchErrorToast('verb_upload_error_only_accept_one_file');
+      await this.dispatchErrorToast('validation_error_only_accept_one_file');
       return;
     }
     const file = files[0];
     if (!file) return;
-    await this.handleFileUpload(files, eventName);
+    await this.handleFileUpload(files);
   }
 
-  async processHybrid(files, totalFileSize, eventName) {
+  async processHybrid(files) {
     if (!files) {
-      await this.dispatchErrorToast('verb_upload_error_only_accept_one_file');
+      await this.dispatchErrorToast('validation_error_only_accept_one_file');
       return;
     }
     this.limits = await this.loadVerbLimits(this.workflowCfg.name, ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]]);
     if (!this.limits || Object.keys(this.limits).length === 0) return;
-    await this.handleFileUpload(files, eventName, totalFileSize);
+    await this.handleFileUpload(files);
   }
 
   delay(ms) {
     return new Promise((res) => { setTimeout(() => { res(); }, ms); });
   }
-
-  checkCookie = () => {
-    const cookies = document.cookie.split(';').map((item) => item.trim());
-    const target = /^UTS_Uploaded=/;
-    return cookies.some((item) => target.test(item));
-  };
-
-  waitForCookie = (timeout) => new Promise((resolve) => {
-    const interval = 100;
-    let elapsed = 0;
-    const intervalId = setInterval(() => {
-      if (this.checkCookie() || elapsed >= timeout) {
-        clearInterval(intervalId);
-        resolve();
-      }
-      elapsed += interval;
-    }, interval);
-  });
 
   async continueInApp() {
     if (!this.redirectUrl || !(this.operations.length || this.redirectWithoutUpload)) return;
@@ -568,14 +592,6 @@ static ERROR_MAP = {
     this.transitionScreen = new TransitionScreen(this.transitionScreen.splashScreenEl, this.initActionListeners, this.LOADER_LIMIT, this.workflowCfg);
     this.transitionScreen.updateProgressBar(this.transitionScreen.splashScreenEl, 100);
     try {
-      await this.waitForCookie(2000);
-      if (!this.checkCookie()) {
-        await this.dispatchErrorToast('verb_cookie_not_set', 200, 'Not all cookies found, redirecting anyway', true, true, {
-          code: 'verb_upload_error_redirect_to_app',
-          subCode: 'verb_cookie_not_set',
-          desc: 'Not all cookies found, redirecting anyway',
-        });
-      }
       await this.delay(500);
       const [baseUrl, queryString] = this.redirectUrl.split('?');
       const additionalParams = unityConfig.env === 'stage' ? `${window.location.search.slice(1)}&` : '';
@@ -584,8 +600,8 @@ static ERROR_MAP = {
       } else window.location.href = `${baseUrl}?${this.redirectWithoutUpload === false ? `UTS_Uploaded=${this.uploadTimestamp}&` : ''}${additionalParams}${queryString}`;
     } catch (e) {
       await this.transitionScreen.showSplashScreen();
-      await this.dispatchErrorToast('verb_upload_error_generic', 500, `Exception thrown when redirecting to product; ${e.message}`, false, e.showError, {
-        code: 'verb_upload_error_redirect_to_app',
+      await this.dispatchErrorToast('error_generic', 500, `Exception thrown when redirecting to product; ${e.message}`, false, e.showError, {
+        code: 'upload_error_redirect_to_app',
         subCode: e.status,
         desc: e.message,
       });
@@ -611,15 +627,27 @@ static ERROR_MAP = {
 
   async acrobatActionMaps(value, files, totalFileSize, eventName) {
     await this.handlePreloads();
-    window.addEventListener('DCUnity:RedirectReady', async (e) => {
+    if (this.signedOut === undefined) {
+      if (this.tokenError) {
+        const errorDetails = JSON.stringify(this.tokenError, null, 2);
+        await this.dispatchErrorToast('pre_upload_error_fetching_access_token', null, `Could not fetch access token; Error: ${errorDetails}`, false, true, {
+          code: 'pre_upload_error_fetching_access_token',
+          desc: `Could not fetch access token; Error: ${errorDetails}`,
+        });
+        return;
+      }
+    }
+    window.addEventListener('DCUnity:RedirectReady', async () => {
       await this.continueInApp();
     });
     const uploadType = ActionBinder.LIMITS_MAP[this.workflowCfg.enabledFeatures[0]][0];
     switch (value) {
       case 'upload':
         this.promiseStack = [];
-        if (uploadType === 'single') await this.processSingleFile(files, eventName);
-        else if (uploadType === 'hybrid') await this.processHybrid(files, totalFileSize, eventName);
+        this.filesData = { type: this.isMixedFileTypes(files), size: totalFileSize, count: files.length, uploadType: files.length > 1 ? 'mfu' : 'sfu' };
+        this.dispatchAnalyticsEvent(eventName, this.filesData);
+        if (uploadType === 'single') await this.processSingleFile(files);
+        else if (uploadType === 'hybrid') await this.processHybrid(files);
         break;
       case 'interrupt':
         await this.cancelAcrobatOperation();
@@ -627,7 +655,7 @@ static ERROR_MAP = {
       default:
         break;
     }
-    if(this.redirectWithoutUpload) await this.continueInApp();
+    if (this.redirectWithoutUpload) await this.continueInApp();
   }
 
   extractFiles(e) {

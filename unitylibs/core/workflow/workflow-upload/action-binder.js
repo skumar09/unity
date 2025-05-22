@@ -313,10 +313,11 @@ export default class ActionBinder {
 
   logAnalyticsinSplunk(eventName, data) {
     if (this.sendAnalyticsToSplunk) {
+      const category = this.workflowCfg.productName;
       this.sendAnalyticsToSplunk(eventName, {
         eventName,
         ...data,
-      }, `${unityConfig.apiEndPoint}/log`);
+      }, `${unityConfig.apiEndPoint}/log`, category);
     }
   }
 

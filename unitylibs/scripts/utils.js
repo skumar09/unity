@@ -40,19 +40,79 @@ export {
 async function getRefreshToken() {
   try {
     const { tokenInfo } = window.adobeIMS ? await window.adobeIMS.refreshToken() : {};
-    return `Bearer ${tokenInfo.token}`;
+    return tokenInfo;
   } catch (e) {
-    return '';
+    return {
+      token: null,
+      error: {
+        message: `Token refresh failed: ${e.message}`,
+        type: 'refresh_error',
+      },
+    };
+  }
+}
+
+async function attemptTokenRefresh() {
+  const refreshResult = await getRefreshToken();
+  if (!refreshResult.error) {
+    return { token: refreshResult, error: null };
+  }
+  return refreshResult;
+}
+
+async function getImsToken() {
+  const RETRY_WAIT = 2000;
+  try {
+    const accessToken = window.adobeIMS?.getAccessToken();
+    if (!accessToken || accessToken?.expire.valueOf() <= Date.now() + (5 * 60 * 1000)) {
+      const firstAttempt = await attemptTokenRefresh();
+      if (!firstAttempt.error) {
+        return firstAttempt;
+      }
+      await new Promise((resolve) => setTimeout(resolve, RETRY_WAIT));
+      const retryAttempt = await attemptTokenRefresh();
+      if (!retryAttempt.error) {
+        return retryAttempt;
+      }
+      return {
+        token: null,
+        error: {
+          message: `Token refresh failed after retry. Original error: ${firstAttempt.error.message}`,
+          type: 'refresh_error',
+          originalToken: accessToken,
+        },
+      };
+    }
+    return { token: accessToken, error: null };
+  } catch (error) {
+    return {
+      token: null,
+      error: {
+        message: `Error getting IMS access token: ${error.message}`,
+        type: 'token_error',
+      },
+    };
   }
 }
 
 export async function getGuestAccessToken() {
-  const guestAccessToken = window.adobeIMS?.getAccessToken();
-  if (guestAccessToken?.expire.valueOf() <= Date.now() + (5 * 60 * 1000)) {
-    const refreshToken = await getRefreshToken();
-    return refreshToken;
+  const result = await getImsToken();
+  return `Bearer ${result.token?.token}`;
+}
+
+export async function isGuestUser() {
+  const result = await getImsToken();
+  if (result.error) {
+    return {
+      isGuest: null,
+      error: {
+        message: `Error checking guest user status: ${result.error.message}`,
+        type: 'guest_status_error',
+        originalError: result.error,
+      },
+    };
   }
-  return `Bearer ${guestAccessToken?.token}`;
+  return { isGuest: result.token?.isGuestToken, error: null };
 }
 
 export async function getHeaders(apiKey, additionalHeaders = {}) {
@@ -273,7 +333,9 @@ export const unityConfig = (() => {
     },
   };
   if (host.includes('hlx.page')
+    || host.includes('hlx.live') 
     || host.includes('aem.page')
+    || host.includes('aem.live') 
     || host.includes('localhost')
     || host.includes('stage.adobe')
     || host.includes('corp.adobe')

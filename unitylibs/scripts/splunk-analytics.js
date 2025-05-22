@@ -7,12 +7,12 @@ function getSessionID() {
   return tokenPayload.sub || tokenPayload.user_id;
 }
 
-function createPayloadForSplunk(metaData) {
+function createPayloadForSplunk(metaData, category) {
   const { eventName, errorData, redirectUrl, assetId } = metaData;
   return {
     event: {
       name: eventName,
-      category: 'photoshop',
+      category,
     },
     content: { ...(assetId && { assetId }) },
     source: {
@@ -34,9 +34,9 @@ function createPayloadForSplunk(metaData) {
   };
 }
 
-export default function sendAnalyticsToSplunk(eventName, metaData, splunkEndpoint) {
+export default function sendAnalyticsToSplunk(eventName, metaData, splunkEndpoint, category) {
   try {
-    const eventDataPayload = createPayloadForSplunk({ ...metaData, eventName });
+    const eventDataPayload = createPayloadForSplunk({ ...metaData, eventName }, category);
     fetch(splunkEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
