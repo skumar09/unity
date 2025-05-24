@@ -1,0 +1,18 @@
+{
+  "hero-marquee": {
+    "type": "text",
+    "selector": ".copy",
+    "handler": "render",
+    "renderWidget": true,
+    "source": ".copy .main-copy",
+    "target": "a:last-of-type",
+    "insert": "before",
+    "actionMap": {
+      ".inp-field": { "actionType": "autocomplete" },
+      ".gen-btn": { "actionType": "generate" },
+      ".close-btn": { "actionType": "closeDropdown" },
+      ".drop-item": { "actionType": "setPromptValue" }
+    },
+    "sendSplunkAnalytics": true
+  }
+}

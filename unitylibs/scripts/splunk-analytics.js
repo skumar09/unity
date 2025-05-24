@@ -7,12 +7,16 @@ function getSessionID() {
   return tokenPayload.sub || tokenPayload.user_id;
 }
 
-function createPayloadForSplunk(metaData, category) {
-  const { eventName, errorData, redirectUrl, assetId } = metaData;
+function createPayloadForSplunk(metaData) {
+  const { eventName, product, errorData, redirectUrl, assetId, statusCode, verb, action, workflowStep } = metaData;
   return {
     event: {
       name: eventName,
-      category,
+      category: product,
+      ...(verb && { subcategory: verb }),
+      ...(action && { action }),
+      ...(statusCode!==undefined && { statusCode }),
+      ...(workflowStep && { workflowStep }),
     },
     content: { ...(assetId && { assetId }) },
     source: {
@@ -34,9 +38,10 @@ function createPayloadForSplunk(metaData, category) {
   };
 }
 
-export default function sendAnalyticsToSplunk(eventName, metaData, splunkEndpoint, category) {
+export default function sendAnalyticsToSplunk(eventName, product, metaData, splunkEndpoint, sendBeacon=false) {
   try {
-    const eventDataPayload = createPayloadForSplunk({ ...metaData, eventName }, category);
+    const eventDataPayload = createPayloadForSplunk({ ...metaData, eventName, product });
+    if (navigator.sendBeacon && navigator.sendBeacon(splunkEndpoint, JSON.stringify(eventDataPayload))) return;
     fetch(splunkEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
