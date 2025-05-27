@@ -23,7 +23,7 @@ test.describe('Unity Compress PDF test suite', () => {
 
     await test.step('step-1: Go to Compress PDF test page', async () => {
       await page.goto(`${baseURL}${features[0].path}${unityLibs}`);
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle');
       await expect(page).toHaveURL(`${baseURL}${features[0].path}${unityLibs}`);
       console.info('******* [Step-1 PASS ******]');
     });

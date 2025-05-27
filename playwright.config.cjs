@@ -58,6 +58,7 @@ const config = {
       use: {
         ...devices['Desktop Chrome'],
         userAgent: USER_AGENT_DESKTOP,
+        headless: true,
       },
     },
     /*
