@@ -29,8 +29,8 @@ test.describe('Unity Compress PDF test suite', () => {
     });
 
     await test.step('step-2: Verify Compress PDF content/specs', async () => {
-      const html = await page.content();
-      console.log('[DEBUG] PAGE HTML SNAPSHOT:\n', html);
+      // const html = await page.content();
+      // console.log('[DEBUG] PAGE HTML SNAPSHOT:\n', html);
       await expect(await compressPdf.compressPdf).toBeVisible();
       await expect(await compressPdf.dropZone).toBeVisible();
       await expect(await compressPdf.verbImage).toBeVisible();
@@ -39,6 +39,7 @@ test.describe('Unity Compress PDF test suite', () => {
       expect(actualText.trim()).toBe(data.verbHeading);
       await expect(await compressPdf.verbTitle).toContainText(data.verbTitle);
       await expect(await compressPdf.verbCopy).toContainText(data.verbCopy);
+      console.info('******* [Step-2 PASS ******]');
     });
 
     await test.step('step-3: Upload a sample PDF file', async () => {
