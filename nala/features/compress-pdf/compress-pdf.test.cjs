@@ -29,6 +29,8 @@ test.describe('Unity Compress PDF test suite', () => {
     });
 
     await test.step('step-2: Verify Compress PDF content/specs', async () => {
+      const html = await page.content();
+      console.log('[DEBUG] PAGE HTML SNAPSHOT:\n', html);
       await expect(await compressPdf.compressPdf).toBeVisible();
       await expect(await compressPdf.dropZone).toBeVisible();
       await expect(await compressPdf.verbImage).toBeVisible();
