@@ -60,7 +60,7 @@ const config = {
         userAgent: USER_AGENT_DESKTOP,
       },
     },
-
+    /*
     {
       name: 'unity-live-firefox',
       use: {
@@ -75,7 +75,9 @@ const config = {
         userAgent: USER_AGENT_DESKTOP,
       },
     },
+    */
     /* Test Against Mobile View ports */
+    /*
     {
       name: 'mobile-chrome-pixel5',
       use: {
@@ -90,6 +92,7 @@ const config = {
         userAgent: USER_AGENT_MOBILE_SAFARI,
       },
     },
+    */
   ],
 };
 

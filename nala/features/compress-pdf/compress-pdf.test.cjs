@@ -18,6 +18,7 @@ test.describe('Unity Compress PDF test suite', () => {
   // Test 0 : Compress PDF
   test(`${features[0].name},${features[0].tags}`, async ({ page, baseURL }) => {
     console.info(`[Test Page]: ${baseURL}${features[0].path}${unityLibs}`);
+    console.info(`[Asset Path]: ${pdfFilePath}`);
     const { data } = features[0];
 
     await test.step('step-1: Go to Compress PDF test page', async () => {
