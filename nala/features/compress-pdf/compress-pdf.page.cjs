@@ -3,7 +3,7 @@ export default class CompressPdf {
     this.page = page;
     // compress-pdf widget locators
     this.section = this.page.locator('.section').nth(nth);
-    this.compressPdf = this.page.locator('.compress-pdf.unity-enabled').nth(nth);
+    this.compressPdf = this.page.locator('.compress-pdf').nth(nth);
     this.dropZone = this.compressPdf.locator('#drop-zone');
     this.verbRow = this.compressPdf.locator('.verb-row').nth(0);
     this.verbHeader = this.verbRow.locator('.verb-heading');
